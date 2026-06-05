@@ -18,7 +18,7 @@
 
                 <h5 class="text-center text-white mb-4" style="font-weight: 500;">Sistem Surat Dan Agenda Digital</h5>
 
-                <form action="{{ route('login') }}" method="POST">
+                <form action="{{ route('login.post') }}" method="POST">
                     @csrf
                     
                     <div class="mb-3">
@@ -29,14 +29,14 @@
                     </div>
 
                     <div class="mb-4">
-                        <input type="password" class="form-control custom-input py-2" name="password" placeholder="********" required>
+                        <input type="password" class="form-control custom-input py-2" name="password" placeholder="Password" required>
                         @error('password')
                             <div class="text-danger mt-1" style="font-size: 0.85rem;">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="text-center mt-2">
-                        <button type="submit" class="btn btn-login text-white">Login</button>
+                        <button type="submit" class="btn btn-success text-white">Login</button>
                     </div>
                 </form>
 

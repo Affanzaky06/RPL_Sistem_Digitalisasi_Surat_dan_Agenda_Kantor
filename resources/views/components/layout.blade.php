@@ -20,8 +20,8 @@
 
     <div class="d-flex flex-grow-1 overflow-hidden">
         
-        @if($role === 'Kepala')
-            <x-navbar-k-p></x-navbar-k-p>
+        @if($role === 'Kepala' || $role === 'Kabid')
+            <x-navbar-k-p :role="$role"></x-navbar-k-p>
         @else
             <x-navbar-fr></x-navbar-fr>
         @endif

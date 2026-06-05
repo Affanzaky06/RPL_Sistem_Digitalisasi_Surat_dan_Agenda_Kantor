@@ -8,7 +8,7 @@
         <div class="dropdown px-4"> <a href="#"
                 class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
                 data-bs-toggle="dropdown" aria-expanded="false"> <img src="https://github.com/mdo.png" alt="" width="32"
-                    height="32" class="rounded-circle me-2"> <strong class="text-white">nvdo</strong> </a>
+                    height="32" class="rounded-circle me-2"> <strong class="text-white">{{ auth()->user()->nama }}</strong> </a>
             <ul class="dropdown-menu text-small shadow">
                 <li><a class="dropdown-item" href="#">New project...</a></li>
                 <li><a class="dropdown-item" href="#">Settings</a></li>
@@ -16,7 +16,12 @@
                 <li>
                     <hr class="dropdown-divider">
                 </li>
-                <li><a class="dropdown-item" href="#">Sign out</a></li>
+                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    Sign out</a></li>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
             </ul>
         </div>
 

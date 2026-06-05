@@ -8,36 +8,52 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    // Menampilkan halaman form login
     public function showLoginForm()
     {
-        return view('login');
+        // Saya sesuaikan dengan nama file Anda di resources/views/login.blade.php
+        return view('login'); 
     }
 
-    // Memproses data nip dan password yang dikirim dari form
     public function authenticate(Request $request)
-    {
-        // Validasi inputan harus diisi
-        $credentials = $request->validate([
-            'nip' => ['required', 'string'],
-            'password' => ['required'],
-        ]);
+        {
 
-        // Coba cocokkan nip dan password ke database
-        if (Auth::attempt($credentials)) {
-            // Jika berhasil, perbarui sesi agar aman
-            $request->session()->regenerate();
+            $credentials = $request->validate([
+                'NIP' => ['required', 'string'],
+                'password' => ['required'],
+            ]);
 
-            // Arahkan ke halaman dashboard
-            return redirect()->intended('dashboard');
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+
+                // Ambil data user yang sedang login
+                $user = Auth::user();
+
+                // Cek id_jabatan dan arahkan ke halamannya masing-masing
+                // Asumsi: J01 = Kepala Kantor, J02 = Sekretaris, J03 = Kepala Bidang
+                switch ($user->id_jabatan) {
+                    case 'J001':
+                        return redirect()->route('kepala.dashboard');
+                    case 'J002':
+                        return redirect()->route('sekretaris.dashboard');
+                    case 'J003':
+                        return redirect()->route('kabid.dashboard');
+                    case 'J004':
+                        return redirect()->route('subkoor.dashboard');
+                    case 'J005':
+                        return redirect()->route('staff.dashboard');
+                    case 'J006':
+                        return redirect()->route('kepegawaian.dashboard');
+                    case 'J007':
+                        return redirect()->route('frontliner.dashboard');            
+                    default:
+                        return redirect()->route('dashboard.umum'); // Default jika role tidak dikenali
+                }
+            }
+
+            return back()->withErrors([
+                'nip' => 'NIP atau password yang Anda masukkan salah.',
+            ])->onlyInput('nip');
         }
-
-        // Jika gagal, kembalikan ke halaman login dengan pesan error
-        return back()->withErrors([
-            'nip' => 'NIP atau password yang Anda masukkan salah.',
-        ])->onlyInput('nip');
-    }
-
     // Memproses logout
     public function logout(Request $request)
     {
