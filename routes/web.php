@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use function Laravel\Prompts\title;
+use App\Http\Controllers\Auth\LoginController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -71,4 +72,24 @@ Route::get('/kepala/profil', function () {
     return view('profil', 
     ['title' => 'Kepala',
     'role' => 'Kepala']);
+});
+
+Route::get('/', function () {
+    return redirect('/login');
+});
+
+// Rute khusus tamu (belum login)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'authenticate'])->name('login.post');
+});
+
+// Rute khusus yang sudah login (auth)
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    
+    // Rute sementara untuk dashboard
+    Route::get('/dashboard', function () {
+        return "Selamat datang di Dashboard!";
+    })->name('dashboard');
 });

@@ -1,0 +1,22 @@
+body {
+    background-image: url('/image/bgLogin.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: rgba(0, 0, 0, 0.749);
+    background-blend-mode: darken;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+}
+
+.login-card{
+    background-color: rgba(0, 0, 0, 0.871); 
+    
+    border: none; 
+    border-radius: 12px; 
+    width: 100%; 
+    max-width: 420px; 
+    padding: 2rem 1.5rem;
+}
