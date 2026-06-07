@@ -16,16 +16,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // 2. Buat data pegawai dengan password yang DI-HASH
-        Pegawai::create([
-            'nip' => '003',
-            'nama' => 'Kabid',
-            'password' => Hash::make('Kabid123'),
-            'id_bidang' => 'BD03',
-            'id_jabatan' => 'J003',
-            'nip_atasan' => '001'
-        ]);
+        $this->call([BidangSeeder::class, JabatanSeeder::class, PegawaiSeeder::class]);
     }
 }

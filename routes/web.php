@@ -47,8 +47,11 @@ Route::middleware('auth')->group(function () {
         })->name('kepala.profil');
     });
 
+    // --------------------------------------------------------
+    // 2. RUTE KABID (Role: J002)
+    // --------------------------------------------------------
 
-    Route::middleware('role:J003')->group(function () {
+    Route::middleware('role:J002')->group(function () {
         Route::get('/kabid', function () {
             return view('dashboardKepala', ['title' => 'Kabid', 'role' => 'Kabid']);
         })->name('kabid.dashboard');
@@ -74,9 +77,24 @@ Route::middleware('auth')->group(function () {
         })->name('kabid.profil');
     });
 
+    // --------------------------------------------------------
+    // 3. RUTE SUBKOOR (Role: J003)
+    // --------------------------------------------------------
 
     // --------------------------------------------------------
-    // 2. RUTE FRONTLINER (Role: J04)
+    // 4. RUTE STAF (Role: J004)
+    // --------------------------------------------------------
+
+    // --------------------------------------------------------
+    // 5. RUTE KEPEGAWAIAN (Role: J005)
+    // --------------------------------------------------------
+
+    // --------------------------------------------------------
+    // 6. RUTE SEKRETARIS (Role: J006)
+    // --------------------------------------------------------
+
+    // --------------------------------------------------------
+    // 7. RUTE FRONTLINER (Role: J007)
     // --------------------------------------------------------
     Route::middleware('role:J007')->group(function () {
         Route::get('/frontliner', function () {
@@ -99,5 +117,4 @@ Route::middleware('auth')->group(function () {
             return view('Profil', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.profil');
     });
-
 });
