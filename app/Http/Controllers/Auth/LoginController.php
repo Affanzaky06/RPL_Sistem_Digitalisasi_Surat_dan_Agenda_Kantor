@@ -34,15 +34,15 @@ class LoginController extends Controller
                     case 'J001':
                         return redirect()->route('kepala.dashboard');
                     case 'J002':
-                        return redirect()->route('sekretaris.dashboard');
-                    case 'J003':
                         return redirect()->route('kabid.dashboard');
-                    case 'J004':
+                    case 'J003':
                         return redirect()->route('subkoor.dashboard');
-                    case 'J005':
+                    case 'J004':
                         return redirect()->route('staff.dashboard');
-                    case 'J006':
+                    case 'J005':
                         return redirect()->route('kepegawaian.dashboard');
+                    case 'J006':
+                        return redirect()->route('sekretaris.dashboard');
                     case 'J007':
                         return redirect()->route('frontliner.dashboard');            
                     default:

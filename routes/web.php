@@ -81,9 +81,58 @@ Route::middleware('auth')->group(function () {
     // 3. RUTE SUBKOOR (Role: J003)
     // --------------------------------------------------------
 
+     Route::middleware('role:J003')->group(function () {
+        Route::get('/subkoor', function () {
+            return view('dashboardKepala', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.dashboard');
+
+        Route::get('/subkoor/surat_masuk', function () {
+            return view('suratMasuk&Dispo', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.surat_masuk');
+
+        Route::get('/subkoor/agenda', function () {
+            return view('agenda', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.agenda');
+
+        Route::get('/subkoor/Laporan_Pemantauan', function () {
+            return view('laporanPemantauan', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.laporan');
+
+        Route::get('/subkoor/kalender_kantor', function () {
+            return view('KalenderKantor', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.kalender');
+
+        Route::get('/subkoor/profil', function () {
+            return view('profil', ['title' => 'Subkoor', 'role' => 'Subkoor']);
+        })->name('subkoor.profil');
+    });
+
+
     // --------------------------------------------------------
     // 4. RUTE STAF (Role: J004)
     // --------------------------------------------------------
+
+    Route::middleware('role:J004')->group(function () {
+        Route::get('/staff', function () {
+            return view('dashboardKepala', ['title' => 'Staff', 'role' => 'Staff']);
+        })->name('staff.dashboard');
+
+        Route::get('/staff/surat_masuk', function () {
+            return view('suratMasuk', ['title' => 'Staff', 'role' => 'Staff']);
+        })->name('staff.surat_masuk');
+
+        Route::get('/staff/agenda', function () {
+            return view('agenda', ['title' => 'Staff', 'role' => 'Staff']);
+        })->name('staff.agenda');
+
+        Route::get('/staff/kalender_kantor', function () {
+            return view('KalenderKantor', ['title' => 'Staff', 'role' => 'Staff']);
+        })->name('staff.kalender');
+
+        Route::get('/staff/profil', function () {
+            return view('profil', ['title' => 'Staff', 'role' => 'Staff']);
+        })->name('staff.profil');
+    });
 
     // --------------------------------------------------------
     // 5. RUTE KEPEGAWAIAN (Role: J005)

@@ -59,7 +59,7 @@ class PegawaiSeeder extends Seeder
             'tanggal_lahir' => '1980-12-25',
             'password' => Hash::make('Kabid123'),
             'id_bidang' => 'B004',
-            'id_jabatan' => 'J002',
+            'id_jabatan' => 'J004',
             'nip_atasan' => '197004222000081001'
         ]);
 
@@ -100,7 +100,7 @@ class PegawaiSeeder extends Seeder
             'nama' => 'Harjo',
             'tanggal_lahir' => '1981-02-05',
             'password' => Hash::make('Frontliner123'),
-            'id_bidang' => null,
+            'id_bidang' => B004,
             'id_jabatan' => 'J007',
             'nip_atasan' => '197004222000081001'
         ]);

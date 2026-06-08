@@ -7,7 +7,7 @@
             </svg> <span class="px-3 fs-5 fw-bold fc-white text-white">{{ $slot }}</span> </a>
         <div class="dropdown px-4"> <a href="#"
                 class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
-                data-bs-toggle="dropdown" aria-expanded="false"> <img src="https://github.com/mdo.png" alt="" width="32"
+                data-bs-toggle="dropdown" aria-expanded="false"> <img src="https://ilmutanah.upnyk.ac.id/public/assets/dosen/thumb/9204738615.png" alt="" width="32"
                     height="32" class="rounded-circle me-2"> <strong class="text-white">{{ auth()->user()->nama }}</strong> </a>
             <ul class="dropdown-menu text-small shadow">
                 <li><a class="dropdown-item" href="#">New project...</a></li>

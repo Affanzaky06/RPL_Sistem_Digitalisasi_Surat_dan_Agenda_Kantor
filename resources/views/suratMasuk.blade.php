@@ -1,5 +1,4 @@
 <x-layout :role="$role">
     <x-slot:title>{{ $title }}</x-slot:title>
-    <x-dashboard-fr-skr>
-    </x-dashboard-fr-skr>
+    Surat Masuk
 </x-layout>
