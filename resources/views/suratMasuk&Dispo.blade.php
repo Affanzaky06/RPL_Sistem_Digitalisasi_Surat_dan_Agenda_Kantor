@@ -10,6 +10,17 @@
                 'tanggal' => '10-12-2025',
                 'prioritas' => 'Urgent',
                 'badge' => 'danger',
+                'detail' => [
+                    'perihal' => 'Rapat',
+                    'nomor_surat' => '123-45-9',
+                    'tanggal_surat' => '10/10/2010',
+                    'tanggal_kegiatan' => '10/10/2010',
+                    'lokasi' => 'Jl. MBUH no.2 Kantor Kominfo Lt.2',
+                    'waktu_mulai' => '09:30',
+                    'waktu_selesai' => '20:30',
+                    'asal_surat' => 'Dinas Komunikasi dan Informasi',
+                    'berkas_scan' => 'surat-rapat-kemendagri.pdf',
+                ],
             ],
             [
                 'pengirim' => 'Kemendagri',
@@ -18,6 +29,17 @@
                 'tanggal' => '10-12-2025',
                 'prioritas' => 'Sedang',
                 'badge' => 'secondary',
+                'detail' => [
+                    'perihal' => 'Rapat',
+                    'nomor_surat' => '123-46-0',
+                    'tanggal_surat' => '10/10/2010',
+                    'tanggal_kegiatan' => '10/10/2010',
+                    'lokasi' => 'Ruang Rapat Kepala Kantor Lt.1',
+                    'waktu_mulai' => '10:00',
+                    'waktu_selesai' => '12:00',
+                    'asal_surat' => 'Kementerian Dalam Negeri',
+                    'berkas_scan' => 'surat-koordinasi-pegawai.pdf',
+                ],
             ],
             [
                 'pengirim' => 'Kemendagri',
@@ -26,6 +48,17 @@
                 'tanggal' => '10-12-2025',
                 'prioritas' => 'Rendah',
                 'badge' => 'success',
+                'detail' => [
+                    'perihal' => 'Rapat',
+                    'nomor_surat' => '123-47-1',
+                    'tanggal_surat' => '10/10/2010',
+                    'tanggal_kegiatan' => '10/10/2010',
+                    'lokasi' => 'Aula Kantor Kominfo',
+                    'waktu_mulai' => '13:00',
+                    'waktu_selesai' => '15:00',
+                    'asal_surat' => 'Sekretariat Daerah',
+                    'berkas_scan' => 'surat-undangan-rapat.pdf',
+                ],
             ],
         ];
 
@@ -92,7 +125,11 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <a href="#" class="disposisi-detail">Detail</a>
+                                    <button type="button" class="btn btn-link p-0 disposisi-detail"
+                                        data-bs-toggle="modal" data-bs-target="#detailSuratModal"
+                                        data-surat='@json($surat['detail'])'>
+                                        Detail
+                                    </button>
                                 </td>
                             </tr>
                             <tr class="disposisi-actions-row">
@@ -139,5 +176,75 @@
                 @endforeach
             </div>
         </aside>
+    </div>
+
+    <div class="modal fade surat-detail-modal" id="detailSuratModal" tabindex="-1" aria-labelledby="detailSuratModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="detailSuratModalLabel">Detail Surat</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form class="surat-detail-form">
+                        <label>
+                            <span>Perihal</span>
+                            <input type="text" class="form-control" data-surat-field="perihal" readonly>
+                        </label>
+
+                        <label>
+                            <span>Nomor Surat</span>
+                            <input type="text" class="form-control" data-surat-field="nomor_surat" readonly>
+                        </label>
+
+                        <label>
+                            <span>Tanggal Surat</span>
+                            <span class="surat-detail-date">
+                                <input type="text" class="form-control" data-surat-field="tanggal_surat" readonly>
+                                <i class="bi bi-calendar-event-fill"></i>
+                            </span>
+                        </label>
+
+                        <label>
+                            <span>Tanggal Kegiatan</span>
+                            <span class="surat-detail-date">
+                                <input type="text" class="form-control" data-surat-field="tanggal_kegiatan" readonly>
+                                <i class="bi bi-calendar-event-fill"></i>
+                            </span>
+                        </label>
+
+                        <label class="surat-detail-wide">
+                            <span>Lokasi</span>
+                            <input type="text" class="form-control" data-surat-field="lokasi" readonly>
+                        </label>
+
+                        <label>
+                            <span>Waktu Mulai</span>
+                            <input type="text" class="form-control" data-surat-field="waktu_mulai" readonly>
+                        </label>
+
+                        <label>
+                            <span>Waktu Selesai</span>
+                            <input type="text" class="form-control" data-surat-field="waktu_selesai" readonly>
+                        </label>
+
+                        <label class="surat-detail-wide">
+                            <span>Asal Surat</span>
+                            <input type="text" class="form-control" data-surat-field="asal_surat" readonly>
+                        </label>
+
+                        <div class="surat-detail-wide">
+                            <span class="surat-detail-label">Berkas Scan Surat</span>
+                            <div class="surat-detail-file">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <button type="button" class="btn btn-light" data-surat-field="berkas_scan">Buka File</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </x-layout>

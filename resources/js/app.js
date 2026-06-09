@@ -2,6 +2,29 @@
 // import './bootstrap'; // Ini bawaan Laravel
 import 'bootstrap';   // Ini memanggil Javascript milik UI Bootstrap
 
+document.querySelectorAll('[data-surat]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const modal = document.querySelector('#detailSuratModal');
+
+        if (!modal) {
+            return;
+        }
+
+        const detail = JSON.parse(button.dataset.surat || '{}');
+
+        modal.querySelectorAll('[data-surat-field]').forEach((field) => {
+            const key = field.dataset.suratField;
+
+            if (field.tagName === 'BUTTON') {
+                field.dataset.fileName = detail[key] || '';
+                return;
+            }
+
+            field.value = detail[key] || '';
+        });
+    });
+});
+
 const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const weekDayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const monthNames = [

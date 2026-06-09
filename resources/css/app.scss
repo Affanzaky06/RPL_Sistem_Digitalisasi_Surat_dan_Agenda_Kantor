@@ -122,6 +122,105 @@ $success: #2e7d32;
 
 .disposisi-detail {
     font-weight: 500;
+    text-decoration: underline;
+}
+
+.surat-detail-modal .modal-dialog {
+    max-width: 720px;
+}
+
+.surat-detail-modal .modal-content {
+    border: 0;
+    border-radius: 8px;
+}
+
+.surat-detail-modal .modal-header {
+    border-bottom: 0;
+    padding: 1.2rem 1.6rem .55rem;
+}
+
+.surat-detail-modal .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.surat-detail-modal .btn-close {
+    opacity: 1;
+}
+
+.surat-detail-modal .modal-body {
+    padding: 0 3rem 2rem;
+}
+
+.surat-detail-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .7rem 1.35rem;
+}
+
+.surat-detail-form label,
+.surat-detail-wide {
+    display: flex;
+    flex-direction: column;
+}
+
+.surat-detail-form span,
+.surat-detail-label {
+    font-size: .82rem;
+    font-weight: 500;
+    margin-bottom: .18rem;
+}
+
+.surat-detail-form .form-control {
+    border: 1px solid #111;
+    border-radius: 5px;
+    font-size: .82rem;
+    min-height: 28px;
+    padding: .2rem .45rem;
+}
+
+.surat-detail-form .form-control[readonly] {
+    background: #fff;
+}
+
+.surat-detail-wide {
+    grid-column: 1 / -1;
+}
+
+.surat-detail-date {
+    margin-bottom: 0 !important;
+    position: relative;
+}
+
+.surat-detail-date .form-control {
+    padding-right: 2rem;
+}
+
+.surat-detail-date i {
+    bottom: .35rem;
+    position: absolute;
+    right: .55rem;
+}
+
+.surat-detail-file {
+    align-items: center;
+    border: 1px solid #111;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    justify-content: center;
+    min-height: 78px;
+}
+
+.surat-detail-file i {
+    font-size: 1.4rem;
+}
+
+.surat-detail-file .btn {
+    border-radius: 6px;
+    font-size: .62rem;
+    padding: .2rem .75rem;
 }
 
 .disposisi-summary h2 {
