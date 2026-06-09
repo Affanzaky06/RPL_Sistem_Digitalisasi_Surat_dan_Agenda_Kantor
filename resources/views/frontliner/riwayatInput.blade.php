@@ -1,6 +1,6 @@
 <x-layout :role="$role">
     <x-slot:title>{{ $title }}</x-slot:title>
-<div class="container-fluid p-0">
+    <div class="container-fluid p-0">
         <div class="row">
 
             <div class="col-lg-9 pe-lg-4">
@@ -11,7 +11,8 @@
 
                     <form class="d-flex gap-2" style="width: 100%; max-width: 550px;">
                         <input type="text" class="form-control border-dark border-1 rounded-2">
-                        <button type="submit" class="btn bg-white border-dark border-1 rounded-2 d-flex align-items-center gap-2 px-4 text-dark text-nowrap">
+                        <button type="submit"
+                            class="btn bg-white border-dark border-1 rounded-2 d-flex align-items-center gap-2 px-4 text-dark text-nowrap">
                             <i class="bi bi-search"></i> Cari
                         </button>
                     </form>
@@ -29,16 +30,37 @@
 
                 @php
                     $suratMasuk = [
-                        ['pengirim' => 'Kemendagri', 'nomor' => '12-3-456', 'perihal' => 'Rapat Koordinasi Pegawai Nasional', 'tanggal' => '11-12-2025'],
-                        ['pengirim' => 'Kemendagri', 'nomor' => '12-3-456', 'perihal' => 'Rapat Koordinasi Pegawai Nasional', 'tanggal' => '10-12-2025'],
-                        ['pengirim' => 'Kemendagri', 'nomor' => '12-3-456', 'perihal' => 'Rapat Koordinasi Pegawai Nasional', 'tanggal' => '10-12-2025'],
-                        ['pengirim' => 'Kemendagri', 'nomor' => '12-3-456', 'perihal' => 'Rapat Koordinasi Pegawai Nasional', 'tanggal' => '10-12-2025'],
+                        [
+                            'pengirim' => 'Kemendagri',
+                            'nomor' => '12-3-456',
+                            'perihal' => 'Rapat Koordinasi Pegawai Nasional',
+                            'tanggal' => '11-12-2025',
+                        ],
+                        [
+                            'pengirim' => 'Kemendagri',
+                            'nomor' => '12-3-456',
+                            'perihal' => 'Rapat Koordinasi Pegawai Nasional',
+                            'tanggal' => '10-12-2025',
+                        ],
+                        [
+                            'pengirim' => 'Kemendagri',
+                            'nomor' => '12-3-456',
+                            'perihal' => 'Rapat Koordinasi Pegawai Nasional',
+                            'tanggal' => '10-12-2025',
+                        ],
+                        [
+                            'pengirim' => 'Kemendagri',
+                            'nomor' => '12-3-456',
+                            'perihal' => 'Rapat Koordinasi Pegawai Nasional',
+                            'tanggal' => '10-12-2025',
+                        ],
                     ];
                 @endphp
-                
+
                 <div class="border border-dark rounded-3 overflow-hidden mb-3 shadow-sm">
                     <div class="table-responsive">
-                        <table class="table table-borderless align-middle text-center mb-0" style="border-style: hidden;">
+                        <table class="table table-borderless align-middle text-center mb-0"
+                            style="border-style: hidden;">
                             <thead style="background-color: #e9ecef; border-bottom: 1px solid #212529;" class="fs-5 ">
                                 <tr>
                                     <th scope="col" class="py-2 fw-medium text-dark">Pengirim</th>
@@ -53,18 +75,23 @@
                                     <tr style="border-bottom: 1px solid #dee2e6;">
                                         <td class="text-dark py-2">{{ $surat['pengirim'] }}</td>
                                         <td class="text-dark py-2">{{ $surat['nomor'] }}</td>
-                                        <td class="text-dark py-2" style="max-width: 220px;">{{ $surat['perihal'] }}</td>
+                                        <td class="text-dark py-2" style="max-width: 220px;">{{ $surat['perihal'] }}
+                                        </td>
                                         <td class="text-dark py-2">{{ $surat['tanggal'] }}</td>
-                                        
+
                                         <td class="py-2" style="width: 120px;">
                                             <div class="d-flex flex-column gap-1 px-2">
-                                                <a href="#" class="btn btn-primary btn-sm rounded-1" style="font-size: 0.7rem; background-color: #0d6efd;">Lihat Detail</a>
-                                                <a href="#" class="btn btn-warning btn-sm rounded-1 text-white" style="font-size: 0.7rem; background-color: #ffc107;">Edit</a>
-                                                
+                                                <a href="#" class="btn btn-primary btn-sm rounded-1"
+                                                    style="font-size: 0.7rem; background-color: #0d6efd;">Lihat
+                                                    Detail</a>
+                                                <a href="#" class="btn btn-warning btn-sm rounded-1 text-white"
+                                                    style="font-size: 0.7rem; background-color: #ffc107;">Edit</a>
+
                                                 <form action="#" method="POST" class="d-inline m-0">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm rounded-1 w-100" style="font-size: 0.7rem; background-color: #dc3545;">Hapus</button>
+                                                    <button type="submit" class="btn btn-danger btn-sm rounded-1 w-100"
+                                                        style="font-size: 0.7rem; background-color: #dc3545;">Hapus</button>
                                                 </form>
                                             </div>
                                         </td>

@@ -30,8 +30,7 @@
         @endif
 
         <main class="flex-grow-1 p-4 overflow-auto">
-            <h2>{{ $slot }}</h2>
-
+            {{ $slot }}
         </main>
 
     </div>

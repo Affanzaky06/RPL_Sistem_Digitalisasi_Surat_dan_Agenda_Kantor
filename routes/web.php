@@ -81,7 +81,7 @@ Route::middleware('auth')->group(function () {
     // 3. RUTE SUBKOOR (Role: J003)
     // --------------------------------------------------------
 
-     Route::middleware('role:J003')->group(function () {
+    Route::middleware('role:J003')->group(function () {
         Route::get('/subkoor', function () {
             return view('dashboardKepala', ['title' => 'Subkoor', 'role' => 'Subkoor']);
         })->name('subkoor.dashboard');
@@ -151,11 +151,11 @@ Route::middleware('auth')->group(function () {
         })->name('frontliner.dashboard');
 
         Route::get('/frontliner/input_surat', function () {
-            return view('inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
+            return view('frontliner.inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.input_surat');
 
         Route::get('/frontliner/riwayat_input', function () {
-            return view('RiwayatInput', ['title' => 'Frontliner', 'role' => 'Frontliner']);
+            return view('frontliner.RiwayatInput', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.riwayat_input');
 
         Route::get('/frontliner/kalender_kantor', function () {
