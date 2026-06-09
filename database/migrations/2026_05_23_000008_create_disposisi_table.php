@@ -11,17 +11,22 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('disposisi', function (Blueprint $table) {
-            $table->string('id_disposisi')->primary();
-            $table->string('id_surat');
+            $table->id('id_disposisi');
+            $table->unsignedBigInteger('id_surat');
             $table->string('nip_pemberi');
             $table->string('nip_penerima');
             $table->dateTime('tanggal');
             $table->text('catatan');
             $table->string('status');
-
-            $table->foreign('id_surat')->references('id_surat')->on('surat');
-            $table->foreign('nip_pemberi')->references('nip')->on('pegawai');
-            $table->foreign('nip_penerima')->references('nip')->on('pegawai');
+            $table->foreign('id_surat')
+                ->references('id_surat')
+                ->on('surat');
+            $table->foreign('nip_pemberi')
+                ->references('nip')
+                ->on('pegawai');
+            $table->foreign('nip_penerima')
+                ->references('nip')
+                ->on('pegawai');
             $table->timestamps();
         });
     }

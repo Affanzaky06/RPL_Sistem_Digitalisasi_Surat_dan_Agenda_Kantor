@@ -11,13 +11,18 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('surat', function (Blueprint $table) {
-            $table->string('id_surat')->primary();
-            $table->string('nomor_surat');
+            $table->id('id_surat');
+            $table->text('perihal');
+            $table->string('nomor_surat')->unique();
+            $table->string('jenis_surat');
             $table->string('prioritas')->nullable();
             $table->date('tanggal_surat');
+            $table->date('tanggal_kegiatan')->nullable();
+            $table->string('lokasi_kegiatan')->nullable();
+            $table->time('waktu_mulai_kegiatan')->nullable();
+            $table->time('waktu_selesai_kegiatan')->nullable();
             $table->string('asal_surat');
-            $table->text('perihal');
-            $table->string('status');
+            $table->string('status')->default('Menunggu Verifikasi');
             $table->string('file_scan');
             $table->dateTime('tanggal_verifikasi')->nullable();
             $table->timestamps();

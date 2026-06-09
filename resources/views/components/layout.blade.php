@@ -20,17 +20,19 @@
     </x-header>
 
     <div class="d-flex flex-grow-1 overflow-hidden">
-        
-        @if($role === 'Kepala' || $role === 'Kabid' || $role === 'Subkoor')
-            <x-navbar-k-p :role="$role"></x-navbar-k-p>
+
+        @if ($role === 'Kepala' || $role === 'Kabid' || $role === 'Subkoor')
+            <x-navbar-k-p :role="$role" />
         @elseif($role === 'Staff')
-            <x-navbar-staff></x-navbar-staff>
+            <x-navbar-staff />
+        @elseif($role === 'Sekretaris')
+            <x-navbar-sekretaris />
         @else
-            <x-navbar-fr></x-navbar-fr>
+            <x-navbar-fr />
         @endif
 
-        <main class="flex-grow-1 p-4 overflow-auto">
-            <h2>{{ $slot }}</h2>
+        <main class="flex-grow-1 px-4 py-3 overflow-auto">
+            {{ $slot }}
 
         </main>
 

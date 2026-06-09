@@ -11,15 +11,26 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('peserta', function (Blueprint $table) {
-            $table->string('id_peserta')->primary();
-            $table->string('id_disposisi')->nullable();
-            $table->string('id_agenda');
+            $table->id('id_peserta');
+
+            $table->unsignedBigInteger('id_disposisi')->nullable();
+            $table->unsignedBigInteger('id_agenda');
+
             $table->string('nip');
             $table->string('status_kehadiran');
 
-            $table->foreign('id_disposisi')->references('id_disposisi')->on('disposisi');
-            $table->foreign('id_agenda')->references('id_agenda')->on('agenda');
-            $table->foreign('nip')->references('nip')->on('pegawai');
+            $table->foreign('id_disposisi')
+                ->references('id_disposisi')
+                ->on('disposisi');
+
+            $table->foreign('id_agenda')
+                ->references('id_agenda')
+                ->on('agenda');
+
+            $table->foreign('nip')
+                ->references('nip')
+                ->on('pegawai');
+
             $table->timestamps();
         });
     }

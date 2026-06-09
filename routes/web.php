@@ -1,8 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use function Laravel\Prompts\title;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Frontliner\SuratController;
+use App\Http\Controllers\KepalaKantor\DashboardKepalaController;
+use App\Http\Controllers\KepalaKantor\DisposisiKepalaController;
+use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
+use App\Http\Controllers\Sekretaris\VerifikasiController;
+use Illuminate\Support\Facades\Route;
+
+use function Laravel\Prompts\title;
 
 Route::get('/', function () {
     return redirect('/login');
@@ -22,13 +28,15 @@ Route::middleware('auth')->group(function () {
     // 1. RUTE KEPALA KANTOR (Role: J01)
     // --------------------------------------------------------
     Route::middleware('role:J001')->group(function () {
-        Route::get('/kepala', function () {
-            return view('dashboardKepala', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.dashboard');
+        Route::get(
+            '/kepala',
+            [DashboardKepalaController::class, 'index']
+        )->name('kepala.dashboard');
 
-        Route::get('/kepala/surat_masuk', function () {
-            return view('suratMasuk&Dispo', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.surat_masuk');
+        Route::get(
+            '/kepala/surat_masuk',
+            [DisposisiKepalaController::class, 'index']
+        )->name('kepala.surat_masuk');
 
         Route::get('/kepala/agenda', function () {
             return view('agenda', ['title' => 'Kepala', 'role' => 'Kepala']);
@@ -81,7 +89,7 @@ Route::middleware('auth')->group(function () {
     // 3. RUTE SUBKOOR (Role: J003)
     // --------------------------------------------------------
 
-     Route::middleware('role:J003')->group(function () {
+    Route::middleware('role:J003')->group(function () {
         Route::get('/subkoor', function () {
             return view('dashboardKepala', ['title' => 'Subkoor', 'role' => 'Subkoor']);
         })->name('subkoor.dashboard');
@@ -142,6 +150,36 @@ Route::middleware('auth')->group(function () {
     // 6. RUTE SEKRETARIS (Role: J006)
     // --------------------------------------------------------
 
+    Route::middleware('role:J006')->group(function () {
+
+
+        Route::get(
+            '/sekretaris',
+            [DashboardSekretarisController::class, 'index']
+        )->name('sekretaris.dashboard');
+
+        Route::get(
+            '/sekretaris/verifikasi_surat',
+            [VerifikasiController::class, 'index']
+        )->name('sekretaris.verifikasi_surat');
+
+        Route::put(
+            '/sekretaris/verifikasi/{id}',
+            [VerifikasiController::class, 'verifikasi']
+        )->name('sekretaris.verifikasi');
+
+        Route::put(
+            '/sekretaris/tolak/{id}',
+            [VerifikasiController::class, 'tolak']
+        )->name('sekretaris.tolak');
+
+        Route::get(
+            '/sekretaris/riwayat_verifikasi',
+            [VerifikasiController::class, 'riwayat']
+        )->name('sekretaris.riwayat');
+    });
+
+
     // --------------------------------------------------------
     // 7. RUTE FRONTLINER (Role: J007)
     // --------------------------------------------------------
@@ -151,11 +189,11 @@ Route::middleware('auth')->group(function () {
         })->name('frontliner.dashboard');
 
         Route::get('/frontliner/input_surat', function () {
-            return view('inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
+            return view('frontliner.inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.input_surat');
 
         Route::get('/frontliner/riwayat_input', function () {
-            return view('RiwayatInput', ['title' => 'Frontliner', 'role' => 'Frontliner']);
+            return view('frontliner.RiwayatInput', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.riwayat_input');
 
         Route::get('/frontliner/kalender_kantor', function () {
@@ -165,5 +203,25 @@ Route::middleware('auth')->group(function () {
         Route::get('/frontliner/profil', function () {
             return view('Profil', ['title' => 'Frontliner', 'role' => 'Frontliner']);
         })->name('frontliner.profil');
+
+        Route::post('/surat/store', [SuratController::class, 'store'])
+            ->name('surat.store');
+
+        Route::get(
+            '/frontliner/riwayat_input',
+            [SuratController::class, 'index']
+        );
+
+        Route::get('/surat/{id}', [SuratController::class, 'show'])
+            ->name('surat.show');
+
+        Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])
+            ->name('surat.edit');
+
+        Route::put('/surat/{id}', [SuratController::class, 'update'])
+            ->name('surat.update');
+
+        Route::delete('/surat/{id}', [SuratController::class, 'destroy'])
+            ->name('surat.destroy');
     });
 });
