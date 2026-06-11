@@ -116,47 +116,47 @@
                                             </button>
                                         </td>
                                         <td>
+                                            @if ($surat->jenis_surat == 'Undangan')
+                                                <div class="d-flex flex-column align-items-center gap-1">
 
-                                            <div class="d-flex flex-column align-items-center gap-1">
 
 
+                                                    <button class="btn btn-primary btn-sm" style="width:100px;"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#disposisiModal{{ $surat->id_surat }}">
 
-                                                <button class="btn btn-primary btn-sm" style="width:100px;"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#disposisiModal{{ $surat->id_surat }}">
-
-                                                    Disposisi
-
-                                                </button>
-
-                                                <form action="#" method="POST">
-
-                                                    @csrf
-
-                                                    <button type="submit" class="btn btn-success btn-sm"
-                                                        style="width:100px;">
-
-                                                        Hadir
+                                                        Disposisi
 
                                                     </button>
 
-                                                </form>
+                                                    <form action="#" method="POST">
 
-                                                <form action="#" method="POST">
+                                                        @csrf
 
-                                                    @csrf
+                                                        <button type="submit" class="btn btn-success btn-sm"
+                                                            style="width:100px;">
 
-                                                    <button type="submit" class="btn btn-danger btn-sm"
-                                                        style="width:100px;">
+                                                            Hadir
 
-                                                        Tolak
+                                                        </button>
 
-                                                    </button>
+                                                    </form>
 
-                                                </form>
+                                                    <form action="#" method="POST">
 
-                                            </div>
+                                                        @csrf
 
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                            style="width:100px;">
+
+                                                            Tolak
+
+                                                        </button>
+
+                                                    </form>
+
+                                                </div>
+                                            @endif
                                         </td>
 
                                     </tr>
@@ -181,10 +181,10 @@
             </div>
             {{-- SIDEBAR KANAN --}}
 
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
         </div>
 
-        </div>
+    </div>
     </div>
     @foreach ($suratMasuk as $surat)
         <div class="modal fade" id="detailModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
@@ -341,6 +341,212 @@
                     </div>
                 </div>
             </div>
+        </div>
+    @endforeach
+
+    @foreach ($suratMasuk as $surat)
+        <div class="modal fade" id="disposisiModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+
+                <div class="modal-content border-0 shadow rounded-4">
+
+                    <form action="{{ route('kepala.disposisi', $surat->id_surat) }}" method="POST">
+
+                        @csrf
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+
+                                Disposisi Surat
+
+                            </h5>
+
+                            <button type="button" class="btn-close" data-bs-dismiss="modal">
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body p-4">
+
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+
+                                <div>
+
+                                    <h4 class="mb-1 fw-semibold">
+                                        {{ $surat->perihal }}
+                                    </h4>
+
+                                    <small class="text-muted">
+                                        {{ $surat->nomor_surat }}
+                                    </small>
+
+                                </div>
+
+                                @if ($surat->prioritas == 'Tinggi')
+                                    <span class="badge bg-danger px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                        Tinggi
+
+                                    </span>
+                                @elseif($surat->prioritas == 'Sedang')
+                                    <span class="badge bg-warning text-dark px-3 py-2"
+                                        style="width:110px;font-size:0.85rem;">
+
+                                        Sedang
+
+                                    </span>
+                                @else
+                                    <span class="badge bg-success px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                        Rendah
+
+                                    </span>
+                                @endif
+
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-4">
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Informasi Surat
+
+                                </div>
+
+                                <div class="row g-4">
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+                                            Pengirim
+                                        </div>
+
+                                        <div>
+                                            {{ $surat->asal_surat }}
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+                                            Tanggal Surat
+                                        </div>
+
+                                        <div>
+                                            {{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d M Y') }}
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+                                            Nomor Surat
+                                        </div>
+
+                                        <div>
+                                            {{ $surat->nomor_surat }}
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+                                            Jenis Surat
+                                        </div>
+
+                                        <div>
+                                            {{ $surat->jenis_surat }}
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-4">
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Tujuan Disposisi
+
+                                </div>
+
+                                <select name="nip_penerima" class="form-select" required>
+
+                                    <option value="" selected disabled>
+
+                                        Pilih Penerima
+
+                                    </option>
+
+                                    @foreach ($pegawai as $p)
+                                        <option value="{{ $p->nip }}">
+
+                                            {{ $p->nama }}
+
+                                            -
+
+                                            @switch($p->id_jabatan)
+                                                @case('J002')
+                                                    Kabid
+                                                @break
+
+                                                @case('J006')
+                                                    Sekretaris
+                                                @break
+                                            @endswitch
+
+                                            @if ($p->bidang)
+                                                | {{ $p->bidang->nama_bidang }}
+                                            @endif
+
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+                            </div>
+
+                            <div>
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Catatan Disposisi
+
+                                </div>
+
+                                <textarea name="catatan" rows="4" class="form-control" placeholder="Tulis catatan disposisi..."></textarea>
+
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="submit" class="btn btn-primary">
+
+                                Disposisikan
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
         </div>
     @endforeach
 </x-layout>

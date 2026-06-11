@@ -14,37 +14,22 @@ class BidangSeeder extends Seeder
     {
         Bidang::create([
             'id_bidang' => 'B001',
-            'nama_bidang' => 'Keuangan',
+            'nama_bidang' => 'Infrastruktur Kewilayahan Perekonomian SDA',
         ]);
 
         Bidang::create([
             'id_bidang' => 'B002',
-            'nama_bidang' => 'Umum',
+            'nama_bidang' => 'Pemerintahan dan Pembangunan Manusia',
         ]);
 
         Bidang::create([
             'id_bidang' => 'B003',
-            'nama_bidang' => 'Perencanaan',
+            'nama_bidang' => 'Perencanaan Pengendalian dan Evaluasi',
         ]);
 
         Bidang::create([
             'id_bidang' => 'B004',
-            'nama_bidang' => 'Pelayanan Publik',
-        ]);
-
-        Bidang::create([
-            'id_bidang' => 'B005',
-            'nama_bidang' => 'Hukum',
-        ]);
-
-        Bidang::create([
-            'id_bidang' => 'B006',
-            'nama_bidang' => 'Kearsipan',
-        ]);
-
-        Bidang::create([
-            'id_bidang' => 'B007',
-            'nama_bidang' => 'Pengawasan Internal',
+            'nama_bidang' => 'Riset dan Inovasi',
         ]);
     }
 }

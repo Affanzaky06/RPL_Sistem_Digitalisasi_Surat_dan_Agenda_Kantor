@@ -63,36 +63,6 @@ class PegawaiSeeder extends Seeder
             'nip_atasan' => '197004222000081001'
         ]);
 
-        $kabidHukum = Pegawai::factory()->create([
-            'nip' => '198105152011022006',
-            'nama' => 'Atallah Mutmainah',
-            'tanggal_lahir' => '1981-05-15',
-            'password' => Hash::make('Kabid123'),
-            'id_bidang' => 'B005',
-            'id_jabatan' => 'J002',
-            'nip_atasan' => '197004222000081001'
-        ]);
-
-        $kabidArsip = Pegawai::factory()->create([
-            'nip' => '197908222009011012',
-            'nama' => 'Sutarjo',
-            'tanggal_lahir' => '1979-08-22',
-            'password' => Hash::make('Kabid123'),
-            'id_bidang' => 'B006',
-            'id_jabatan' => 'J002',
-            'nip_atasan' => '197004222000081001'
-        ]);
-
-        $kabidPI = Pegawai::factory()->create([
-            'nip' => '197909122009022002',
-            'nama' => 'Yulia Sari',
-            'tanggal_lahir' => '1979-09-12',
-            'password' => Hash::make('Kabid123'),
-            'id_bidang' => 'B007',
-            'id_jabatan' => 'J002',
-            'nip_atasan' => '197004222000081001'
-        ]);
-
         // Seeder frontliner, sekretaris dan kepegawaian
 
         Pegawai::factory()->create([
@@ -146,41 +116,28 @@ class PegawaiSeeder extends Seeder
             'nip_atasan' => $kabidPP->nip,
         ]);
 
-        $subkoor5 = Pegawai::factory(5)->create([
-            'id_bidang' => $kabidHukum->id_bidang,
-            'nip_atasan' => $kabidHukum->nip,
-        ]);
 
-        $subkoor6 = Pegawai::factory(5)->create([
-            'id_bidang' => $kabidArsip->id_bidang,
-            'nip_atasan' => $kabidArsip->nip,
-        ]);
-
-        $subkoor7 = Pegawai::factory(5)->create([
-            'id_bidang' => $kabidPI->id_bidang,
-            'nip_atasan' => $kabidPI->nip,
-        ]);
-
-        
         $semuaRombonganSubkoor = [
-            $subkoor, $subkoor2, $subkoor3, $subkoor4, $subkoor5, $subkoor6, $subkoor7
+            $subkoor,
+            $subkoor2,
+            $subkoor3,
+            $subkoor4
         ];
 
         // LOOPING PEMBUATAN STAFF
         // Untuk setiap rombongan bidang...
         foreach ($semuaRombonganSubkoor as $rombongan) {
-            
+
             // Untuk setiap individu subkoor di dalam bidang tersebut...
             $rombongan->each(function ($individuSubkoor) {
-                
+
                 // Buatkan 5 orang staff yang menginduk ke NIP individu subkoor ini
                 Pegawai::factory()->count(5)->create([
-                    'id_jabatan' => 'J004', 
+                    'id_jabatan' => 'J004',
                     'id_bidang' => $individuSubkoor->id_bidang, // Staff mengikuti bidang atasannya
                     'password' => Hash::make('Staf123'),
                     'nip_atasan' => $individuSubkoor->nip, // <-- SEKARANG INI VALID!
                 ]);
-
             });
         }
     }

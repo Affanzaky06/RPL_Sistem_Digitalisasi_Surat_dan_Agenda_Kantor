@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
         </div>
     </div>
