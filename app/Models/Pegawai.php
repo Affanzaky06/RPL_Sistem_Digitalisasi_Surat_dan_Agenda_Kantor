@@ -37,12 +37,8 @@ class Pegawai extends Authenticatable
         return $this->belongsTo(Jabatan::class, 'id_jabatan', 'id_jabatan');
     }
 
-    // 2. RELASI KE TABEL BIDANG
-    public function bidang()
-    {
-        return $this->belongsTo(Bidang::class, 'id_bidang', 'id_bidang');
-    }
-    
+
+
     public function atasan()
     {
         return $this->belongsTo(
