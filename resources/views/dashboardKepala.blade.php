@@ -72,8 +72,9 @@
 
             @forelse($notifikasi as $surat)
                 <div class="card mb-3 shadow-sm position-relative">
-                    
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;" aria-label="Close" onclick="this.closest('.card').remove()"></button>
+
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;"
+                        aria-label="Close" onclick="this.closest('.card').remove()"></button>
 
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -101,55 +102,55 @@
             @endforelse
         </div>
 
-        <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+        <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
 
-    @foreach ($notifikasi as $surat)
-        <div class="modal fade" id="detailModal{{ $surat->id_surat }}" tabindex="-1">
+        @foreach ($notifikasi as $surat)
+            <div class="modal fade" id="detailModal{{ $surat->id_surat }}" tabindex="-1">
 
-            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
 
-                <div class="modal-content">
+                    <div class="modal-content">
 
-                    <div class="modal-header">
+                        <div class="modal-header">
 
-                        <h5 class="modal-title">
-                            Detail Surat
-                        </h5>
+                            <h5 class="modal-title">
+                                Detail Surat
+                            </h5>
 
-                        <button type="button" class="btn-close" data-bs-dismiss="modal">
-                        </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal">
+                            </button>
 
-                    </div>
+                        </div>
 
-                    <div class="modal-body">
+                        <div class="modal-body">
 
-                        <p>
-                            <strong>Perihal:</strong>
-                            {{ $surat->perihal }}
-                        </p>
+                            <p>
+                                <strong>Perihal:</strong>
+                                {{ $surat->perihal }}
+                            </p>
 
-                        <p>
-                            <strong>Nomor Surat:</strong>
-                            {{ $surat->nomor_surat }}
-                        </p>
+                            <p>
+                                <strong>Nomor Surat:</strong>
+                                {{ $surat->nomor_surat }}
+                            </p>
 
-                        <p>
-                            <strong>Asal Surat:</strong>
-                            {{ $surat->asal_surat }}
-                        </p>
+                            <p>
+                                <strong>Asal Surat:</strong>
+                                {{ $surat->asal_surat }}
+                            </p>
 
-                        <p>
-                            <strong>Jenis Surat:</strong>
-                            {{ $surat->jenis_surat }}
-                        </p>
+                            <p>
+                                <strong>Jenis Surat:</strong>
+                                {{ $surat->jenis_surat }}
+                            </p>
+
+                        </div>
 
                     </div>
 
                 </div>
 
             </div>
-
-        </div>
-    @endforeach
+        @endforeach
 </x-layout>

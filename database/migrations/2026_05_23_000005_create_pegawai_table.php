@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('nama');
             $table->date('tanggal_lahir');
             $table->string('password');
+            $table->string('no_telp');
+            $table->string('email')->unique()->nullable();
             $table->string('id_bidang')->nullable();
             $table->string('id_jabatan')->nullable();
             $table->string('nip_atasan')->nullable();

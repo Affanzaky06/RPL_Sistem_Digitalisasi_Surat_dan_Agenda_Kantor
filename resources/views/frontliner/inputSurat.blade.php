@@ -1,7 +1,7 @@
 <x-layout :role="$role">
     <x-slot:title>{{ $title }}</x-slot:title>
     <script src="{{ asset('js/upload-preview.js') }}"></script>
-    
+
     <div class="container-fluid pt-2">
         <div class="row">
 
@@ -46,9 +46,6 @@
                             </option>
                             <option value="Edaran">
                                 Surat Edaran
-                            </option>
-                            <option value="Tugas">
-                                Surat Tugas
                             </option>
                         </select>
                     </div>
@@ -104,24 +101,32 @@
 
                     <div class="mb-3">
                         <label class="form-label text-dark fw-medium">Unggah Berkas Scan Surat (PDF/JPG)</label>
-                        <div class="border border-dark rounded-3 p-1 text-center position-relative" style="background-color: #fafafa;">
-                            
+                        <div class="border border-dark rounded-3 p-1 text-center position-relative"
+                            style="background-color: #fafafa;">
+
                             <div id="upload-prompt">
                                 <i class="bi bi-file-earmark-arrow-up fs-2 text-dark"></i><br>
-                                <label for="file-upload" class="btn btn-light border-secondary-subtle mt-1 px-3 shadow-sm" style="cursor: pointer; background-color: #e9ecef;">
+                                <label for="file-upload"
+                                    class="btn btn-light border-secondary-subtle mt-1 px-3 shadow-sm"
+                                    style="cursor: pointer; background-color: #e9ecef;">
                                     Pilih File
                                 </label>
                             </div>
 
-                            <div id="file-preview" class="d-none align-items-center justify-content-center gap-2 mt-2 p-2 border border-secondary-subtle rounded-2 bg-white mx-auto shadow-sm" style="max-width: 350px;">
+                            <div id="file-preview"
+                                class="d-none align-items-center justify-content-center gap-2 mt-2 p-2 border border-secondary-subtle rounded-2 bg-white mx-auto shadow-sm"
+                                style="max-width: 350px;">
                                 <i class="bi bi-file-earmark-check-fill text-success fs-4"></i>
-                                <span id="file-name" class="text-truncate fw-medium text-dark" style="max-width: 200px; font-size: 0.85rem;">nama_file.pdf</span>
-                                <button type="button" class="btn btn-sm btn-danger py-0 px-2 ms-2" id="btn-remove-file" title="Batal Upload">
+                                <span id="file-name" class="text-truncate fw-medium text-dark"
+                                    style="max-width: 200px; font-size: 0.85rem;">nama_file.pdf</span>
+                                <button type="button" class="btn btn-sm btn-danger py-0 px-2 ms-2" id="btn-remove-file"
+                                    title="Batal Upload">
                                     <i class="bi bi-trash3"></i>
                                 </button>
                             </div>
 
-                            <input id="file-upload" type="file" class="d-none" name="berkas_surat" accept=".pdf,.jpg,.jpeg" required>
+                            <input id="file-upload" type="file" class="d-none" name="berkas_surat"
+                                accept=".pdf,.jpg,.jpeg" required>
                         </div>
                     </div>
 
@@ -132,7 +137,7 @@
                 </form>
             </div>
 
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
         </div>
     </div>

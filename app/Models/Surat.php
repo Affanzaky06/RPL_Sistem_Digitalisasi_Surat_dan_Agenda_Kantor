@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Surat extends Model
 {
+    use HasFactory;
+
     protected $table = 'surat';
 
     protected $primaryKey = 'id_surat';
@@ -26,17 +29,18 @@ class Surat extends Model
         'tanggal_verifikasi'
     ];
 
-    
+
 
     public function agenda()
     {
         return $this->hasOne(Agenda::class, 'id_surat', 'id_surat');
     }
 
+
     public function disposisi()
     {
         // Parameter kedua adalah foreign key di tabel disposisi
         // Parameter ketiga adalah primary key di tabel surat
-        return $this->hasMany(Disposisi::class, 'id_surat', 'id_surat'); 
+        return $this->hasMany(Disposisi::class, 'id_surat', 'id_surat');
     }
 }

@@ -60,4 +60,13 @@ class Pegawai extends Authenticatable
             'nip'
         );
     }
+
+    public function bidang()
+    {
+        return $this->belongsTo(
+            Bidang::class,
+            'id_bidang',
+            'id_bidang'
+        );
+    }
 }

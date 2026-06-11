@@ -10,6 +10,7 @@ use App\Http\Controllers\Kepegawaian\kepegawaianController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
+use App\Http\Controllers\laporanPemantauanController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -46,20 +47,32 @@ Route::middleware('auth')->group(function () {
         Route::get(
             '/kepala/agenda',
             [AgendaController::class, 'index']
-            )->name('kepala.agenda');
+        )->name('kepala.agenda');
 
-        Route::get('/kepala/Laporan_Pemantauan', function () {
-            return view('laporanPemantauan', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.laporan');
+        Route::get(
+            '/kepala/Laporan_Pemantauan',
+            [laporanPemantauanController::class, 'index']
+        )->name('kepala.laporan');
 
-       Route::get(
-        '/kepala/kalender_kantor', 
-        [KalenderKantorController::class, 'index']
+        Route::get(
+            '/kepala/kalender_kantor',
+            [KalenderKantorController::class, 'index']
         )->name('kepala.kalender');
 
-        Route::get('/kepala/profil',
-         [ProfilController::class, 'index']
-         )->name('kepala.profil');
+        Route::get(
+            '/kepala/profil',
+            [ProfilController::class, 'index']
+        )->name('kepala.profil');
+
+        Route::post(
+            '/kepala/disposisi/{id}',
+            [DisposisiKepalaController::class, 'disposisi']
+        )->name('kepala.disposisi');
+
+        Route::delete(
+            '/kepala/disposisi/{id}',
+            [DisposisiKepalaController::class, 'batalDisposisi']
+        )->name('kepala.disposisi.batal');
     });
 
     // --------------------------------------------------------
@@ -77,7 +90,8 @@ Route::middleware('auth')->group(function () {
             [DisposisiKepalaController::class, 'index']
         )->name('kabid.surat_masuk');
 
-        Route::get('/kabid/agenda', 
+        Route::get(
+            '/kabid/agenda',
             [agendaController::class, 'index']
         )->name('kabid.agenda');
 
@@ -86,12 +100,13 @@ Route::middleware('auth')->group(function () {
         })->name('kabid.laporan');
 
         Route::get(
-            '/kabid/kalender_kantor', 
+            '/kabid/kalender_kantor',
             [KalenderKantorController::class, 'index']
         )->name('kabid.kalender');
 
-        Route::get('/kabid/profil',
-        [ProfilController::class, 'index']
+        Route::get(
+            '/kabid/profil',
+            [ProfilController::class, 'index']
         )->name('kabid.profil');
     });
 
@@ -105,26 +120,28 @@ Route::middleware('auth')->group(function () {
             [DashboardKepalaController::class, 'index']
         )->name('subkoor.dashboard');
 
-       Route::get(
+        Route::get(
             '/subkoor/surat_masuk',
             [DisposisiKepalaController::class, 'index']
         )->name('subkoor.surat_masuk');
 
-        Route::get('/subkoor/agenda', 
-        [agendaController::class, 'index']
+        Route::get(
+            '/subkoor/agenda',
+            [agendaController::class, 'index']
         )->name('subkoor.agenda');
 
         Route::get('/subkoor/Laporan_Pemantauan', function () {
             return view('laporanPemantauan', ['title' => 'Subkoor', 'role' => 'Subkoor']);
         })->name('subkoor.laporan');
 
-         Route::get(
-            '/subkoor/kalender_kantor', 
+        Route::get(
+            '/subkoor/kalender_kantor',
             [KalenderKantorController::class, 'index']
         )->name('kabid.kalender');
 
-        Route::get('/subkoor/profil',
-        [ProfilController::class, 'index']
+        Route::get(
+            '/subkoor/profil',
+            [ProfilController::class, 'index']
         )->name('subkoor.profil');
     });
 
@@ -232,7 +249,7 @@ Route::middleware('auth')->group(function () {
             [VerifikasiController::class, 'riwayat']
         )->name('sekretaris.riwayat');
 
-        
+
 
         Route::get('/sekretaris/profil', function () {
             return view('profil', ['title' => 'Sekretaris', 'role' => 'Sekretaris']);
@@ -247,7 +264,7 @@ Route::middleware('auth')->group(function () {
         Route::get(
             '/frontliner',
             [SuratController::class, 'info']
-        )->name('frontliner.dashboard');;  
+        )->name('frontliner.dashboard');;
 
         Route::get('/frontliner/input_surat', function () {
             return view('frontliner.inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
