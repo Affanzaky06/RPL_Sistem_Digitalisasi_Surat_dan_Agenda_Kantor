@@ -26,7 +26,9 @@
         @elseif($role === 'Staff')
             <x-navbar-staff />
         @elseif($role === 'Sekretaris')
-            <x-navbar-sekretaris />
+            <x-navbar-sekretaris :role="$role"/>
+        @elseif($role === 'Kepegawaian')
+            <x-navbar-kpeg />
         @else
             <x-navbar-fr />
         @endif

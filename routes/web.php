@@ -6,10 +6,12 @@ use App\Http\Controllers\Frontliner\SuratController;
 use App\Http\Controllers\KalenderKantorController;
 use App\Http\Controllers\KepalaKantor\DashboardKepalaController;
 use App\Http\Controllers\KepalaKantor\DisposisiKepalaController;
+use App\Http\Controllers\Kepegawaian\kepegawaianController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
 use Illuminate\Support\Facades\Route;
+
 
 use function Laravel\Prompts\title;
 
@@ -156,7 +158,34 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
     // 5. RUTE KEPEGAWAIAN (Role: J005)
     // --------------------------------------------------------
+    Route::get('/kepegawaian', 
+        [kepegawaianController::class, 'index']
+        )->name('kepegawaian.dashboard');
 
+    Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
+        ->name('kepegawaian.input_data');
+
+        // ROUTE UNTUK MEMPROSES FORM
+    Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
+        ->name('kepegawaian.store');
+    
+    Route::get('/kepegawaian/list', [KepegawaianController::class, 'listPegawai'])
+        ->name('kepegawaian.list');
+
+        // TAMBAHKAN DUA ROUTE INI
+    Route::put('/kepegawaian/update/{nip}', [KepegawaianController::class, 'updatePegawai'])
+         ->name('kepegawaian.update');
+            
+        Route::delete('/kepegawaian/delete/{nip}', [KepegawaianController::class, 'destroyPegawai'])
+        ->name('kepegawaian.delete');
+    Route::get(
+        '/kepegawaian/kalender_kantor', 
+        [KalenderKantorController::class, 'index']
+        )->name('kepegawaian.kalender');
+
+    Route::get('/kepegawaian/profil',
+        [ProfilController::class, 'index']
+        )->name('kepegawian.profil');
 
 
     // --------------------------------------------------------

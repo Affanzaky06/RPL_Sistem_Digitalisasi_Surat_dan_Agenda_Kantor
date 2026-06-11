@@ -30,6 +30,19 @@ class Pegawai extends Authenticatable
         'remember_token',
     ];
 
+
+    public function jabatan()
+    {
+        // Parameter: (NamaModelTarget, foreign_key_di_tabel_pegawai, primary_key_di_tabel_jabatan)
+        return $this->belongsTo(Jabatan::class, 'id_jabatan', 'id_jabatan');
+    }
+
+    // 2. RELASI KE TABEL BIDANG
+    public function bidang()
+    {
+        return $this->belongsTo(Bidang::class, 'id_bidang', 'id_bidang');
+    }
+    
     public function atasan()
     {
         return $this->belongsTo(
