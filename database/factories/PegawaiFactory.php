@@ -26,9 +26,9 @@ class PegawaiFactory extends Factory
             'nip' => $this->generateNip($tanggalLahir),
             'nama' => fake()->name(),
             'tanggal_lahir' => $tanggalLahir->format('Y-m-d'),
-            'password' => Hash::make('Staf123'),
+            'password' => Hash::make('Subkoor123'),
             // 'id_bidang' => 'BD07',
-            'id_jabatan' => 'J004',
+            'id_jabatan' => 'J003',
             // 'nip_atasan' => '197004222000081001'
         ];
     }

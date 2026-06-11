@@ -3,7 +3,7 @@
     <div class="container-fluid pt-2">
         <div class="row">
 
-            <div class="col-lg-8 d-flex flex-column align-items-center text-center pe-lg-1">
+            <div class="col-lg-8 d-flex flex-column align-items-center text-center pe-lg-3 mx-5">
 
                 <img src="https://ilmutanah.upnyk.ac.id/public/assets/dosen/thumb/9204738615.png" alt="Foto Profil"
                     class="rounded-circle border border-dark border-1 mb-3 object-fit-cover shadow-sm"
@@ -62,30 +62,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-4 ps-lg-5 mt-5 mt-lg-0">
-                <h5 class="fw-bold mb-4 text-dark">Ringkasan Agenda dan Peserta</h5>
-
-                <div class="card border-0 mb-3" style="background-color: #f4f5f7; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold mb-0 text-dark">Meeting 1:</h6>
-                        <h6 class="fw-bold mb-2 text-dark">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-
-                <div class="card border-0 mb-3" style="background-color: #f4f5f7; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold mb-0 text-dark">Meeting 2:</h6>
-                        <h6 class="fw-bold mb-2 text-dark">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-
-            </div>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
 
         </div>
     </div>

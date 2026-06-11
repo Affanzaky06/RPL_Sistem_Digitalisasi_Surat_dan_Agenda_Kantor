@@ -1,9 +1,9 @@
-@props([
+{{-- @props([
     'jmlSurat' => 0, 
     'jmlNotif' => 0, 
     'jmlAgenda' => 0
     // Nanti Anda bisa menambahkan 'listAgenda' di sini saat datanya sudah ditarik dari database
-])
+]) --}}
 
 <div class="container-fluid pt-2">
         <div class="row">
@@ -87,30 +87,6 @@
             </div>
 
 
-            <div class="col-lg-4">
-                <h5 class="mb-3 fw-semibold ms-3" >Ringkasan Agenda dan Peserta</h5>
-
-                <div class="card border-0  mb-3 ms-3" style="background-color: #f1f3f5; border-radius: 12px;">
-                    <div class="card-body">
-                        <p class="mb-0 fw-semibold text-dark"style="font-size: 22px;">Meeting 1:</p>
-                        <h6 class="fw-bold mb-2">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-
-                <div class="card border-0 mb-3 ms-3" style="background-color: #f1f3f5; border-radius: 12px;">
-                    <div class="card-body">
-                        <p class="mb-0 fw-semibold text-dark"style="font-size: 22px;">Meeting 2:</p>
-                        <h6 class="fw-bold mb-2">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-
-            </div>
-
+           <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
         </div>
     </div>   

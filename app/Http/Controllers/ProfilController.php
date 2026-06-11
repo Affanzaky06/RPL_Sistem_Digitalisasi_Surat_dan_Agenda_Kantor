@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\KepalaKantor;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Surat;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth; // Wajib ditambahkan
+use App\Models\Surat; // Wajib ditambahkan
 
-class DisposisiKepalaController extends Controller
+class ProfilController extends Controller
 {
     public function index()
     {
@@ -27,11 +26,13 @@ class DisposisiKepalaController extends Controller
         
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
+        // 3. Siapkan query dasar agenda
         $queryAgenda = Surat::query()->whereNotNull('tanggal_kegiatan');
 
         // 4. FILTER SAKTI: Jika BUKAN Kepala (J001), tampilkan hanya agenda miliknya!
         if ($user->id_jabatan !== 'J001') {
-            $identitasPenerima = $user->nama; 
+            // PERBAIKAN: Gunakan NIP, bukan nama, agar cocok dengan kolom nip_penerima
+            $identitasPenerima = $user->nip; 
 
             $queryAgenda->whereHas('disposisi', function ($q) use ($identitasPenerima) {
                 $q->where('nip_penerima', $identitasPenerima);
@@ -40,19 +41,13 @@ class DisposisiKepalaController extends Controller
 
         $ringkasanAgenda = (clone $queryAgenda)->orderBy('tanggal_kegiatan', 'asc')->take(3)->get();
 
-        $suratMasuk = Surat::query()
-            ->where('status', 'Terverifikasi')
-            ->latest('tanggal_verifikasi')
-            ->paginate(10);
-
-        return view(
-            'disposisi.disposisiKepala',
-            [
-                'title' => $role,
-                'role' => $role,
-                'suratMasuk' => $suratMasuk,
-                'ringkasanAgenda' => $ringkasanAgenda
-            ]
-        );
+        // 5. Kembalikan ke satu view profil universal
+        // Ganti 'profil' dengan nama file blade Anda yang memuat komponen profil tersebut
+        return view('profil', [
+            'title' =>  $role, // Otomatis menjadi "Profil Kabid", "Profil Staff", dll.
+            'role' => $role,
+            'user' => $user, // Lempar data $user ini agar bisa dicetak di komponen profil (nama, NIP, dll)
+            'ringkasanAgenda' => $ringkasanAgenda
+        ]);
     }
 }

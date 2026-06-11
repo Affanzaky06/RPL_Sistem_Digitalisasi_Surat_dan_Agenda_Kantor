@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('id_bidang')->nullable();
             $table->string('id_jabatan')->nullable();
             $table->string('nip_atasan')->nullable();
+            $table->string('foto_profil')->nullable();
 
             // Foreign Keys
             $table->foreign('id_bidang')->references('id_bidang')->on('bidang');

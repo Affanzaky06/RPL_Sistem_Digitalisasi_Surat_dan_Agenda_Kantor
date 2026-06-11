@@ -7,6 +7,7 @@ use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 
 class SuratController extends Controller
@@ -99,15 +100,40 @@ class SuratController extends Controller
         }
 
         $suratMasuk = $query->paginate(10)->withQueryString();
+        
 
         return view(
             'frontliner.RiwayatInput',
             [
                 'title' => 'Riwayat Input Surat',
                 'role' => 'Frontliner',
-                'suratMasuk' => $suratMasuk
+                'suratMasuk' => $suratMasuk,
+                
             ]
         );
+    }
+
+    public function info(){
+        $jmlSurat = Surat::whereDate('created_at', Carbon::today())->count();
+        $jmltolak = Surat::where('status', 'Ditolak')->count();
+        $TungguVeriv = Surat::where('status', 'Menunggu Verifikasi')->count();
+        
+        // 2. Tambahkan variabel ringkasan agenda karena komponennya butuh data ini
+        $ringkasanAgenda = Surat::orderBy('created_at', 'desc')->take(3)->get();
+        
+        $title = "Frontliner";
+        $role = "frontliner";
+
+        // 3. Lempar variabel yang namanya sudah benar ke dalam view
+        return view(
+            'dashboardFr', compact(
+            'title',
+            'role', 
+            'jmlSurat', 
+            'jmltolak', 
+            'TungguVeriv',
+            'ringkasanAgenda'
+        ));
     }
 
     public function update(Request $request, $id)

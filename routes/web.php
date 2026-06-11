@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Frontliner\SuratController;
+use App\Http\Controllers\KalenderKantorController;
 use App\Http\Controllers\KepalaKantor\DashboardKepalaController;
 use App\Http\Controllers\KepalaKantor\DisposisiKepalaController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     // --------------------------------------------------------
-    // 1. RUTE KEPALA KANTOR (Role: J01)
+    // 1. RUTE KEPALA KANTOR (Role: J001)
     // --------------------------------------------------------
     Route::middleware('role:J001')->group(function () {
         Route::get(
@@ -38,21 +41,23 @@ Route::middleware('auth')->group(function () {
             [DisposisiKepalaController::class, 'index']
         )->name('kepala.surat_masuk');
 
-        Route::get('/kepala/agenda', function () {
-            return view('agenda', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.agenda');
+        Route::get(
+            '/kepala/agenda',
+            [AgendaController::class, 'index']
+            )->name('kepala.agenda');
 
         Route::get('/kepala/Laporan_Pemantauan', function () {
             return view('laporanPemantauan', ['title' => 'Kepala', 'role' => 'Kepala']);
         })->name('kepala.laporan');
 
-        Route::get('/kepala/kalender_kantor', function () {
-            return view('KalenderKantor', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.kalender');
+       Route::get(
+        '/kepala/kalender_kantor', 
+        [KalenderKantorController::class, 'index']
+        )->name('kepala.kalender');
 
-        Route::get('/kepala/profil', function () {
-            return view('profil', ['title' => 'Kepala', 'role' => 'Kepala']);
-        })->name('kepala.profil');
+        Route::get('/kepala/profil',
+         [ProfilController::class, 'index']
+         )->name('kepala.profil');
     });
 
     // --------------------------------------------------------
@@ -60,29 +65,32 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
 
     Route::middleware('role:J002')->group(function () {
-        Route::get('/kabid', function () {
-            return view('dashboardKepala', ['title' => 'Kabid', 'role' => 'Kabid']);
-        })->name('kabid.dashboard');
+        Route::get(
+            '/kabid',
+            [DashboardKepalaController::class, 'index']
+        )->name('kabid.dashboard');
 
-        Route::get('/kabid/surat_masuk', function () {
-            return view('suratMasuk&Dispo', ['title' => 'Kabid', 'role' => 'Kabid']);
-        })->name('kabid.surat_masuk');
+        Route::get(
+            '/kabid/surat_masuk',
+            [DisposisiKepalaController::class, 'index']
+        )->name('kabid.surat_masuk');
 
-        Route::get('/kabid/agenda', function () {
-            return view('agenda', ['title' => 'Kabid', 'role' => 'Kabid']);
-        })->name('kabid.agenda');
+        Route::get('/kabid/agenda', 
+            [agendaController::class, 'index']
+        )->name('kabid.agenda');
 
         Route::get('/kabid/Laporan_Pemantauan', function () {
             return view('laporanPemantauan', ['title' => 'Kabid', 'role' => 'Kabid']);
         })->name('kabid.laporan');
 
-        Route::get('/kabid/kalender_kantor', function () {
-            return view('KalenderKantor', ['title' => 'Kabid', 'role' => 'Kabid']);
-        })->name('kabid.kalender');
+        Route::get(
+            '/kabid/kalender_kantor', 
+            [KalenderKantorController::class, 'index']
+        )->name('kabid.kalender');
 
-        Route::get('/kabid/profil', function () {
-            return view('profil', ['title' => 'Kabid', 'role' => 'Kabid']);
-        })->name('kabid.profil');
+        Route::get('/kabid/profil',
+        [ProfilController::class, 'index']
+        )->name('kabid.profil');
     });
 
     // --------------------------------------------------------
@@ -90,29 +98,32 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
 
     Route::middleware('role:J003')->group(function () {
-        Route::get('/subkoor', function () {
-            return view('dashboardKepala', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.dashboard');
+        Route::get(
+            '/subkoor',
+            [DashboardKepalaController::class, 'index']
+        )->name('subkoor.dashboard');
 
-        Route::get('/subkoor/surat_masuk', function () {
-            return view('suratMasuk&Dispo', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.surat_masuk');
+       Route::get(
+            '/subkoor/surat_masuk',
+            [DisposisiKepalaController::class, 'index']
+        )->name('subkoor.surat_masuk');
 
-        Route::get('/subkoor/agenda', function () {
-            return view('agenda', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.agenda');
+        Route::get('/subkoor/agenda', 
+        [agendaController::class, 'index']
+        )->name('subkoor.agenda');
 
         Route::get('/subkoor/Laporan_Pemantauan', function () {
             return view('laporanPemantauan', ['title' => 'Subkoor', 'role' => 'Subkoor']);
         })->name('subkoor.laporan');
 
-        Route::get('/subkoor/kalender_kantor', function () {
-            return view('KalenderKantor', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.kalender');
+         Route::get(
+            '/subkoor/kalender_kantor', 
+            [KalenderKantorController::class, 'index']
+        )->name('kabid.kalender');
 
-        Route::get('/subkoor/profil', function () {
-            return view('profil', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.profil');
+        Route::get('/subkoor/profil',
+        [ProfilController::class, 'index']
+        )->name('subkoor.profil');
     });
 
 
@@ -146,6 +157,8 @@ Route::middleware('auth')->group(function () {
     // 5. RUTE KEPEGAWAIAN (Role: J005)
     // --------------------------------------------------------
 
+
+
     // --------------------------------------------------------
     // 6. RUTE SEKRETARIS (Role: J006)
     // --------------------------------------------------------
@@ -173,10 +186,28 @@ Route::middleware('auth')->group(function () {
             [VerifikasiController::class, 'tolak']
         )->name('sekretaris.tolak');
 
+        Route::get('/sekretaris/agenda', function () {
+            return view('agenda', ['title' => 'Sekretaris', 'role' => 'Sekretaris']);
+        })->name('sekretaris.agenda');
+
+        Route::get('/sekretaris/kalender_kantor', function () {
+            return view('KalenderKantor', ['title' => 'Sekretaris', 'role' => 'Sekretaris']);
+        })->name('sekretaris.kalender');
+
+        Route::get('/sekretaris/disposisi', function () {
+            return view('suratMasuk&Dispo', ['title' => 'Sekretaris', 'role' => 'Sekretaris']);
+        })->name('sekretaris.surat_masuk');
+
         Route::get(
             '/sekretaris/riwayat_verifikasi',
             [VerifikasiController::class, 'riwayat']
         )->name('sekretaris.riwayat');
+
+        
+
+        Route::get('/sekretaris/profil', function () {
+            return view('profil', ['title' => 'Sekretaris', 'role' => 'Sekretaris']);
+        })->name('sekretaris.profil');
     });
 
 
@@ -184,9 +215,10 @@ Route::middleware('auth')->group(function () {
     // 7. RUTE FRONTLINER (Role: J007)
     // --------------------------------------------------------
     Route::middleware('role:J007')->group(function () {
-        Route::get('/frontliner', function () {
-            return view('dashboardFr', ['title' => 'Frontliner', 'role' => 'Frontliner']);
-        })->name('frontliner.dashboard');
+        Route::get(
+            '/frontliner',
+            [SuratController::class, 'info']
+        )->name('frontliner.dashboard');;  
 
         Route::get('/frontliner/input_surat', function () {
             return view('frontliner.inputSurat', ['title' => 'Frontliner', 'role' => 'Frontliner']);
