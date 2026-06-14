@@ -42,7 +42,7 @@ class Pegawai extends Authenticatable
     {
         return $this->belongsTo(Bidang::class, 'id_bidang', 'id_bidang');
     }
-
+    
     public function atasan()
     {
         return $this->belongsTo(
