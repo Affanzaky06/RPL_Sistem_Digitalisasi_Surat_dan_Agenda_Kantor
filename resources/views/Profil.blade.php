@@ -29,7 +29,7 @@
                             <i class="bi bi-telephone fs-5"></i>
                         </div>
                         <div class="col-8 text-start fs-6">
-                            0856445516160651
+                            {{ $user->no_telp ?? 'Belum ada nomor telepon' }}
                         </div>
                         <div class="col-2 text-start">
                             <a href="#" class="text-dark"><i class="bi bi-pencil-square fs-5"></i></a>
@@ -41,7 +41,11 @@
                             <i class="bi bi-envelope fs-5"></i>
                         </div>
                         <div class="col-8 text-start fs-6">
-                            <a href="#" class="text-dark text-decoration-underline">YNTKTS@gmail.com</a>
+                            @if($user->email)
+                                <a href="mailto:{{ $user->email }}" class="text-dark text-decoration-underline">{{ $user->email }}</a>
+                            @else
+                                <span class="text-muted">Belum ada email</span>
+                            @endif
                         </div>
                         <div class="col-2 text-start">
                             <a href="#" class="text-dark"><i class="bi bi-pencil-square fs-5"></i></a>

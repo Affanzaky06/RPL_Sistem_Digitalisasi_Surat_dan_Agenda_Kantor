@@ -19,13 +19,18 @@ class DashboardSekretarisController extends Controller
             ->latest()
             ->take(5)
             ->get();
+            
+        $totalSurat = Surat::count(); // Total semua surat masuk di sistem
+        $menungguVerifikasi = Surat::where('status', 'Menunggu Verifikasi')->count();
 
         return view(
             'dashboardSk',
             [
                 'title' => 'Sekretaris',
                 'role' => 'Sekretaris',
-                'notifikasi' => $notifikasi
+                'notifikasi' => $notifikasi,
+                'totalSurat' => $totalSurat, // Kirim variabel total surat
+                'menungguVerifikasi' => $menungguVerifikasi
             ]
         );
     }

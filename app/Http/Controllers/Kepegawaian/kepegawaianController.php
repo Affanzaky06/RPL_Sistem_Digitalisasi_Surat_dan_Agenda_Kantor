@@ -66,12 +66,12 @@ class KepegawaianController extends Controller
         ]);
     }
 
+    // MENGAMBIL HALAMAN FORM INPUT PEGAWAI
     public function inputPegawai()
     {
         $user = Auth::user();
         $role = 'Kepegawaian';
 
-        // Ambil data agenda untuk sidebar kanan (sama seperti di dashboard)
         $ringkasanAgenda = Surat::with('disposisi')
             ->whereNotNull('tanggal_kegiatan')
             ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
@@ -79,10 +79,17 @@ class KepegawaianController extends Controller
             ->take(3)
             ->get();
 
-        return view('inputPegawai', [ // Sesuaikan dengan nama file blade Anda
+        // 1. Ambil data bidang dan jabatan dari database
+        $semuaBidang = \App\Models\Bidang::all();
+        $semuaJabatan = \App\Models\Jabatan::all();
+
+        return view('inputPegawai', [
             'title' => 'Input Data Pegawai',
             'role' => $role,
-            'ringkasanAgenda' => $ringkasanAgenda
+            'ringkasanAgenda' => $ringkasanAgenda,
+            // 2. Lempar datanya ke file Blade
+            'semuaBidang' => $semuaBidang,
+            'semuaJabatan' => $semuaJabatan
         ]);
     }
 

@@ -15,7 +15,7 @@
 
                     <i class="bi bi-envelope fs-1"></i>
 
-                    <h1>100</h1>
+                    <h1>{{ $totalSurat }}</h1>
 
                     <small>
                         Total Surat Masuk
@@ -35,7 +35,7 @@
 
                     <i class="bi bi-bell fs-1"></i>
 
-                    <h1>100</h1>
+                    <h1>{{ count($notifikasi) }}</h1>
 
                     <small>
                         Notifikasi
@@ -55,7 +55,7 @@
 
                     <i class="bi bi-file-earmark-text fs-1"></i>
 
-                    <h1>100</h1>
+                    <h1>{{ $menungguVerifikasi }}</h1>
 
                     <small>
                         Menunggu Verifikasi

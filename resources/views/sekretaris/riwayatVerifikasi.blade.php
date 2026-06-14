@@ -204,31 +204,7 @@
             </div>
 
             {{-- SIDEBAR KANAN --}}
-            <div class="col-lg-3 ps-lg-4">
-                <h4 class="fw-bold mb-3 fs-5">
-                    Ringkasan Agenda dan Peserta
-                </h4>
-
-                <div class="card border-0 mb-3 shadow-sm" style="background-color: #f4f5f7; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold mb-0 text-dark">Meeting 1:</h6>
-                        <h6 class="fw-bold mb-2 text-dark">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-
-                <div class="card border-0 mb-3 shadow-sm" style="background-color: #f4f5f7; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold mb-0 text-dark">Meeting 2:</h6>
-                        <h6 class="fw-bold mb-2 text-dark">AG-20231015-001</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Peserta: Budi W. (Keuangan), Susi A. (HR), Andi R. (Operasional)
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
 
         </div>
 

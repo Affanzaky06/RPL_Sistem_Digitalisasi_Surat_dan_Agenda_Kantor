@@ -5,7 +5,7 @@
     <div class="container-fluid pt-2">
         <div class="row">
 
-            <div class="col-lg-8 pe-lg-4">
+            <div class="col-lg-9 pe-lg-2">
                 @if (session('success'))
                     <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
                         <div class="toast show border-0 shadow">

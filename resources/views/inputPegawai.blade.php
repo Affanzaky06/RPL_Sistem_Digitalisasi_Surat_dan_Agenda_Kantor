@@ -19,6 +19,15 @@
                         </div>
                     </div>
                 @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger mb-3 shadow-sm border-0">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <script>
                     setTimeout(() => {
                         document.querySelectorAll('.toast').forEach(el => {
@@ -60,22 +69,23 @@
                         <input type="text" name="alamat" class="form-control border-dark border" required>
                     </div>
 
-                    <div class="row mb-3">
+                   <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label text-dark fw-medium">Bidang</label>
-                            <input type="text" name="bidang" class="form-control border-dark border" required>
+                            <select name="bidang" class="form-select border-dark border shadow-sm" required>
+                                <option value="" selected disabled>Pilih Bidang</option>
+                                @foreach($semuaBidang as $bidang)
+                                    <option value="{{ $bidang->id_bidang }}">{{ $bidang->nama_bidang }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-6 mt-3 mt-md-0">
                             <label class="form-label text-dark fw-medium">Jabatan</label>
                             <select name="jabatan" class="form-select border-dark border shadow-sm" required>
                                 <option value="" selected disabled>Pilih Jabatan</option>
-                                <option value="J001">Kepala Kantor</option>
-                                <option value="J002">Kepala Bidang</option>
-                                <option value="J003">Subkoordinator</option>
-                                <option value="J004">Staff</option>
-                                <option value="J005">Kepegawaian</option>
-                                <option value="J006">Sekretaris</option>
-                                <option value="J007">Frontliner</option>
+                                @foreach($semuaJabatan as $jabatan)
+                                    <option value="{{ $jabatan->id_jabatan }}">{{ $jabatan->nama_jabatan }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -99,7 +109,7 @@
                                 </button>
                             </div>
 
-                            <input id="file-upload" type="file" class="d-none" name="berkas_pegawai" accept=".pdf,.jpg,.jpeg" required>
+                            <input id="file-upload" type="file" class="d-none" name="berkas_pegawai" accept=".pdf,.jpg,.jpeg">
                         </div>
                     </div>
 

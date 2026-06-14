@@ -1,4 +1,4 @@
-<nav class="d-flex flex-column flex-shrink-0 p-3 bg-body-tertiary" style="width: 240px;">
+<nav class="d-flex flex-column flex-shrink-0 py-3 px-2 bg-body-tertiary" style="width: 250px;">
 
     <ul class="nav nav-pills flex-column mb-auto">
 
@@ -50,7 +50,7 @@
             </x-navlink-fr>
         </li>
 
-        <li>
+        <li  class="mb-2">
             <x-navlink-fr href="/sekretaris/profil" :active="request()->is('sekretaris/profil')">
 
                 Profil

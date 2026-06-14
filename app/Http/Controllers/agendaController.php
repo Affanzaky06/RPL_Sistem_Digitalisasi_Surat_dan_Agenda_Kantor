@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Surat;
+use App\Models\Agenda;
+use App\Models\Peserta;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +16,7 @@ class AgendaController extends Controller
         // 1. Ambil data user yang sedang aktif (login)
         $user = Auth::user();
 
-        // 2. Petakan id_jabatan menjadi nama Role untuk keperluan View/Layout
+        // 2. Petakan id_jabatan menjadi nama Role
         $roleMap = [
             'J001' => 'Kepala',
             'J002' => 'Kabid',
@@ -26,13 +28,20 @@ class AgendaController extends Controller
         ];
         
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
-        // 1. DATA UNTUK FULLCALENDAR (Hanya ambil yang diverifikasi)
-        $agendaList = Surat::with('disposisi')
-            ->whereNotNull('tanggal_kegiatan')
-            ->where('status', 'Terverifikasi')
-            ->get();
+        $title = $role;
 
-        $events = $agendaList->map(function ($item) {
+        // 3. LOGIKA QUERY MURNI PRIBADI: Tarik agenda HANYA JIKA NIP login terdaftar sebagai peserta
+        // Tidak peduli apa jabatannya, aturannya pukul rata untuk semua orang.
+        $baseQuery = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
+            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
+            ->where('peserta.nip', $user->nip)
+            ->select('agenda.*', 'surat.perihal', 'surat.nomor_surat');
+
+        // --- A. Eksekusi Data untuk FullCalendar ---
+        $queryKalender = clone $baseQuery; 
+        $agendaKalender = $queryKalender->distinct()->get();
+
+        $events = $agendaKalender->map(function ($item) {
             $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
             $statusAcara = 'mendatang'; 
             
@@ -43,38 +52,30 @@ class AgendaController extends Controller
             }
 
             return [
-                'id' => $item->id_surat,
-                'title' => $item->perihal,
-                'start' => $item->tanggal_kegiatan . 'T' . $item->waktu_mulai_kegiatan,
-                'end' => $item->tanggal_kegiatan . 'T' . $item->waktu_selesai_kegiatan,
+                'id' => $item->id_agenda,
+                'title' => $item->nama_kegiatan ?? $item->perihal,
+                'start' => $item->tanggal_kegiatan . 'T' . $item->waktu_mulai,
+                'end' => $item->tanggal_kegiatan . 'T' . $item->waktu_selesai,
                 'extendedProps' => [
-                    'lokasi' => $item->lokasi_kegiatan,
+                    'lokasi' => $item->lokasi,
                     'status' => $statusAcara
                 ]
             ];
         });
 
-        // 2. DATA UNTUK SIDEBAR RINGKASAN AGENDA (Ambil 5 agenda ke depan)
-        $ringkasanAgenda = Surat::with('disposisi')
-            ->whereNotNull('tanggal_kegiatan')
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
-            ->where('status', 'Terverifikasi')
-            ->orderBy('tanggal_kegiatan', 'asc')
+        // --- B. Eksekusi Data untuk Sidebar Ringkasan (5 Terdekat) ---
+        $querySidebar = clone $baseQuery;
+        $ringkasanAgenda = $querySidebar
+            ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today())
+            ->orderBy('agenda.tanggal_kegiatan', 'asc')
+            ->orderBy('agenda.waktu_mulai', 'asc')
+            ->distinct()
             ->take(5)
-            ->get()
-            ->map(function($item) {
-                // MENGGUNAKAN collect() AGAR ANTI CRASH JIKA DATANYA NULL
-                $peserta = collect($item->disposisi)->pluck('tujuan_disposisi')->filter()->implode(', ');
-                
-                return (object) [
-                    'nomor_surat' => $item->nomor_surat,
-                    'peserta' => $peserta ?: 'Belum ada peserta ditugaskan'
-                ];
-            });
+            ->get();
 
         return view('agenda', [
-            'title' => $role,
-            'role' => $role, // Sesuaikan jika dinamis
+            'title' => $title,
+            'role' => $role, 
             'events' => $events,
             'ringkasanAgenda' => $ringkasanAgenda
         ]);

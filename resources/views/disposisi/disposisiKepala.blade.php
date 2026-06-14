@@ -133,28 +133,18 @@
 
                                                         @csrf
 
-                                                        <button type="submit" class="btn btn-success btn-sm"
-                                                            style="width:100px;">
-
+                                                       <button type="button" class="btn btn-success btn-sm" style="width:100px;"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#hadirModal{{ $surat->id_surat }}">
                                                             Hadir
-
                                                         </button>
-
                                                     </form>
 
-                                                    <form action="#" method="POST">
-
-                                                        @csrf
-
-                                                        <button type="submit" class="btn btn-danger btn-sm"
-                                                            style="width:100px;">
-
-                                                            Tolak
-
-                                                        </button>
-
-                                                    </form>
-
+                                                   <button type="button" class="btn btn-danger btn-sm" style="width:100px;"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#tolakModal{{ $surat->id_surat }}">
+                                                        Tolak
+                                                    </button>
                                                 </div>
                                             @endif
                                         </td>
@@ -547,6 +537,166 @@
 
             </div>
 
+        </div>
+    @endforeach
+    @foreach ($suratMasuk as $surat)
+        <div class="modal fade" id="hadirModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <form action="{{ route('kepala.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
+                        @csrf
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold fs-4">Ajak Pendamping</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body p-4">
+                            <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                                <div class="col-6 border-end pe-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-send me-2"></i>Pengirim</small>
+                                        <span class="fw-semibold">{{ $surat->asal_surat }}</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor Surat</small>
+                                        <span class="fw-semibold">{{ $surat->nomor_surat }}</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text me-2"></i>Perihal Surat</small>
+                                        <span class="fw-semibold">{{ $surat->perihal }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 ps-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-calendar-event me-2"></i>Tanggal Kegiatan</small>
+                                        <span class="fw-semibold">{{ $surat->tanggal_kegiatan ? \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') : '-' }}</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-clock me-2"></i>Waktu</small>
+                                        <span class="fw-semibold">{{ \Carbon\Carbon::parse($surat->waktu_mulai_kegiatan)->format('H:i') }} - {{ \Carbon\Carbon::parse($surat->waktu_selesai_kegiatan)->format('H:i') }}</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                        @if ($surat->prioritas == 'Tinggi')
+                                            <span class="badge bg-danger">Urgent</span>
+                                        @elseif($surat->prioritas == 'Sedang')
+                                            <span class="badge bg-warning text-dark">Sedang</span>
+                                        @else
+                                            <span class="badge bg-success">Rendah</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 p-3 mb-3 bg-white shadow-sm">
+                                <label class="fw-semibold mb-2 d-flex align-items-center">
+                                    <i class="bi bi-people me-2 fs-5"></i> Pilih Pendamping (Opsional)
+                                </label>
+                                <select name="nip_pendamping" class="form-select border-secondary">
+                                    <option value="" selected>Tidak membawa pendamping...</option>
+                                    @foreach ($pegawai as $p)
+                                        <option value="{{ $p->nip }}">
+                                            {{ $p->nama }} - 
+                                            @switch($p->id_jabatan)
+                                                @case('J002') Kabid @break
+                                                @case('J003') Subkoor @break
+                                                @case('J006') Sekretaris @break
+                                                @default {{ $p->id_jabatan }}
+                                            @endswitch
+                                            @if ($p->bidang) | {{ $p->bidang->nama_bidang }} @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="border rounded-3 p-3 bg-white shadow-sm">
+                                <label class="fw-semibold mb-2 d-flex align-items-center">
+                                    <i class="bi bi-journal-text me-2 fs-5"></i> Catatan
+                                </label>
+                                <textarea name="catatan" rows="3" class="form-control border-secondary" placeholder="Tulis instruksi pendampingan di sini... (kosongkan jika tidak ada)"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-top-0 px-4 pb-4">
+                            <button type="submit" class="btn btn-success px-4 fw-bold w-100">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+   
+    @foreach ($suratMasuk as $surat)
+        <div class="modal fade" id="tolakModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <form action="{{ route('kepala.tolak', $surat->id_surat) }}" method="POST">
+                        @csrf
+                        <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                            <h5 class="modal-title fw-bold fs-4">Tolak Surat</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body p-4">
+                            <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                                <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-send me-2"></i>Pengirim</small>
+                                        <span class="fw-bold text-dark">{{ $surat->asal_surat }}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor Surat</small>
+                                        <span class="fw-bold text-dark">{{ $surat->nomor_surat }}</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text me-2"></i>Perihal Surat</small>
+                                        <span class="fw-bold text-dark">{{ $surat->perihal }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-6 ps-4 position-relative">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                        <span class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-clock me-2"></i>Waktu</small>
+                                        <span class="fw-bold text-dark">
+                                            {{ $surat->waktu_mulai_kegiatan ? \Carbon\Carbon::parse($surat->waktu_mulai_kegiatan)->format('H:i') : '-' }} - 
+                                            {{ $surat->waktu_selesai_kegiatan ? \Carbon\Carbon::parse($surat->waktu_selesai_kegiatan)->format('H:i') : '-' }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                        @if ($surat->prioritas == 'Tinggi')
+                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                        @elseif($surat->prioritas == 'Sedang')
+                                            <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
+                                        @else
+                                            <span class="badge bg-success px-3 py-1">Rendah</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-outline-secondary btn-sm position-absolute bottom-0 end-0 me-3" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#detailModal{{ $surat->id_surat }}">
+                                        <i class="bi bi-eye"></i> Lihat Detail
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 p-3 bg-white shadow-sm">
+                                <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                    <i class="bi bi-pencil-square me-2 fs-5"></i> Alasan Menolak Surat
+                                </label>
+                                <textarea name="alasan_tolak" rows="4" class="form-control border-secondary-subtle" placeholder="Tulis Alasan Disini..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
+                            <button type="submit" class="btn btn-success px-4 fw-bold" style="background-color: #198754;">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     @endforeach
 </x-layout>

@@ -6,15 +6,15 @@ use App\Models\Surat; // Wajib ditambahkan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Wajib ditambahkan
 use Illuminate\Support\Facades\Hash;
+use App\Models\Peserta; // Wajib import Peserta
+use Carbon\Carbon;
 
 class ProfilController extends Controller
 {
-    public function index()
+  public function index()
     {
-        // 1. Ambil data user yang sedang aktif (login)
         $user = Auth::user();
 
-        // 2. Petakan id_jabatan menjadi nama Role untuk keperluan View/Layout
         $roleMap = [
             'J001' => 'Kepala',
             'J002' => 'Kabid',
@@ -27,27 +27,29 @@ class ProfilController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        // 3. Siapkan query dasar agenda
-        $queryAgenda = Surat::query()->whereNotNull('tanggal_kegiatan');
+        // LOGIKA AGENDA PRIBADI YANG SAMA DENGAN KALENDER/DASHBOARD
+        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
+            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
+            ->select(
+                'agenda.id_agenda',
+                'agenda.nama_kegiatan',
+                'agenda.tanggal_kegiatan',
+                'agenda.waktu_mulai',
+                'surat.nomor_surat',
+                'surat.perihal'
+            )
+            ->where('peserta.nip', $user->nip) // Saring khusus NIP user yang sedang login
+            ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today()) // Tampilkan agenda mulai hari ini ke depan
+            ->orderBy('agenda.tanggal_kegiatan', 'asc')
+            ->orderBy('agenda.waktu_mulai', 'asc')
+            ->distinct()
+            ->take(3)
+            ->get();
 
-        // 4. FILTER SAKTI: Jika BUKAN Kepala (J001), tampilkan hanya agenda miliknya!
-        if ($user->id_jabatan !== 'J001') {
-            // PERBAIKAN: Gunakan NIP, bukan nama, agar cocok dengan kolom nip_penerima
-            $identitasPenerima = $user->nip;
-
-            $queryAgenda->whereHas('disposisi', function ($q) use ($identitasPenerima) {
-                $q->where('nip_penerima', $identitasPenerima);
-            });
-        }
-
-        $ringkasanAgenda = (clone $queryAgenda)->orderBy('tanggal_kegiatan', 'asc')->take(3)->get();
-
-        // 5. Kembalikan ke satu view profil universal
-        // Ganti 'profil' dengan nama file blade Anda yang memuat komponen profil tersebut
         return view('profil', [
-            'title' =>  $role, // Otomatis menjadi "Profil Kabid", "Profil Staff", dll.
+            'title' =>  $role, 
             'role' => $role,
-            'user' => $user, // Lempar data $user ini agar bisa dicetak di komponen profil (nama, NIP, dll)
+            'user' => $user, 
             'ringkasanAgenda' => $ringkasanAgenda
         ]);
     }
