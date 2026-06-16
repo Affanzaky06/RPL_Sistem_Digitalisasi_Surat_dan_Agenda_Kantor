@@ -36,4 +36,13 @@ class Disposisi extends Model
             'nip'
         );
     }
+
+    public function pemberi()
+    {
+        return $this->belongsTo(
+            Pegawai::class,
+            'nip_pemberi',
+            'nip'
+        );
+    }
 }

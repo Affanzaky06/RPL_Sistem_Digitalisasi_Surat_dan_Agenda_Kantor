@@ -108,7 +108,8 @@ class VerifikasiController extends Controller
                 'status',
                 [
                     'Terverifikasi',
-                    'Ditolak'
+                    'Ditolak',
+                    'Ditolak Kepala'
                 ]
             );
 

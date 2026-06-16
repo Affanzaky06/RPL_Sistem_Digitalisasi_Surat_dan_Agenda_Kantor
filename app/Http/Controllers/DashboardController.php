@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\KepalaKantor;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class DashboardKepalaController extends Controller
+class DashboardController extends Controller
 {
     public function index()
     {

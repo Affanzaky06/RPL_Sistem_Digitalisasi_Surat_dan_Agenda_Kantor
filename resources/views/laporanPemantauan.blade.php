@@ -7,7 +7,7 @@
             <!-- KIRI : TABEL -->
             <div class="col-lg-9">
 
-                <h1 class="mb-4">Laporan dan Pemantauan Surat</h1>
+                <h3 class="fw-bold mb-4">Laporan dan Pemantauan Surat</h3>
 
                 <div class="border border-dark rounded-3 overflow-hidden shadow-sm">
 
@@ -51,7 +51,31 @@
                                         <td>
 
                                             <div class="fw-semibold">
-                                                {{ $item->penerima->nama ?? '-' }}
+
+                                                @switch($item->penerima->id_jabatan)
+                                                    @case('J001')
+                                                        Kepala -
+                                                    @break
+
+                                                    @case('J002')
+                                                        Kabid -
+                                                    @break
+
+                                                    @case('J003')
+                                                        Subkoor -
+                                                    @break
+
+                                                    @case('J004')
+                                                        Staff -
+                                                    @break
+
+                                                    @case('J006')
+                                                        Sekretaris -
+                                                    @break
+                                                @endswitch
+
+                                                {{ $item->penerima->nama }}
+
                                             </div>
 
                                             <small class="text-muted">
@@ -80,31 +104,36 @@
 
                                         <td>
 
-                                            @if ($item->status == 'Menunggu Konfirmasi')
-                                                <span class="badge bg-warning text-dark">
+                                            @switch($item->status)
+                                                @case('Menunggu Konfirmasi')
+                                                    <span class="badge bg-warning text-dark">
+                                                        Menunggu Konfirmasi
+                                                    </span>
+                                                @break
 
-                                                    Menunggu Konfirmasi
+                                                @case('Didisposisikan')
+                                                    <span class="badge bg-primary">
+                                                        Didisposisikan
+                                                    </span>
+                                                @break
 
-                                                </span>
-                                            @elseif ($item->status == 'ACC')
-                                                <span class="badge bg-success">
+                                                @case('Hadir')
+                                                    <span class="badge bg-success">
+                                                        Hadir
+                                                    </span>
+                                                @break
 
-                                                    ACC
+                                                @case('Tidak Hadir')
+                                                    <span class="badge bg-secondary">
+                                                        Tidak Hadir
+                                                    </span>
+                                                @break
 
-                                                </span>
-                                            @elseif ($item->status == 'Ditolak')
-                                                <span class="badge bg-danger">
-
-                                                    Ditolak
-
-                                                </span>
-                                            @else
-                                                <span class="badge bg-secondary">
-
-                                                    {{ $item->status }}
-
-                                                </span>
-                                            @endif
+                                                @default
+                                                    <span class="badge bg-secondary">
+                                                        {{ $item->status }}
+                                                    </span>
+                                            @endswitch
 
                                         </td>
 
@@ -126,191 +155,236 @@
 
                                     </tr>
 
-                                @empty
+                                    @empty
 
-                                    <tr>
+                                        <tr>
 
-                                        <td colspan="5">
+                                            <td colspan="5">
 
-                                            Belum ada disposisi.
+                                                Belum ada disposisi.
 
-                                        </td>
+                                            </td>
 
-                                    </tr>
-                                @endforelse
+                                        </tr>
+                                    @endforelse
 
-                            </tbody>
+                                </tbody>
 
-                        </table>
-
-                    </div>
-
-                </div>
-
-
-
-            </div>
-
-            <!-- KANAN : RINGKASAN AGENDA -->
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
-
-        </div>
-    </div>
-    @foreach ($laporan as $item)
-        <div class="modal fade" id="pantauModal{{ $item->id_disposisi }}" tabindex="-1" aria-hidden="true">
-
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                <div class="modal-content border-0 shadow rounded-4">
-
-                    <div class="modal-header">
-
-                        <h5 class="modal-title">
-
-                            Pantau Disposisi Surat
-
-                        </h5>
-
-                        <button type="button" class="btn-close" data-bs-dismiss="modal">
-                        </button>
-
-                    </div>
-
-                    <div class="modal-body p-4">
-
-                        {{-- HEADER --}}
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-
-                            <div>
-
-                                <h4 class="mb-1 fw-semibold">
-
-                                    {{ $item->surat->perihal }}
-
-                                </h4>
-
-                                <small class="text-muted">
-
-                                    {{ $item->surat->nomor_surat }}
-
-                                </small>
-
-                            </div>
-
-                            @if ($item->status == 'Menunggu Konfirmasi')
-                                <span class="badge bg-warning text-dark px-3 py-2">
-
-                                    Dalam Proses
-
-                                </span>
-                            @elseif ($item->status == 'ACC')
-                                <span class="badge bg-success px-3 py-2">
-
-                                    ACC
-
-                                </span>
-                            @else
-                                <span class="badge bg-danger px-3 py-2">
-
-                                    Ditolak
-
-                                </span>
-                            @endif
+                            </table>
 
                         </div>
 
-                        <hr>
+                    </div>
 
-                        {{-- INFORMASI SURAT --}}
-                        <div class="mb-4">
 
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">
 
-                                Informasi Surat
+                </div>
 
-                            </div>
+                <!-- KANAN : RINGKASAN AGENDA -->
+                <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
-                            <div class="row g-4">
+            </div>
+        </div>
+        @foreach ($laporan as $item)
+            <div class="modal fade" id="pantauModal{{ $item->id_disposisi }}" tabindex="-1" aria-hidden="true">
 
-                                <div class="col-md-6">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
 
-                                    <div class="text-secondary small">
+                    <div class="modal-content border-0 shadow rounded-4">
 
-                                        Pengirim
+                        <div class="modal-header">
 
-                                    </div>
+                            <h5 class="modal-title">
 
-                                    <div>
+                                Pantau Disposisi Surat
 
-                                        {{ $item->surat->asal_surat }}
+                            </h5>
 
-                                    </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal">
+                            </button>
 
-                                </div>
+                        </div>
 
-                                <div class="col-md-6">
+                        <div class="modal-body p-4">
 
-                                    <div class="text-secondary small">
+                            {{-- HEADER --}}
+                            <div class="d-flex justify-content-between align-items-start mb-4">
 
-                                        Tanggal Surat
+                                <div>
 
-                                    </div>
+                                    <h4 class="mb-1 fw-semibold">
 
-                                    <div>
+                                        {{ $item->surat->perihal }}
 
-                                        {{ \Carbon\Carbon::parse($item->surat->tanggal_surat)->format('d M Y') }}
+                                    </h4>
 
-                                    </div>
-
-                                </div>
-
-                                <div class="col-md-6">
-
-                                    <div class="text-secondary small">
-
-                                        Nomor Surat
-
-                                    </div>
-
-                                    <div>
+                                    <small class="text-muted">
 
                                         {{ $item->surat->nomor_surat }}
 
+                                    </small>
+
+                                </div>
+
+                                <span
+                                    class="badge px-3 py-2
+                                    @if ($item->status == 'Menunggu Konfirmasi') bg-warning text-dark
+                                    @elseif($item->status == 'Didisposisikan') bg-primary
+                                    @elseif($item->status == 'Hadir') bg-success
+                                    @else bg-secondary @endif">
+
+                                    {{ $item->status }}
+
+                                </span>
+
+                            </div>
+
+                            <hr>
+
+                            {{-- INFORMASI SURAT --}}
+                            <div class="mb-4">
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Informasi Surat
+
+                                </div>
+
+                                <div class="row g-4">
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+
+                                            Pengirim
+
+                                        </div>
+
+                                        <div>
+
+                                            {{ $item->surat->asal_surat }}
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+
+                                            Tanggal Surat
+
+                                        </div>
+
+                                        <div>
+
+                                            {{ \Carbon\Carbon::parse($item->surat->tanggal_surat)->format('d M Y') }}
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+
+                                            Nomor Surat
+
+                                        </div>
+
+                                        <div>
+
+                                            {{ $item->surat->nomor_surat }}
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <div class="text-secondary small">
+
+                                            Prioritas
+
+                                        </div>
+
+                                        <div>
+
+                                            @if ($item->surat->prioritas == 'Tinggi')
+                                                <span class="badge bg-danger">
+
+                                                    Tinggi
+
+                                                </span>
+                                            @elseif ($item->surat->prioritas == 'Sedang')
+                                                <span class="badge bg-warning text-dark">
+
+                                                    Sedang
+
+                                                </span>
+                                            @else
+                                                <span class="badge bg-success">
+
+                                                    Rendah
+
+                                                </span>
+                                            @endif
+
+                                        </div>
+
                                     </div>
 
                                 </div>
 
-                                <div class="col-md-6">
+                            </div>
 
-                                    <div class="text-secondary small">
+                            <hr>
 
-                                        Prioritas
+                            {{-- DISPOSISI KE --}}
+                            <div class="mb-4">
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Disposisikan Kepada
+
+                                </div>
+
+                                <div class="border rounded-3 p-3 bg-body-tertiary">
+
+                                    <div class="fw-semibold">
+
+                                        {{ $item->penerima->nama }}
 
                                     </div>
 
-                                    <div>
+                                    <small class="text-muted">
 
-                                        @if ($item->surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger">
-
-                                                Tinggi
-
-                                            </span>
-                                        @elseif ($item->surat->prioritas == 'Sedang')
-                                            <span class="badge bg-warning text-dark">
-
-                                                Sedang
-
-                                            </span>
+                                        @if ($item->penerima->id_jabatan == 'J006')
+                                            Sekretaris
                                         @else
-                                            <span class="badge bg-success">
-
-                                                Rendah
-
-                                            </span>
+                                            {{ $item->penerima->bidang->nama_bidang ?? '-' }}
                                         @endif
 
-                                    </div>
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            {{-- CATATAN --}}
+                            <div class="mb-4">
+
+                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
+
+                                    Catatan
+
+                                </div>
+
+                                <div class="border rounded-3 p-3 bg-body-tertiary">
+
+                                    {{ $item->catatan }}
 
                                 </div>
 
@@ -318,90 +392,39 @@
 
                         </div>
 
-                        <hr>
+                        <div class="modal-footer">
 
-                        {{-- DISPOSISI KE --}}
-                        <div class="mb-4">
+                            <div class="d-flex justify-content-between w-100">
 
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">
+                                @if ($item->status == 'Menunggu Konfirmasi')
+                                    <form action="{{ route($routeBatalDisposisi, $item->id_disposisi) }}" method="POST">
 
-                                Disposisikan Kepada
+                                        @csrf
+                                        @method('DELETE')
 
-                            </div>
+                                        <button type="submit" class="btn btn-danger"
+                                            onclick="return confirm('Yakin ingin membatalkan disposisi ini?')">
 
-                            <div class="border rounded-3 p-3 bg-body-tertiary">
+                                            <i class="bi bi-x-circle me-1"></i>
 
-                                <div class="fw-semibold">
+                                            Batalkan Disposisi
 
-                                    {{ $item->penerima->nama }}
+                                        </button>
 
-                                </div>
+                                    </form>
+                                @endif
 
-                                <small class="text-muted">
+                                {{-- LIHAT FILE --}}
+                                <a href="{{ asset('storage/surat/' . $item->surat->file_scan) }}" target="_blank"
+                                    class="btn btn-primary">
 
-                                    @if ($item->penerima->id_jabatan == 'J006')
-                                        Sekretaris
-                                    @else
-                                        {{ $item->penerima->bidang->nama_bidang ?? '-' }}
-                                    @endif
+                                    <i class="bi bi-eye me-1"></i>
 
-                                </small>
+                                    Lihat File Surat
 
-                            </div>
-
-                        </div>
-
-                        <hr>
-
-                        {{-- CATATAN --}}
-                        <div class="mb-4">
-
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">
-
-                                Catatan
+                                </a>
 
                             </div>
-
-                            <div class="border rounded-3 p-3 bg-body-tertiary">
-
-                                {{ $item->catatan }}
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <div class="d-flex justify-content-between w-100">
-
-                            {{-- BATALKAN --}}
-                            <form action="{{ route('kepala.disposisi.batal', $item->id_disposisi) }}" method="POST">
-
-                                @csrf
-                                @method('DELETE')
-
-                                <button type="submit" class="btn btn-danger"
-                                    onclick="return confirm('Yakin ingin membatalkan disposisi ini?')">
-
-                                    <i class="bi bi-x-circle me-1"></i>
-
-                                    Batalkan Disposisi
-
-                                </button>
-
-                            </form>
-
-                            {{-- LIHAT FILE --}}
-                            <a href="{{ asset('storage/surat/' . $item->surat->file_scan) }}" target="_blank"
-                                class="btn btn-primary">
-
-                                <i class="bi bi-eye me-1"></i>
-
-                                Lihat File Surat
-
-                            </a>
 
                         </div>
 
@@ -410,7 +433,5 @@
                 </div>
 
             </div>
-
-        </div>
-    @endforeach
-</x-layout>
+        @endforeach
+    </x-layout>

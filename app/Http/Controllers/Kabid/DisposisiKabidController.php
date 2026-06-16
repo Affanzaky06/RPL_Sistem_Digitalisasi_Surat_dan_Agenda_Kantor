@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\KepalaKantor;
+namespace App\Http\Controllers\Kabid;
 
 use App\Http\Controllers\Controller;
 use App\Models\Disposisi;
@@ -9,7 +9,7 @@ use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class DisposisiKepalaController extends Controller
+class DisposisiKabidController extends Controller
 {
     public function index()
     {
@@ -42,36 +42,35 @@ class DisposisiKepalaController extends Controller
 
         $ringkasanAgenda = collect();
 
-        $suratMasuk = Surat::with('disposisi')
-            ->where('status', 'Terverifikasi')
-            ->where(function ($q) {
+        $suratMasuk = Surat::with([
+            'disposisi.pemberi.bidang'
+        ])
+            ->whereHas('disposisi', function ($q) {
 
-                $q->whereDoesntHave('disposisi')
+                $q->where(
+                    'nip_penerima',
+                    Auth::user()->nip
+                )
 
-                    ->orWhereHas('disposisi', function ($sub) {
-
-                        $sub->whereRaw("
-                            id_disposisi = (
-                                SELECT MAX(d2.id_disposisi)
-                                FROM disposisi d2
-                                WHERE d2.id_surat = disposisi.id_surat
-                            )
-                        ")
-                            ->where('status', 'Tidak Hadir');
-                    });
+                    ->whereIn('status', [
+                        'Menunggu Konfirmasi',
+                        'Belum Dibaca',
+                        'Dalam Proses'
+                    ]);
             })
-            ->latest('tanggal_verifikasi')
+            ->latest()
             ->paginate(10);
 
         $pegawai = Pegawai::with('bidang')
+            ->where('id_bidang', $user->id_bidang)
             ->whereIn('id_jabatan', [
-                'J002',
-                'J006'
+                'J003',
+                'J004'
             ])
             ->get();
 
         return view(
-            'disposisi.disposisiKepala',
+            'disposisi.disposisiKabid',
             [
                 'title' => $role,
                 'role' => $role,
@@ -102,34 +101,6 @@ class DisposisiKepalaController extends Controller
                 'status' => 'Didisposisikan'
             ]);
 
-        $disposisiLama = Disposisi::where(
-            'id_surat',
-            $id
-        )
-            ->where(
-                'nip_penerima',
-                $request->nip_penerima
-            )
-            ->where(
-                'status',
-                'Tidak Hadir'
-            )
-            ->first();
-
-        if ($disposisiLama) {
-
-            $disposisiLama->update([
-                'tanggal' => now(),
-                'catatan' => $request->catatan ?? '-',
-                'status' => 'Menunggu Konfirmasi'
-            ]);
-
-            return back()->with(
-                'success',
-                'Disposisi berhasil dikirim ulang'
-            );
-        }
-
         Disposisi::create([
 
             'id_surat' => $id,
@@ -156,6 +127,18 @@ class DisposisiKepalaController extends Controller
     {
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user(); // NIP Kepala
+
+        Disposisi::where(
+            'id_surat',
+            $id_surat
+        )
+            ->where(
+                'nip_penerima',
+                $user->nip
+            )
+            ->update([
+                'status' => 'Hadir'
+            ]);
 
         // 1. PASTIKAN AGENDA SUDAH DIBUAT
         // Cari apakah agenda dari surat ini sudah ada, jika belum buatkan
@@ -214,29 +197,54 @@ class DisposisiKepalaController extends Controller
 
     public function tolak(Request $request, $id_surat)
     {
-        $surat = Surat::findOrFail($id_surat);
+        $disposisi = Disposisi::where(
+            'id_surat',
+            $id_surat
+        )
+            ->where(
+                'nip_penerima',
+                Auth::user()->nip
+            )
+            ->latest()
+            ->firstOrFail();
 
-        // 1. Ubah status surat
-        $surat->update([
-            'status' => 'Ditolak Kepala'
-            // 'alasan_tolak' => $request->alasan_tolak // <-- Hapus tanda // jika kolom alasan_tolak sudah Anda tambahkan di database
+        $disposisi->update([
+            'status' => 'Tidak Hadir'
         ]);
 
-        // 2. Jika sebelumnya pernah di-acc dan masuk agenda, hapus dari agenda
-        $agenda = \App\Models\Agenda::where('id_surat', $id_surat)->first();
-        if ($agenda) {
-            \App\Models\Peserta::where('id_agenda', $agenda->id_agenda)->delete();
-            $agenda->delete();
-        }
-
-        return back()->with('success', 'Surat berhasil ditolak dan dikembalikan ke Sekretaris.');
+        return back()->with(
+            'success',
+            'Disposisi ditolak dan dikembalikan ke Kepala Kantor'
+        );
     }
 
     public function batalDisposisi($id)
     {
         $disposisi = Disposisi::findOrFail($id);
 
-        $disposisi->delete();
+        // disposisi ke bawahan dibatalkan
+        $disposisi->update([
+            'status' => 'Dibatalkan'
+        ]);
+
+        // cari disposisi yang diterima Kabid
+        $disposisiMasuk = Disposisi::where(
+            'id_surat',
+            $disposisi->id_surat
+        )
+            ->where(
+                'nip_penerima',
+                Auth::user()->nip
+            )
+            ->latest('id_disposisi')
+            ->first();
+
+        if ($disposisiMasuk) {
+
+            $disposisiMasuk->update([
+                'status' => 'Menunggu Konfirmasi'
+            ]);
+        }
 
         return back()->with(
             'success',

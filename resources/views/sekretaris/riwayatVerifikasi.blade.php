@@ -148,7 +148,11 @@
                                                 </span>
                                             @elseif ($surat->status == 'Ditolak')
                                                 <span class="badge bg-danger">
-                                                    Ditolak
+                                                    Tidak Terverifikasi
+                                                </span>
+                                            @elseif ($surat->status == 'Ditolak Kepala')
+                                                <span class="badge bg-danger">
+                                                    Ditolak Kepala Kantor
                                                 </span>
                                             @endif
 
@@ -204,7 +208,7 @@
             </div>
 
             {{-- SIDEBAR KANAN --}}
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
         </div>
 

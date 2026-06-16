@@ -57,14 +57,18 @@
                                     <th class="fw-semibold fs-6">Perihal</th>
                                     <th class="fw-semibold fs-6">Prioritas</th>
                                     <th class="fw-semibold fs-6">Tanggal Kegiatan</th>
+                                    <th class="fw-semibold fs-6">Pendisposisi</th>
                                     <th class="fw-semibold fs-6">Detail Surat</th>
                                     <th class="fw-semibold fs-6">Aksi</th>
                                 </tr>
                             </thead>
 
                             <tbody class="fs-6 bg-white">
-
                                 @forelse ($suratMasuk as $surat)
+                                    @php
+                                        $dispo = $surat->disposisi->where('nip_penerima', auth()->user()->nip)->first();
+                                    @endphp
+
                                     <tr style="border-bottom:1px solid #dee2e6;">
 
                                         <td>
@@ -106,6 +110,17 @@
                                             @endif
 
                                         </td>
+
+                                        <td>
+                                            @if ($dispo)
+                                                {{ $dispo->pemberi->nama }}
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ $dispo->pemberi->bidang->nama_bidang ?? 'Kepala Kantor' }}
+                                                </small>
+                                            @endif
+                                        </td>
+
                                         <td>
                                             <button class="btn btn-dark btn-sm" style="width:100px;"
                                                 data-bs-toggle="modal"
@@ -341,7 +356,7 @@
 
                 <div class="modal-content border-0 shadow rounded-4">
 
-                    <form action="{{ route('kepala.disposisi', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('kabid.disposisi', $surat->id_surat) }}" method="POST">
 
                         @csrf
 
@@ -479,37 +494,28 @@
 
                                     </option>
 
-                                    @php
-                                        $ditolak = $surat->disposisi
-                                            ->where('status', 'Tidak Hadir')
-                                            ->pluck('nip_penerima')
-                                            ->toArray();
-                                    @endphp
-
                                     @foreach ($pegawai as $p)
-                                        @if (!in_array($p->nip, $ditolak))
-                                            <option value="{{ $p->nip }}">
+                                        <option value="{{ $p->nip }}">
 
-                                                {{ $p->nama }}
+                                            {{ $p->nama }}
 
-                                                -
+                                            -
 
-                                                @switch($p->id_jabatan)
-                                                    @case('J002')
-                                                        Kabid
-                                                    @break
+                                            @switch($p->id_jabatan)
+                                                @case('J003')
+                                                    Subkoor
+                                                @break
 
-                                                    @case('J006')
-                                                        Sekretaris
-                                                    @break
-                                                @endswitch
+                                                @case('J004')
+                                                    Staff
+                                                @break
+                                            @endswitch
 
-                                                @if ($p->bidang)
-                                                    | {{ $p->bidang->nama_bidang }}
-                                                @endif
+                                            @if ($p->bidang)
+                                                | {{ $p->bidang->nama_bidang }}
+                                            @endif
 
-                                            </option>
-                                        @endif
+                                        </option>
                                     @endforeach
 
                                 </select>
@@ -548,11 +554,12 @@
 
         </div>
     @endforeach
+
     @foreach ($suratMasuk as $surat)
         <div class="modal fade" id="hadirModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('kepala.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('kabid.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0">
                             <h5 class="modal-title fw-bold fs-4">Ajak Pendamping</h5>
@@ -662,7 +669,7 @@
         <div class="modal fade" id="tolakModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('kepala.tolak', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('kabid.tolak', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
                             <h5 class="modal-title fw-bold fs-4">Tolak Surat</h5>

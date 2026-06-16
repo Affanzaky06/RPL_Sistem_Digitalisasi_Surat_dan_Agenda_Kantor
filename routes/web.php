@@ -2,17 +2,18 @@
 
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Frontliner\SuratController;
+use App\Http\Controllers\Kabid\DisposisiKabidController;
 use App\Http\Controllers\KalenderKantorController;
 use App\Http\Controllers\KepalaKantor\DashboardKepalaController;
 use App\Http\Controllers\KepalaKantor\DisposisiKepalaController;
 use App\Http\Controllers\Kepegawaian\kepegawaianController;
+use App\Http\Controllers\laporanPemantauanController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
-use App\Http\Controllers\laporanPemantauanController;
 use Illuminate\Support\Facades\Route;
-
 
 use function Laravel\Prompts\title;
 
@@ -36,21 +37,23 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:J001')->group(function () {
         Route::get(
             '/kepala',
-            [DashboardKepalaController::class, 'index']
+            [DashboardController::class, 'index']
         )->name('kepala.dashboard');
 
         Route::get(
             '/kepala/surat_masuk',
             [DisposisiKepalaController::class, 'index']
         )->name('kepala.surat_masuk');
-        
-        Route::post('/kepala/konfirmasi-hadir/{id_surat}', 
-            [DisposisiKepalaController::class, 'konfirmasiHadir']
-            )->name('kepala.konfirmasi_hadir');
 
-        Route::post('/kepala/tolak/{id_surat}', 
+        Route::post(
+            '/kepala/konfirmasi-hadir/{id_surat}',
+            [DisposisiKepalaController::class, 'konfirmasiHadir']
+        )->name('kepala.konfirmasi_hadir');
+
+        Route::post(
+            '/kepala/tolak/{id_surat}',
             [DisposisiKepalaController::class, 'tolak']
-            )->name('kepala.tolak');
+        )->name('kepala.tolak');
 
         Route::get(
             '/kepala/agenda',
@@ -90,12 +93,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:J002')->group(function () {
         Route::get(
             '/kabid',
-            [DashboardKepalaController::class, 'index']
+            [DashboardController::class, 'index']
         )->name('kabid.dashboard');
 
         Route::get(
             '/kabid/surat_masuk',
-            [DisposisiKepalaController::class, 'index']
+            [DisposisiKabidController::class, 'index']
         )->name('kabid.surat_masuk');
 
         Route::get(
@@ -103,7 +106,7 @@ Route::middleware('auth')->group(function () {
             [agendaController::class, 'index']
         )->name('kabid.agenda');
 
-       Route::get(
+        Route::get(
             '/kabid/Laporan_Pemantauan',
             [laporanPemantauanController::class, 'index']
         )->name('kabid.laporan');
@@ -117,6 +120,26 @@ Route::middleware('auth')->group(function () {
             '/kabid/profil',
             [ProfilController::class, 'index']
         )->name('kabid.profil');
+
+        Route::post(
+            '/kabid/disposisi/{id}',
+            [DisposisiKabidController::class, 'disposisi']
+        )->name('kabid.disposisi');
+
+        Route::post(
+            '/kabid/{id_surat}/hadir',
+            [DisposisiKabidController::class, 'konfirmasiHadir']
+        )->name('kabid.konfirmasi_hadir');
+
+        Route::post(
+            '/kabid/{id_surat}/tolak',
+            [DisposisiKabidController::class, 'tolak']
+        )->name('kabid.tolak');
+
+        Route::delete(
+            '/kabid/disposisi/{id}',
+            [DisposisiKabidController::class, 'batalDisposisi']
+        )->name('kabid.disposisi.batal');
     });
 
     // --------------------------------------------------------
@@ -126,7 +149,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:J003')->group(function () {
         Route::get(
             '/subkoor',
-            [DashboardKepalaController::class, 'index']
+            [DashboardController::class, 'index']
         )->name('subkoor.dashboard');
 
         Route::get(
@@ -152,6 +175,11 @@ Route::middleware('auth')->group(function () {
             '/subkoor/profil',
             [ProfilController::class, 'index']
         )->name('subkoor.profil');
+
+        Route::delete(
+            '/subkoor/disposisi/{id}',
+            [DisposisiSubkoorController::class, 'batalDisposisi']
+        )->name('subkoor.disposisi.batal');
     });
 
 
@@ -168,7 +196,7 @@ Route::middleware('auth')->group(function () {
             return view('suratMasuk', ['title' => 'Staff', 'role' => 'Staff']);
         })->name('staff.surat_masuk');
 
-       Route::get(
+        Route::get(
             '/staff/agenda',
             [agendaController::class, 'index']
         )->name('staff.agenda');
@@ -185,34 +213,36 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
     // 5. RUTE KEPEGAWAIAN (Role: J005)
     // --------------------------------------------------------
-    Route::get('/kepegawaian', 
+    Route::get(
+        '/kepegawaian',
         [kepegawaianController::class, 'index']
-        )->name('kepegawaian.dashboard');
+    )->name('kepegawaian.dashboard');
 
     Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
         ->name('kepegawaian.input_data');
 
-        // ROUTE UNTUK MEMPROSES FORM
+    // ROUTE UNTUK MEMPROSES FORM
     Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
         ->name('kepegawaian.store');
-    
+
     Route::get('/kepegawaian/list', [kepegawaianController::class, 'listPegawai'])
         ->name('kepegawaian.list');
 
-        // TAMBAHKAN DUA ROUTE INI
+    // TAMBAHKAN DUA ROUTE INI
     Route::put('/kepegawaian/update/{nip}', [kepegawaianController::class, 'updatePegawai'])
-         ->name('kepegawaian.update');
-            
-        Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
+        ->name('kepegawaian.update');
+
+    Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
         ->name('kepegawaian.delete');
     Route::get(
-        '/kepegawaian/kalender_kantor', 
+        '/kepegawaian/kalender_kantor',
         [KalenderKantorController::class, 'index']
-        )->name('kepegawaian.kalender');
+    )->name('kepegawaian.kalender');
 
-    Route::get('/kepegawaian/profil',
+    Route::get(
+        '/kepegawaian/profil',
         [ProfilController::class, 'index']
-        )->name('kepegawian.profil');
+    )->name('kepegawian.profil');
 
 
     // --------------------------------------------------------
@@ -227,8 +257,10 @@ Route::middleware('auth')->group(function () {
             [DashboardSekretarisController::class, 'index']
         )->name('sekretaris.dashboard');
 
-        Route::get('/sekretaris/verifikasi_surat',
-             [VerifikasiController::class, 'index'])
+        Route::get(
+            '/sekretaris/verifikasi_surat',
+            [VerifikasiController::class, 'index']
+        )
             ->name('sekretaris.verifikasi_surat');
 
         Route::put(
@@ -247,8 +279,8 @@ Route::middleware('auth')->group(function () {
         )->name('sekretaris.agenda');
 
         Route::get(
-        '/sekretaris/kalender_kantor', 
-        [KalenderKantorController::class, 'index']
+            '/sekretaris/kalender_kantor',
+            [KalenderKantorController::class, 'index']
         )->name('sekretaris.kalender');
 
         Route::get(
@@ -261,8 +293,9 @@ Route::middleware('auth')->group(function () {
             [VerifikasiController::class, 'riwayat']
         )->name('sekretaris.riwayat');
 
-        Route::get('/sekretaris/profil',
-        [ProfilController::class, 'index']
+        Route::get(
+            '/sekretaris/profil',
+            [ProfilController::class, 'index']
         )->name('sekretaris.profil');
     });
 
@@ -277,22 +310,23 @@ Route::middleware('auth')->group(function () {
         )->name('frontliner.dashboard');;
 
         Route::get(
-            '/frontliner/input_surat', 
+            '/frontliner/input_surat',
             [SuratController::class, 'create']
-            )->name('frontliner.input_surat');
-            
+        )->name('frontliner.input_surat');
+
         Route::get(
             '/frontliner/riwayat_input',
             [SuratController::class, 'index']
         );
 
         Route::get(
-        '/frontliner/kalender_kantor', 
-        [KalenderKantorController::class, 'index']
+            '/frontliner/kalender_kantor',
+            [KalenderKantorController::class, 'index']
         )->name('frontliner.kalender');
 
-        Route::get('/frontliner/profil',
-        [ProfilController::class, 'index']
+        Route::get(
+            '/frontliner/profil',
+            [ProfilController::class, 'index']
         )->name('frontliner.profil');
 
         Route::post('/surat/store', [SuratController::class, 'store'])
