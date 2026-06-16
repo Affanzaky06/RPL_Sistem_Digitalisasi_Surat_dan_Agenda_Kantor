@@ -13,6 +13,7 @@ use App\Http\Controllers\laporanPemantauanController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
+use App\Http\Controllers\Subkoor\DisposisiSubkoorController;
 use Illuminate\Support\Facades\Route;
 
 use function Laravel\Prompts\title;
@@ -147,6 +148,7 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
 
     Route::middleware('role:J003')->group(function () {
+
         Route::get(
             '/subkoor',
             [DashboardController::class, 'index']
@@ -154,32 +156,48 @@ Route::middleware('auth')->group(function () {
 
         Route::get(
             '/subkoor/surat_masuk',
-            [DisposisiKepalaController::class, 'index']
+            [DisposisiSubkoorController::class, 'index']
         )->name('subkoor.surat_masuk');
+
+        Route::post(
+            '/subkoor/{id}/disposisi',
+            [DisposisiSubkoorController::class, 'disposisi']
+        )->name('subkoor.disposisi');
+
+        Route::post(
+            '/subkoor/{id_surat}/hadir',
+            [DisposisiSubkoorController::class, 'konfirmasiHadir']
+        )->name('subkoor.konfirmasi_hadir');
+
+        Route::post(
+            '/subkoor/{id_surat}/tolak',
+            [DisposisiSubkoorController::class, 'tolak']
+        )->name('subkoor.tolak');
+
+        Route::delete(
+            '/subkoor/disposisi/{id}',
+            [DisposisiSubkoorController::class, 'batalDisposisi']
+        )->name('subkoor.disposisi.batal');
+
+        Route::get(
+            '/subkoor/Laporan_Pemantauan',
+            [laporanPemantauanController::class, 'index']
+        )->name('subkoor.laporan');
 
         Route::get(
             '/subkoor/agenda',
             [agendaController::class, 'index']
         )->name('subkoor.agenda');
 
-        Route::get('/subkoor/Laporan_Pemantauan', function () {
-            return view('laporanPemantauan', ['title' => 'Subkoor', 'role' => 'Subkoor']);
-        })->name('subkoor.laporan');
-
         Route::get(
             '/subkoor/kalender_kantor',
             [KalenderKantorController::class, 'index']
-        )->name('kabid.kalender');
+        )->name('subkoor.kalender');
 
         Route::get(
             '/subkoor/profil',
             [ProfilController::class, 'index']
         )->name('subkoor.profil');
-
-        Route::delete(
-            '/subkoor/disposisi/{id}',
-            [DisposisiSubkoorController::class, 'batalDisposisi']
-        )->name('subkoor.disposisi.batal');
     });
 
 

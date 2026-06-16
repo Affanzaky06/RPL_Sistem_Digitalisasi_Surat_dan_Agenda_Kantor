@@ -45,18 +45,34 @@ class DisposisiKabidController extends Controller
         $suratMasuk = Surat::with([
             'disposisi.pemberi.bidang'
         ])
-            ->whereHas('disposisi', function ($q) {
+            ->where(function ($query) {
 
-                $q->where(
-                    'nip_penerima',
-                    Auth::user()->nip
-                )
+                // surat yang memang diterima Kabid
+                $query->whereHas('disposisi', function ($q) {
 
-                    ->whereIn('status', [
-                        'Menunggu Konfirmasi',
-                        'Belum Dibaca',
-                        'Dalam Proses'
-                    ]);
+                    $q->where(
+                        'nip_penerima',
+                        Auth::user()->nip
+                    )
+                        ->whereIn('status', [
+                            'Menunggu Konfirmasi',
+                            'Belum Dibaca',
+                            'Dalam Proses'
+                        ]);
+                })
+
+                    // surat yang ditolak bawahan Kabid
+                    ->orWhereHas('disposisi', function ($q) {
+
+                        $q->where(
+                            'nip_pemberi',
+                            Auth::user()->nip
+                        )
+                            ->where(
+                                'status',
+                                'Tidak Hadir'
+                            );
+                    });
             })
             ->latest()
             ->paginate(10);

@@ -356,7 +356,7 @@
 
                 <div class="modal-content border-0 shadow rounded-4">
 
-                    <form action="{{ route('kabid.disposisi', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('subkoor.disposisi', $surat->id_surat) }}" method="POST">
 
                         @csrf
 
@@ -494,36 +494,28 @@
 
                                     </option>
 
-                                    @php
-                                        $ditolak = $surat->disposisi
-                                            ->where('status', 'Tidak Hadir')
-                                            ->pluck('nip_penerima')
-                                            ->toArray();
-                                    @endphp
                                     @foreach ($pegawai as $p)
-                                        @if (!in_array($p->nip, $ditolak))
-                                            <option value="{{ $p->nip }}">
+                                        <option value="{{ $p->nip }}">
 
-                                                {{ $p->nama }}
+                                            {{ $p->nama }}
 
-                                                -
+                                            -
 
-                                                @switch($p->id_jabatan)
-                                                    @case('J003')
-                                                        Subkoor
-                                                    @break
+                                            @switch($p->id_jabatan)
+                                                @case('J003')
+                                                    Subkoor
+                                                @break
 
-                                                    @case('J004')
-                                                        Staff
-                                                    @break
-                                                @endswitch
+                                                @case('J004')
+                                                    Staff
+                                                @break
+                                            @endswitch
 
-                                                @if ($p->bidang)
-                                                    | {{ $p->bidang->nama_bidang }}
-                                                @endif
+                                            @if ($p->bidang)
+                                                | {{ $p->bidang->nama_bidang }}
+                                            @endif
 
-                                            </option>
-                                        @endif
+                                        </option>
                                     @endforeach
 
                                 </select>
@@ -567,7 +559,7 @@
         <div class="modal fade" id="hadirModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('kabid.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('subkoor.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0">
                             <h5 class="modal-title fw-bold fs-4">Ajak Pendamping</h5>
@@ -677,7 +669,7 @@
         <div class="modal fade" id="tolakModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('kabid.tolak', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('subkoor.tolak', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
                             <h5 class="modal-title fw-bold fs-4">Tolak Surat</h5>
