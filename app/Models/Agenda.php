@@ -23,4 +23,10 @@ class Agenda extends Model
     {
         return $this->belongsTo(Surat::class, 'id_surat', 'id_surat');
     }
+
+    public function peserta()
+    {
+        // Sesuaikan 'id_agenda' jika nama primary key Anda berbeda
+        return $this->hasMany(Peserta::class, 'id_agenda', 'id_agenda'); 
+    }
 }

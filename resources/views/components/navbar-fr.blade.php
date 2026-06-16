@@ -13,7 +13,7 @@
             <x-navlink-fr href="/frontliner/kalender_kantor" :active="request()->is('frontliner/kalender_kantor')">Kalender Kantor</x-navlink-fr>
         </li>
         <li>
-            <x-navlink-fr href="/frontliner/profil" :active="request()->is('frontliner/profil')">Profil</x-navlink-fr>
+            <x-navlink-fr href="/frontliner/profil" :active="request()->is('*profil')">Profil</x-navlink-fr>
         </li>
     </ul>
 </nav>

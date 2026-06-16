@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agenda;
+use App\Models\Peserta;
 use App\Models\Surat;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
+   public function index()
     {
-        // 1. Ambil data user yang sedang aktif (login)
         $user = Auth::user();
-
-        // 2. Petakan id_jabatan menjadi nama Role untuk keperluan View/Layout
+        
         $roleMap = [
             'J001' => 'Kepala',
             'J002' => 'Kabid',
@@ -26,39 +27,58 @@ class DashboardController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        // 3. Siapkan Query Dasar (Belum dieksekusi)
-        $queryNotifikasi = Surat::query()->where('status', 'Terverifikasi');
-        $queryAgenda = Surat::query()->whereNotNull('tanggal_kegiatan');
-
-        // 4. FILTER SAKTI: Jika BUKAN Kepala (J001), tampilkan hanya agenda miliknya!
-        if ($user->id_jabatan !== 'J001') {
-
-            // Asumsi: Kita memfilter berdasarkan 'nama' pegawai yang ada di tabel users
-            // yang dicocokkan dengan kolom 'tujuan_disposisi' di tabel disposisi.
-            $identitasPenerima = $user->nama;
-
-            $queryNotifikasi->whereHas('disposisi', function ($q) use ($identitasPenerima) {
-                $q->where('nip_penerima', $identitasPenerima);
-            });
-
-
-            // $queryAgenda->whereHas('disposisi', function ($q) use ($identitasPenerima) {
-            //     $q->where('nip_penerima', $identitasPenerima);
-            // });
+        // ==========================================
+        // 1. LOGIKA UTAMA: NOTIFIKASI SURAT MASUK
+        // ==========================================
+        if (in_array($user->id_jabatan, ['J005', 'J007'])) {
+            // Frontliner & Kepegawaian melihat semua surat terverifikasi kantor
+            $queryNotifikasi = Surat::where('status', 'Terverifikasi');
+        } else {
+            // Role lain hanya melihat jika mereka menerima disposisi surat tersebut
+            $queryNotifikasi = Surat::where('status', 'Terverifikasi')
+                ->whereHas('disposisi', function ($q) use ($user) {
+                    $q->where('nip_penerima', $user->nip);
+                });
         }
 
-        // 5. Eksekusi semua data menggunakan Clone
         $notifikasi = (clone $queryNotifikasi)->latest('tanggal_verifikasi')->take(5)->get();
-        $totalSuratBaru = (clone $queryNotifikasi)->whereDate('tanggal_verifikasi', today())->count();
+        $totalSuratBaru = (clone $queryNotifikasi)->whereDate('tanggal_verifikasi', Carbon::today())->count();
         $totalNotifikasi = $queryNotifikasi->count();
-        // $totalAgenda = (clone $queryAgenda)->whereDate('tanggal_kegiatan', '>=', today())->count();
-        // $ringkasanAgenda = (clone $queryAgenda)->orderBy('tanggal_kegiatan', 'asc')->take(3)->get();
-        $ringkasanAgenda = collect();
-        $totalAgenda = 0;
 
-        // Lempar ke satu view yang sama!
-        return view('dashboardKepala', [ // Boleh di-rename jadi 'dashboardUmum' atau 'dashboard'
-            'title' =>  $role,
+        // ==========================================
+        // 2. LOGIKA UTAMA: RINGKASAN AGENDA & PESERTA
+        // ==========================================
+        if (in_array($user->id_jabatan, ['J005', 'J007'])) {
+            // Frontliner & Kepegawaian: Ambil 3 Agenda Kantor terdekat mendatang
+            $totalAgenda = Agenda::whereDate('tanggal_kegiatan', '>=', Carbon::today())->count();
+            
+            $ringkasanAgenda = Agenda::with(['surat', 'peserta.pegawai']) // Eager load relasi
+                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->orderBy('tanggal_kegiatan', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->take(3)
+                ->get();
+        } else {
+            // Role Lain: Hanya mengambil agenda di mana NIP mereka terdaftar sebagai peserta
+            $totalAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
+                    $q->where('nip', $user->nip);
+                })
+                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->count();
+            
+            $ringkasanAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
+                    $q->where('nip', $user->nip);
+                })
+                ->with(['surat', 'peserta.pegawai']) // Tarik data surat dan info peserta rapat
+                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->orderBy('tanggal_kegiatan', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->take(3)
+                ->get();
+        }
+
+        return view('dashboardKepala', [ 
+            'title' => $role,
             'role' => $role,
             'notifikasi' => $notifikasi,
             'totalSuratBaru' => $totalSuratBaru,

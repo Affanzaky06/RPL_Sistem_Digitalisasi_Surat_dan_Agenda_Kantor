@@ -23,10 +23,11 @@ class SuratFactory extends Factory
 
             'perihal' => $this->faker->sentence(4),
 
+            // DI SINI LETAK PERBAIKANNYA: Tambahkan unique() pada pembuat angka
             'nomor_surat' => sprintf(
                 '%03d/%s/%d',
-                fake()->numberBetween(1, 999),
-                fake()->randomElement(['UND', 'EDR', 'PMH', 'PBR']),
+                $this->faker->unique()->numberBetween(1, 9999), 
+                $this->faker->randomElement(['UND', 'EDR', 'PMH', 'PBR']),
                 now()->year
             ),
 

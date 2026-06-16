@@ -121,45 +121,64 @@
                                             @endif
                                         </td>
 
-                                        <td>
+                                       <td>
                                             <button class="btn btn-dark btn-sm" style="width:100px;"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#detailModal{{ $surat->id_surat }}">
-
                                                 Detail
-
                                             </button>
                                         </td>
+
                                         <td>
-                                            @if ($surat->jenis_surat == 'Undangan')
+                                            @php
+                                                // CEK REAL-TIME: Apakah baris surat ini adalah undangan pendampingan dari Kepala untuk user ini?
+                                                $isDiajakPendamping = \App\Models\Peserta::where('nip', auth()->user()->nip)
+                                                    ->whereHas('agenda', function($q) use ($surat) {
+                                                        $q->where('id_surat', $surat->id_surat);
+                                                    })
+                                                    ->where('status_kehadiran', 'Menunggu Konfirmasi')
+                                                    ->exists();
+                                            @endphp
+
+                                            @if ($isDiajakPendamping)
                                                 <div class="d-flex flex-column align-items-center gap-1">
-
-
-
-                                                    <button class="btn btn-primary btn-sm" style="width:100px;"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#disposisiModal{{ $surat->id_surat }}">
-
-                                                        Disposisi
-
-                                                    </button>
-
-                                                    <form action="#" method="POST">
-
+                                                    <form action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Hadir']) }}" method="POST">
                                                         @csrf
-
-                                                        <button type="button" class="btn btn-success btn-sm"
-                                                            style="width:100px;" data-bs-toggle="modal"
-                                                            data-bs-target="#hadirModal{{ $surat->id_surat }}">
-                                                            Hadir
+                                                        <button type="submit" class="btn btn-success btn-sm" style="width:100px;">
+                                                            <i class="bi bi-check-lg"></i> Hadir
                                                         </button>
                                                     </form>
 
-                                                    <button type="button" class="btn btn-danger btn-sm"
-                                                        style="width:100px;" data-bs-toggle="modal"
-                                                        data-bs-target="#tolakModal{{ $surat->id_surat }}">
-                                                        Tolak
-                                                    </button>
+                                                    <form action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Tolak']) }}" method="POST" onsubmit="return confirm('Tolak ajakan pendampingan Kepala?')">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-danger btn-sm" style="width:100px;">
+                                                            <i class="bi bi-x"></i> Tolak
+                                                        </button>
+                                                    </form>
+                                                    
+                                                    <small class="text-primary fw-bold mt-1" style="font-size: 0.7rem;"><i class="bi bi-info-circle"></i> Diajak Pendamping</small>
+                                                </div>
+                                            @else
+                                                <div class="d-flex flex-column align-items-center gap-1">
+                                                    
+                                                    @if ($surat->jenis_surat == 'Undangan')
+                                                        <button class="btn btn-primary btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#disposisiModal{{ $surat->id_surat }}">
+                                                            Disposisi
+                                                        </button>
+
+                                                        <button type="button" class="btn btn-success btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#hadirModal{{ $surat->id_surat }}">
+                                                            Hadir
+                                                        </button>
+
+                                                        <button type="button" class="btn btn-danger btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#tolakModal{{ $surat->id_surat }}">
+                                                            Tolak
+                                                        </button>
+                                                    @else
+                                                        <button class="btn btn-primary btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#disposisiModal{{ $surat->id_surat }}">
+                                                            Disposisi
+                                                        </button>
+                                                    @endif
+
                                                 </div>
                                             @endif
                                         </td>

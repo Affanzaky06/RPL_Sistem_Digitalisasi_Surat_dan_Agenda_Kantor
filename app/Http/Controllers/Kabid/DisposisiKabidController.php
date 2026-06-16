@@ -267,4 +267,28 @@ class DisposisiKabidController extends Controller
             'Disposisi berhasil dibatalkan'
         );
     }
+
+    public function konfirmasiPendamping($id_surat, $keputusan)
+    {
+        $user = Auth::user();
+        
+        // Find agenda berdasarkan id_surat
+        $agenda = \App\Models\Agenda::where('id_surat', $id_surat)->firstOrFail();
+
+        if ($keputusan === 'Hadir') {
+            // Jika bersedia hadir mendampingi, ubah status kehadiran menjadi 'Hadir'
+            \App\Models\Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', $user->nip)
+                ->update(['status_kehadiran' => 'Hadir']);
+
+            return back()->with('success', 'Berhasil menyetujui pendampingan agenda Kepala Kantor.');
+        } else {
+            // Jika menolak, hapus baris user tersebut dari daftar peserta agenda ini
+            \App\Models\Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', $user->nip)
+                ->delete();
+
+            return back()->with('success', 'Anda menolak undangan pendampingan agenda.');
+        }
+    }
 }

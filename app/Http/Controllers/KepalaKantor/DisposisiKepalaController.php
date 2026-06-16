@@ -152,13 +152,12 @@ class DisposisiKepalaController extends Controller
         );
     }
 
-    public function konfirmasiHadir(Request $request, $id_surat)
+   public function konfirmasiHadir(Request $request, $id_surat)
     {
         $surat = Surat::findOrFail($id_surat);
-        $user = Auth::user(); // NIP Kepala
+        $user = Auth::user(); 
 
-        // 1. PASTIKAN AGENDA SUDAH DIBUAT
-        // Cari apakah agenda dari surat ini sudah ada, jika belum buatkan
+        // 1. Buat Agenda jika belum ada
         $agenda = \App\Models\Agenda::firstOrCreate(
             ['id_surat' => $surat->id_surat],
             [
@@ -170,46 +169,48 @@ class DisposisiKepalaController extends Controller
             ]
         );
 
-        // 2. MASUKKAN KEPALA SEBAGAI PESERTA PASTI HADIR
+        // 2. Masukkan Kepala sebagai peserta wajib
         \App\Models\Peserta::updateOrCreate(
             [
                 'id_agenda' => $agenda->id_agenda,
                 'nip' => $user->nip
             ],
             [
-                'status_kehadiran' => 'Hadir' // Langsung Hadir karena Kepala sendiri yang klik
+                'status_kehadiran' => 'Hadir' 
             ]
         );
 
-        // 3. JIKA KEPALA MEMILIH PENDAMPING (DISPOSISI OTOMATIS)
-        if ($request->filled('nip_pendamping')) {
-            // Buat Disposisi untuk Pendamping
-            $disposisi = \App\Models\Disposisi::create([
-                'id_surat' => $surat->id_surat,
-                'nip_pemberi' => $user->nip,
-                'nip_penerima' => $request->nip_pendamping,
-                'tanggal' => now(),
-                'catatan' => $request->catatan ?? 'Mendampingi Kepala Kantor.',
-                'status' => 'Belum Dibaca' // Atau sesuaikan dengan status disposisi awal Anda
-            ]);
+        // 3. JIKA ADA PENDAMPING YANG DICEKLIS (Bisa lebih dari 1 orang)
+        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+            
+            // Lakukan perulangan untuk setiap NIP yang diceklis di UI
+            foreach ($request->nip_pendamping as $nipPenerima) {
+                
+                // Buat Disposisi untuk masing-masing pendamping
+                $disposisi = \App\Models\Disposisi::create([
+                    'id_surat' => $surat->id_surat,
+                    'nip_pemberi' => $user->nip,
+                    'nip_penerima' => $nipPenerima,
+                    'tanggal' => now(),
+                    'catatan' => $request->catatan ?? 'Mendampingi Kepala Kantor pada kegiatan ini.',
+                    'status' => 'Belum Dibaca'
+                ]);
 
-            // Masukkan Pendamping ke tabel Peserta (Menunggu Konfirmasi mereka)
-            \App\Models\Peserta::updateOrCreate(
-                [
-                    'id_agenda' => $agenda->id_agenda,
-                    'nip' => $request->nip_pendamping
-                ],
-                [
-                    'id_disposisi' => $disposisi->id_disposisi, // Ikat dengan disposisinya
-                    'status_kehadiran' => 'Menunggu Konfirmasi' // Menunggu pendamping klik terima/hadir
-                ]
-            );
+                // Masukkan mereka ke tabel Peserta (Menunggu Konfirmasi)
+                \App\Models\Peserta::updateOrCreate(
+                    [
+                        'id_agenda' => $agenda->id_agenda,
+                        'nip' => $nipPenerima
+                    ],
+                    [
+                        'id_disposisi' => $disposisi->id_disposisi, 
+                        'status_kehadiran' => 'Menunggu Konfirmasi' 
+                    ]
+                );
+            }
         }
 
-        // 4. Update status surat (misalnya: Sudah Diproses)
-        // $surat->update(['status' => 'Sudah Diproses']); // Opsional, buka komentar jika diperlukan
-
-        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan menyusun agenda.');
+        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
     }
 
     public function tolak(Request $request, $id_surat)

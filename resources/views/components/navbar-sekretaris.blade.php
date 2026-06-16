@@ -51,7 +51,7 @@
         </li>
 
         <li  class="mb-2">
-            <x-navlink-fr href="/sekretaris/profil" :active="request()->is('sekretaris/profil')">
+            <x-navlink-fr href="/sekretaris/profil" :active="request()->is('*profil')">
 
                 Profil
 

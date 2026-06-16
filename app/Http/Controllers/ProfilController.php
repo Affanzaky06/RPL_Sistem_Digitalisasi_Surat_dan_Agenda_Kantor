@@ -28,21 +28,13 @@ class ProfilController extends Controller
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
         // LOGIKA AGENDA PRIBADI YANG SAMA DENGAN KALENDER/DASHBOARD
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.tanggal_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->where('peserta.nip', $user->nip) // Saring khusus NIP user yang sedang login
-            ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today()) // Tampilkan agenda mulai hari ini ke depan
-            ->orderBy('agenda.tanggal_kegiatan', 'asc')
-            ->orderBy('agenda.waktu_mulai', 'asc')
-            ->distinct()
+       $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                $q->where('nip', $user->nip);
+            })
+            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -56,6 +48,7 @@ class ProfilController extends Controller
 
     public function update(Request $request)
     {
+
         $user = Auth::user();
 
         $request->validate([
@@ -65,35 +58,30 @@ class ProfilController extends Controller
             'foto_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
+        // 1. Jika form yang dikirim adalah Foto Profil
         if ($request->hasFile('foto_profil')) {
-
-            $namaFile = time() . '.' .
-                $request->foto_profil->extension();
-
-            $request->foto_profil->storeAs(
-                'profil',
-                $namaFile,
-                'public'
-            );
-
+            $namaFile = time() . '.' . $request->foto_profil->extension();
+            $request->foto_profil->storeAs('profil', $namaFile, 'public');
             $user->foto_profil = $namaFile;
         }
 
-        $user->email = $request->email;
-        $user->no_telp = $request->no_telp;
+        // 2. Jika form yang dikirim adalah Email
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
 
+        // 3. Jika form yang dikirim adalah No Telp
+        if ($request->has('no_telp')) {
+            $user->no_telp = $request->no_telp;
+        }
+
+        // 4. Jika form yang dikirim adalah Password Baru
         if ($request->filled('password')) {
-
-            $user->password = Hash::make(
-                $request->password
-            );
+            $user->password = Hash::make($request->password);
         }
 
         $user->save();
 
-        return back()->with(
-            'success',
-            'Profil berhasil diperbarui'
-        );
+        return back()->with('success', 'Profil berhasil diperbarui');
     }
 }

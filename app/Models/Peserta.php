@@ -24,4 +24,11 @@ class Peserta extends Model
     {
         return $this->belongsTo(Pegawai::class, 'nip', 'nip');
     }
+
+    // public function user()
+    // {
+    //     // Sesuaikan 'User::class' dengan nama Model user/pegawai Anda.
+    //     // Asumsinya primary key di tabel user adalah 'nip', dan foreign key di peserta juga 'nip'
+    //     return $this->belongsTo(User::class, 'nip', 'nip'); 
+    // }
 }

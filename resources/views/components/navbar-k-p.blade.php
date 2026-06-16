@@ -33,7 +33,7 @@
             </x-navlink-fr>
         </li>
         <li class="mb-2">
-            <x-navlink-fr href="/{{ $url }}/profil" :active="request()->is($url . '/profil')" icon="people-circle">
+            <x-navlink-fr href="/{{ $url }}/profil" :active="request()->is('*profil')" icon="people-circle">
                 Profil
             </x-navlink-fr>
         </li>

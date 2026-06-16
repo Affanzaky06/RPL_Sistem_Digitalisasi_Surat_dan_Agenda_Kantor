@@ -14,7 +14,7 @@
 
 
 <body class="vh-100 d-flex flex-column overflow-hidden ">
-
+            
     <x-header>
         Sistem Agenda Digital - {{ $title }}
     </x-header>
