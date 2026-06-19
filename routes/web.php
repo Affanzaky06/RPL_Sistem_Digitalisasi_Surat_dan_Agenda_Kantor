@@ -12,7 +12,9 @@ use App\Http\Controllers\Kepegawaian\kepegawaianController;
 use App\Http\Controllers\laporanPemantauanController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\Sekretaris\DashboardSekretarisController;
+use App\Http\Controllers\Sekretaris\DisposisiSekretarisController;
 use App\Http\Controllers\Sekretaris\VerifikasiController;
+use App\Http\Controllers\Staff\DisposisiStaffController;
 use App\Http\Controllers\Subkoor\DisposisiSubkoorController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,9 +34,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
+    Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
     Route::post('/profil/update', [ProfilController::class, 'update'])->name('profil.update');
-    
+
     // 2. Rute Konfirmasi Pendamping (Ditaruh di sini agar Kabid & Sekretaris sama-sama bisa akses)
     Route::post('/pendamping/konfirmasi/{id_surat}/{keputusan}', [ProfilController::class, 'konfirmasiPendamping'])->name('pendamping.konfirmasi');
 
@@ -144,9 +146,9 @@ Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
         )->name('kabid.tolak');
 
         Route::post(
-            '/pendamping/konfirmasi/{id_surat}/{keputusan}', 
+            '/pendamping/konfirmasi/{id_surat}/{keputusan}',
             [ProfilController::class, 'konfirmasiPendamping']
-            )->name('pendamping.konfirmasi');
+        )->name('pendamping.konfirmasi');
 
         Route::delete(
             '/kabid/disposisi/{id}',
@@ -217,13 +219,15 @@ Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
     // --------------------------------------------------------
 
     Route::middleware('role:J004')->group(function () {
-        Route::get('/staff', function () {
-            return view('dashboardKepala', ['title' => 'Staff', 'role' => 'Staff']);
-        })->name('staff.dashboard');
+        Route::get(
+            '/staff',
+            [DashboardController::class, 'index']
+        )->name('staff.dashboard');
 
-        Route::get('/staff/surat_masuk', function () {
-            return view('suratMasuk', ['title' => 'Staff', 'role' => 'Staff']);
-        })->name('staff.surat_masuk');
+        Route::get(
+            '/staff/surat_masuk',
+            [DisposisiStaffController::class, 'index']
+        )->name('staff.surat_masuk');
 
         Route::get(
             '/staff/agenda',
@@ -234,9 +238,20 @@ Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
             return view('KalenderKantor', ['title' => 'Staff', 'role' => 'Staff']);
         })->name('staff.kalender');
 
-        Route::get('/staff/profil', function () {
-            return view('profil', ['title' => 'Staff', 'role' => 'Staff']);
-        })->name('staff.profil');
+        Route::post(
+            '/staff/{id_surat}/hadir',
+            [DisposisiStaffController::class, 'konfirmasi_hadir']
+        )->name('staff.konfirmasi_hadir');
+
+        Route::post(
+            '/staff/{id_surat}/tolak',
+            [DisposisiStaffController::class, 'tolakDispo']
+        )->name('staff.tolakDispo');
+
+        Route::get(
+            '/staff/profil',
+            [ProfilController::class, 'index']
+        )->name('staff.profil');
     });
 
     // --------------------------------------------------------
@@ -314,8 +329,18 @@ Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
 
         Route::get(
             '/sekretaris/disposisi',
-            [DisposisiKepalaController::class, 'index']
-        )->name('sekretaris.surat_masuk');
+            [DisposisiSekretarisController::class, 'index']
+        )->name('sekretaris.disposisi');
+
+        Route::post(
+            '/sekretaris/{id_surat}/hadir',
+            [DisposisiSekretarisController::class, 'konfirmasi_hadir']
+        )->name('sekretaris.konfirmasi_hadir');
+
+        Route::post(
+            '/sekretaris/{id_surat}/tolak',
+            [DisposisiSekretarisController::class, 'tolakDispo']
+        )->name('sekretaris.tolakDispo');
 
         Route::get(
             '/sekretaris/riwayat_verifikasi',
@@ -357,8 +382,8 @@ Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
             '/frontliner/profil',
             [ProfilController::class, 'index']
         )->name('frontliner.profil');
-        
-        
+
+
         Route::post('/surat/store', [SuratController::class, 'store'])
             ->name('surat.store');
 

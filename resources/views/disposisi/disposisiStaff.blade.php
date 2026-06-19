@@ -125,41 +125,68 @@
                                             <button class="btn btn-dark btn-sm" style="width:100px;"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#detailModal{{ $surat->id_surat }}">
-
                                                 Detail
-
                                             </button>
                                         </td>
+
                                         <td>
-                                            @if ($surat->jenis_surat == 'Undangan')
+                                            @php
+                                                // CEK REAL-TIME: Apakah baris surat ini adalah undangan pendampingan dari Kepala untuk user ini?
+                                                $isDiajakPendamping = \App\Models\Peserta::where(
+                                                    'nip',
+                                                    auth()->user()->nip,
+                                                )
+                                                    ->whereHas('agenda', function ($q) use ($surat) {
+                                                        $q->where('id_surat', $surat->id_surat);
+                                                    })
+                                                    ->where('status_kehadiran', 'Menunggu Konfirmasi')
+                                                    ->exists();
+                                            @endphp
+
+                                            @if ($isDiajakPendamping)
+                                                <div class="d-flex flex-column align-items-center gap-1">
+                                                    <form
+                                                        action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Hadir']) }}"
+                                                        method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-success btn-sm"
+                                                            style="width:100px;">
+                                                            <i class="bi bi-check-lg"></i> Hadir
+                                                        </button>
+                                                    </form>
+
+                                                    <form
+                                                        action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Tolak']) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Tolak ajakan pendampingan Kepala?')">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                            style="width:100px;">
+                                                            <i class="bi bi-x"></i> Tolak
+                                                        </button>
+                                                    </form>
+
+                                                    <small class="text-primary fw-bold mt-1"
+                                                        style="font-size: 0.7rem;"><i class="bi bi-info-circle"></i>
+                                                        Diajak Pendamping</small>
+                                                </div>
+                                            @else
                                                 <div class="d-flex flex-column align-items-center gap-1">
 
-
-
-                                                    <button class="btn btn-primary btn-sm" style="width:100px;"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#disposisiModal{{ $surat->id_surat }}">
-
-                                                        Disposisi
-
-                                                    </button>
-
-                                                    <form action="#" method="POST">
-
-                                                        @csrf
-
+                                                    @if ($surat->jenis_surat == 'Undangan')
                                                         <button type="button" class="btn btn-success btn-sm"
                                                             style="width:100px;" data-bs-toggle="modal"
                                                             data-bs-target="#hadirModal{{ $surat->id_surat }}">
                                                             Hadir
                                                         </button>
-                                                    </form>
 
-                                                    <button type="button" class="btn btn-danger btn-sm"
-                                                        style="width:100px;" data-bs-toggle="modal"
-                                                        data-bs-target="#tolakModal{{ $surat->id_surat }}">
-                                                        Tolak
-                                                    </button>
+                                                        <button type="button" class="btn btn-danger btn-sm"
+                                                            style="width:100px;" data-bs-toggle="modal"
+                                                            data-bs-target="#tolakModal{{ $surat->id_surat }}">
+                                                            Tolak
+                                                        </button>
+                                                    @endif
+
                                                 </div>
                                             @endif
                                         </td>
@@ -350,219 +377,13 @@
     @endforeach
 
     @foreach ($suratMasuk as $surat)
-        <div class="modal fade" id="disposisiModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
-
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                <div class="modal-content border-0 shadow rounded-4">
-
-                    <form action="{{ route('subkoor.disposisi', $surat->id_surat) }}" method="POST">
-
-                        @csrf
-
-                        <div class="modal-header">
-
-                            <h5 class="modal-title">
-
-                                Disposisi Surat
-
-                            </h5>
-
-                            <button type="button" class="btn-close" data-bs-dismiss="modal">
-                            </button>
-
-                        </div>
-
-                        <div class="modal-body p-4">
-
-                            <div class="d-flex justify-content-between align-items-start mb-4">
-
-                                <div>
-
-                                    <h4 class="mb-1 fw-semibold">
-                                        {{ $surat->perihal }}
-                                    </h4>
-
-                                    <small class="text-muted">
-                                        {{ $surat->nomor_surat }}
-                                    </small>
-
-                                </div>
-
-                                @if ($surat->prioritas == 'Tinggi')
-                                    <span class="badge bg-danger px-3 py-2" style="width:110px;font-size:0.85rem;">
-
-                                        Tinggi
-
-                                    </span>
-                                @elseif($surat->prioritas == 'Sedang')
-                                    <span class="badge bg-warning text-dark px-3 py-2"
-                                        style="width:110px;font-size:0.85rem;">
-
-                                        Sedang
-
-                                    </span>
-                                @else
-                                    <span class="badge bg-success px-3 py-2" style="width:110px;font-size:0.85rem;">
-
-                                        Rendah
-
-                                    </span>
-                                @endif
-
-                            </div>
-
-                            <hr>
-
-                            <div class="mb-4">
-
-                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
-
-                                    Informasi Surat
-
-                                </div>
-
-                                <div class="row g-4">
-
-                                    <div class="col-md-6">
-
-                                        <div class="text-secondary small">
-                                            Pengirim
-                                        </div>
-
-                                        <div>
-                                            {{ $surat->asal_surat }}
-                                        </div>
-
-                                    </div>
-
-                                    <div class="col-md-6">
-
-                                        <div class="text-secondary small">
-                                            Tanggal Surat
-                                        </div>
-
-                                        <div>
-                                            {{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d M Y') }}
-                                        </div>
-
-                                    </div>
-
-                                    <div class="col-md-6">
-
-                                        <div class="text-secondary small">
-                                            Nomor Surat
-                                        </div>
-
-                                        <div>
-                                            {{ $surat->nomor_surat }}
-                                        </div>
-
-                                    </div>
-
-                                    <div class="col-md-6">
-
-                                        <div class="text-secondary small">
-                                            Jenis Surat
-                                        </div>
-
-                                        <div>
-                                            {{ $surat->jenis_surat }}
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                            <hr>
-
-                            <div class="mb-4">
-
-                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
-
-                                    Tujuan Disposisi
-
-                                </div>
-
-                                <select name="nip_penerima" class="form-select" required>
-
-                                    <option value="" selected disabled>
-
-                                        Pilih Penerima
-
-                                    </option>
-
-                                    @foreach ($pegawai as $p)
-                                        <option value="{{ $p->nip }}">
-
-                                            {{ $p->nama }}
-
-                                            -
-
-                                            @switch($p->id_jabatan)
-                                                @case('J003')
-                                                    Subkoor
-                                                @break
-
-                                                @case('J004')
-                                                    Staff
-                                                @break
-                                            @endswitch
-
-                                            @if ($p->bidang)
-                                                | {{ $p->bidang->nama_bidang }}
-                                            @endif
-
-                                        </option>
-                                    @endforeach
-
-                                </select>
-
-                            </div>
-
-                            <div>
-
-                                <div class="text-uppercase text-secondary small fw-semibold mb-3">
-
-                                    Catatan Disposisi
-
-                                </div>
-
-                                <textarea name="catatan" rows="4" class="form-control" placeholder="Tulis catatan disposisi..."></textarea>
-
-                            </div>
-
-                        </div>
-
-                        <div class="modal-footer">
-
-                            <button type="submit" class="btn btn-primary">
-
-                                Disposisikan
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </div>
-
-            </div>
-
-        </div>
-    @endforeach
-
-    @foreach ($suratMasuk as $surat)
         <div class="modal fade" id="hadirModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('subkoor.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('staff.konfirmasi_hadir', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0">
-                            <h5 class="modal-title fw-bold fs-4">Ajak Pendamping</h5>
+                            <h5 class="modal-title fw-bold fs-4">Hadir</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -613,41 +434,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="border rounded-3 p-3 mb-3 bg-white shadow-sm">
-                                <label class="fw-semibold mb-2 d-flex align-items-center">
-                                    <i class="bi bi-people me-2 fs-5"></i> Pilih Pendamping (Opsional)
-                                </label>
-                                <select name="nip_pendamping" class="form-select border-secondary">
-                                    <option value="" selected>Tidak membawa pendamping...</option>
-                                    @foreach ($pegawai as $p)
-                                        <option value="{{ $p->nip }}">
-                                            {{ $p->nama }} -
-
-                                            @switch($p->id_jabatan)
-                                                @case('J003')
-                                                    Subkoor
-                                                @break
-
-                                                @case('J004')
-                                                    Staff
-                                                @break
-                                            @endswitch
-                                            @if ($p->bidang)
-                                                | {{ $p->bidang->nama_bidang }}
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="border rounded-3 p-3 bg-white shadow-sm">
-                                <label class="fw-semibold mb-2 d-flex align-items-center">
-                                    <i class="bi bi-journal-text me-2 fs-5"></i> Catatan
-                                </label>
-                                <textarea name="catatan" rows="3" class="form-control border-secondary"
-                                    placeholder="Tulis instruksi pendampingan di sini... (kosongkan jika tidak ada)"></textarea>
-                            </div>
                         </div>
 
                         <div class="modal-footer border-top-0 px-4 pb-4">
@@ -663,7 +449,7 @@
         <div class="modal fade" id="tolakModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow rounded-4">
-                    <form action="{{ route('subkoor.tolak', $surat->id_surat) }}" method="POST">
+                    <form action="{{ route('staff.tolakDispo', $surat->id_surat) }}" method="POST">
                         @csrf
                         <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
                             <h5 class="modal-title fw-bold fs-4">Tolak Surat</h5>

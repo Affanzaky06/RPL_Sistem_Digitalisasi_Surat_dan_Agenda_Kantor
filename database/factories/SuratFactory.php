@@ -19,14 +19,31 @@ class SuratFactory extends Factory
 
         $tanggalSurat = $this->faker->dateTimeBetween('-2 months', 'now');
 
-        return [
+        $perihal = match ($jenisSurat) {
+            'Undangan' => $this->faker->randomElement([
+                'Undangan Rapat Koordinasi',
+                'Undangan Sosialisasi Program Kerja',
+                'Undangan Kegiatan Monitoring dan Evaluasi',
+            ]),
+            'Pemberitahuan' => $this->faker->randomElement([
+                'Pemberitahuan Pelaksanaan Kegiatan',
+                'Pemberitahuan Perubahan Jadwal',
+                'Pemberitahuan Penyesuaian Layanan',
+            ]),
+            'Edaran' => $this->faker->randomElement([
+                'Edaran Jadwal Pelayanan Publik',
+                'Edaran Pelaksanaan Apel Pagi',
+                'Edaran Penggunaan Fasilitas Kantor',
+            ]),
+        };
 
-            'perihal' => $this->faker->sentence(4),
+        return [
+            'perihal' => $perihal,
 
             // DI SINI LETAK PERBAIKANNYA: Tambahkan unique() pada pembuat angka
             'nomor_surat' => sprintf(
                 '%03d/%s/%d',
-                $this->faker->unique()->numberBetween(1, 9999), 
+                $this->faker->unique()->numberBetween(1, 9999),
                 $this->faker->randomElement(['UND', 'EDR', 'PMH', 'PBR']),
                 now()->year
             ),

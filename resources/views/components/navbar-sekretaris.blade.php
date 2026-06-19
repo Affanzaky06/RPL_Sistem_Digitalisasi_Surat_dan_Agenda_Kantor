@@ -43,14 +43,14 @@
         </li>
 
         <li class="mb-2">
-            <x-navlink-fr href="/sekretaris/disposisi" :active="request()->is('sekretaris/disposisi')">
+            <x-navlink-fr href="{{ route('sekretaris.disposisi') }}" :active="request()->is('sekretaris/disposisi')">
 
                 Surat Masuk & Disposisi
 
             </x-navlink-fr>
         </li>
 
-        <li  class="mb-2">
+        <li class="mb-2">
             <x-navlink-fr href="/sekretaris/profil" :active="request()->is('*profil')">
 
                 Profil

@@ -52,11 +52,12 @@
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label class="form-label text-dark fw-medium">Perihal Surat</label>
-                            <input type="text" class="form-control border-dark border" name="perihal" required>
+                            <input type="text" class="form-control border-dark border" name="perihal" required
+                                autofocus autocomplete="off">
                         </div>
                         <div class="col-md-6 mt-3 mt-md-0">
                             <label class="form-label text-dark fw-medium">Nomor Surat</label>
-                            <input type="text" name="nomor_surat" value="{{ old('nomor_surat') }}"
+                            <input type="text" name="nomor_surat" value="{{ old('nomor_surat') }}" autocomplete="off"
                                 class="form-control border-dark border @error('nomor_surat') is-invalid @enderror">
 
                             @error('nomor_surat')
@@ -70,17 +71,19 @@
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label class="form-label text-dark fw-medium">Tanggal Surat</label>
-                            <input type="date" class="form-control border-dark border" name="tanggal_surat" required>
+                            <input type="date" class="form-control border-dark border" name="tanggal_surat" required
+                                autocomplete="off">
                         </div>
                         <div class="col-md-6 mt-3 mt-md-0">
                             <label class="form-label text-dark fw-medium">Tanggal Kegiatan</label>
-                            <input type="date" class="form-control border-dark border" name="tanggal_kegiatan">
+                            <input type="date" class="form-control border-dark border" name="tanggal_kegiatan"
+                                autocomplete="off">
                         </div>
                     </div>
 
                     <div class="mb-2">
                         <label class="form-label text-dark fw-medium">Lokasi</label>
-                        <input type="text" class="form-control border-dark border" name="lokasi">
+                        <input type="text" class="form-control border-dark border" name="lokasi" autocomplete="off">
                     </div>
 
                     <div class="row mb-2">
@@ -96,7 +99,8 @@
 
                     <div class="mb-2">
                         <label class="form-label text-dark fw-medium">Asal Surat</label>
-                        <input type="text" class="form-control border-dark border" name="asal_surat" required>
+                        <input type="text" class="form-control border-dark border" name="asal_surat" required
+                            autocomplete="off">
                     </div>
 
                     <div class="mb-3">
