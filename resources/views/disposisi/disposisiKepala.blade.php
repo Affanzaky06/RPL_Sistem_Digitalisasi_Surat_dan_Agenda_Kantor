@@ -479,8 +479,8 @@
                                             </div>
 
                                             <select
-                                                class="form-select form-select-sm border filter-jabatan shadow-none"
-                                                data-target="list-pendamping-{{ $surat->id_surat }}"
+                                                class="form-select form-select-sm border filter-jabatan-penerima shadow-none"
+                                                data-target="list-penerima-{{ $surat->id_surat }}"
                                                 style="width: 140px;">
                                                 <option value="ALL">Pilih Jabatan</option>
                                                 <option value="J002">Kabid</option>
@@ -503,7 +503,8 @@
                                             @if (!in_array($p->nip, $ditolak))
                                                 <label
                                                     class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle penerima-item"
-                                                    data-nama="{{ strtolower($p->nama) }}" style="cursor:pointer;">
+                                                    data-nama="{{ strtolower($p->nama) }}"
+                                                    data-jabatan="{{ $p->id_jabatan }}" style="cursor:pointer;">
 
                                                     <input
                                                         class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle"
@@ -677,7 +678,8 @@
                                                 <i class="bi bi-search"></i>
                                             </span>
                                         </div>
-                                        <select class="form-select form-select-sm border filter-jabatan shadow-none"
+                                        <select
+                                            class="form-select form-select-sm border filter-jabatan-pendamping shadow-none"
                                             data-target="list-pendamping-{{ $surat->id_surat }}"
                                             style="width: 140px;">
                                             <option value="ALL">Pilih Jabatan</option>
@@ -829,64 +831,54 @@
             </div>
         </div>
     @endforeach
+    <script>
+        (() => {
+            const norm = (value) => (value ?? '').toString().trim().toLowerCase();
+
+            const bindList = (searchSelector, filterSelector, itemSelector) => {
+                document.querySelectorAll(searchSelector).forEach(searchInput => {
+                    const targetId = searchInput.dataset.target;
+                    const list = document.getElementById(targetId);
+                    if (!list) return;
+
+                    const modal = searchInput.closest('.modal');
+                    const filter = modal ?
+                        Array.from(modal.querySelectorAll(filterSelector)).find(el => el.dataset.target ===
+                            targetId) :
+                        Array.from(document.querySelectorAll(filterSelector)).find(el => el.dataset
+                            .target === targetId);
+
+                    const apply = () => {
+                        const keyword = norm(searchInput.value);
+                        const jabatan = filter ? filter.value : 'ALL';
+
+                        list.querySelectorAll(itemSelector).forEach(item => {
+                            const matchNama = keyword === '' || norm(item.dataset.nama)
+                                .includes(keyword);
+                            const matchJabatan = jabatan === 'ALL' || norm(item.dataset
+                                .jabatan) === norm(jabatan);
+
+                            item.classList.toggle('d-none', !(matchNama && matchJabatan));
+                        });
+                    };
+
+                    searchInput.addEventListener('input', apply);
+                    if (filter) filter.addEventListener('change', apply);
+
+                    apply();
+                });
+            };
+
+            const init = () => {
+                bindList('.search-penerima', '.filter-jabatan-penerima', '.penerima-item');
+                bindList('.search-pendamping', '.filter-jabatan-pendamping', '.pendamping-item');
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </x-layout>
-
-<script>
-    document.querySelectorAll('.search-penerima').forEach(input => {
-
-        input.addEventListener('keyup', function() {
-
-            const keyword = this.value.toLowerCase();
-
-            const list = document.getElementById(
-                this.dataset.target
-            );
-
-            list.querySelectorAll('.penerima-item')
-                .forEach(item => {
-
-                    const nama = item.dataset.nama;
-
-                    item.style.display =
-                        nama.includes(keyword) ?
-                        '' :
-                        'none';
-                });
-
-        });
-
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Logika Search Bar
-        document.querySelectorAll('.search-pendamping').forEach(input => {
-            input.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase();
-                const targetList = document.getElementById(this.dataset.target);
-                const items = targetList.querySelectorAll('.pendamping-item');
-
-                items.forEach(item => {
-                    const nama = item.dataset.nama;
-                    item.style.display = nama.includes(term) ? 'flex' : 'none';
-                });
-            });
-        });
-
-        // Logika Dropdown Filter Jabatan
-        document.querySelectorAll('.filter-jabatan').forEach(select => {
-            select.addEventListener('change', function() {
-                const jabatan = this.value;
-                const targetList = document.getElementById(this.dataset.target);
-                const items = targetList.querySelectorAll('.pendamping-item');
-
-                items.forEach(item => {
-                    if (jabatan === 'ALL' || item.dataset.jabatan === jabatan) {
-                        item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
-        });
-    });
-</script>
