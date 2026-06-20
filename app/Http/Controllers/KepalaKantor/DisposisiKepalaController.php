@@ -40,7 +40,15 @@ class DisposisiKepalaController extends Controller
             });
         }
 
-        $ringkasanAgenda = collect();
+         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                $q->where('nip', $user->nip);
+            })
+            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->take(3)
+            ->get();
 
         $suratMasuk = Surat::with('disposisi')
             ->where('status', 'Terverifikasi')

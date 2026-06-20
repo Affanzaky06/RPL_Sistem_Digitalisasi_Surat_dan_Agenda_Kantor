@@ -51,8 +51,8 @@ class LoginController extends Controller
             }
 
             return back()->withErrors([
-                'nip' => 'NIP atau password yang Anda masukkan salah.',
-            ])->onlyInput('nip');
+                'NIP' => 'NIP atau password yang Anda masukkan salah.',
+            ])->onlyInput('NIP');
         }
     // Memproses logout
     public function logout(Request $request)

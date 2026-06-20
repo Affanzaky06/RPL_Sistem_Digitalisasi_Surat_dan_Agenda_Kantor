@@ -12,7 +12,8 @@ use Carbon\Carbon; // WAJIB DIIMPORT
 class VerifikasiController extends Controller
 {
     public function index(Request $request)
-    {
+    {   
+        $user = Auth::user();
         $query = Surat::query()
             ->where('status', 'Menunggu Verifikasi');
 
@@ -38,19 +39,13 @@ class VerifikasiController extends Controller
             ->withQueryString();
 
         // LOGIKA AGENDA: Hanya mengambil agenda milik Sekretaris yang sedang login
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->where('peserta.nip', Auth::user()->nip) // Filter khusus NIP pengguna yang login
-            ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
-            ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('agenda.waktu_mulai', 'asc')
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                $q->where('nip', $user->nip);
+            })
+            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -103,6 +98,7 @@ class VerifikasiController extends Controller
 
     public function riwayat(Request $request)
     {
+        $user = Auth::user();
         $query = Surat::query()
             ->whereIn(
                 'status',
@@ -133,19 +129,13 @@ class VerifikasiController extends Controller
             ->withQueryString();
 
         // Jalankan logika agenda yang sama di halaman riwayat agar sidebar tidak kosong/error
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->where('peserta.nip', Auth::user()->nip) // Filter khusus NIP pengguna yang login
-            ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
-            ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('agenda.waktu_mulai', 'asc')
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                $q->where('nip', $user->nip);
+            })
+            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 

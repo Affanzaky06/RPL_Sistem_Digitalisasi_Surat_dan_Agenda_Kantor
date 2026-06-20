@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
 
     // 2. Rute Konfirmasi Pendamping (Ditaruh di sini agar Kabid & Sekretaris sama-sama bisa akses)
     Route::post('/pendamping/konfirmasi/{id_surat}/{keputusan}', [ProfilController::class, 'konfirmasiPendamping'])->name('pendamping.konfirmasi');
+    Route::post('/laporan/dispo-ulang/{id}', [laporanPemantauanController::class, 'dispoUlang'])->name('laporan.dispo_ulang');
+    Route::post('/laporan/setujui/{id}', [laporanPemantauanController::class, 'setujuiPenolakan'])->name('laporan.setujui');
 
     // --------------------------------------------------------
     // 1. RUTE KEPALA KANTOR (Role: J001)
@@ -144,11 +146,6 @@ Route::middleware('auth')->group(function () {
             '/kabid/{id_surat}/tolak',
             [DisposisiKabidController::class, 'tolak']
         )->name('kabid.tolak');
-
-        Route::post(
-            '/pendamping/konfirmasi/{id_surat}/{keputusan}',
-            [ProfilController::class, 'konfirmasiPendamping']
-        )->name('pendamping.konfirmasi');
 
         Route::delete(
             '/kabid/disposisi/{id}',

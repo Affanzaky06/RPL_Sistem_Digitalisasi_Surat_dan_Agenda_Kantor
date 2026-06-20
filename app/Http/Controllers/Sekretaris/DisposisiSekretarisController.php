@@ -25,7 +25,15 @@ class DisposisiSekretarisController extends Controller
         ];
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
-
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                $q->where('nip', $user->nip);
+            })
+            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->take(3)
+            ->get();
         $suratMasuk = Surat::with([
             'disposisi.pemberi.bidang'
         ])
@@ -50,7 +58,7 @@ class DisposisiSekretarisController extends Controller
                 'title' => $role,
                 'role' => $role,
                 'suratMasuk' => $suratMasuk,
-                'ringkasanAgenda' => collect()
+                'ringkasanAgenda' => $ringkasanAgenda
             ]
         );
     }

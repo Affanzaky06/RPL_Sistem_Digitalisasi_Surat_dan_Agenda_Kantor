@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agenda;
+use App\Models\Disposisi;
+use App\Models\Peserta; // Wajib import Peserta
 use App\Models\Surat; // Wajib ditambahkan
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Wajib ditambahkan
 use Illuminate\Support\Facades\Hash;
-use App\Models\Peserta; // Wajib import Peserta
-use Carbon\Carbon;
 
 class ProfilController extends Controller
 {
@@ -83,5 +85,40 @@ class ProfilController extends Controller
         $user->save();
 
         return back()->with('success', 'Profil berhasil diperbarui');
+    }
+
+   public function konfirmasiPendamping($id_surat, $keputusan)
+    {
+        $user = Auth::user();
+        
+        // Find agenda berdasarkan id_surat
+        $agenda = Agenda::where('id_surat', $id_surat)->firstOrFail();
+
+        if ($keputusan === 'Hadir') {
+            // 1. Ubah status kehadiran di tabel Peserta menjadi 'Hadir'
+            Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', $user->nip)
+                ->update(['status_kehadiran' => 'Hadir']);
+
+            // 2. Ubah status di tabel Disposisi agar surat hilang dari antrean masuk
+            Disposisi::where('id_surat', $id_surat)
+                ->where('nip_penerima', $user->nip)
+                ->whereIn('status', ['Belum Dibaca', 'Menunggu Konfirmasi'])
+                ->update(['status' => 'Hadir']); // Atau bisa gunakan 'Hadir'
+
+            return back()->with('success', 'Berhasil menyetujui pendampingan agenda.');
+        } else {
+            // 1. Jika menolak, hapus baris user tersebut dari daftar peserta agenda
+            Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', $user->nip)
+                ->delete();
+
+            // 2. Ubah status di tabel Disposisi menjadi 'Tidak Hadir' atau 'Ditolak'
+            Disposisi::where('id_surat', $id_surat)
+                ->where('nip_penerima', $user->nip)
+                ->update(['status' => 'Tidak Hadir']);
+
+            return back()->with('success', 'Anda menolak undangan pendampingan agenda.');
+        }
     }
 }

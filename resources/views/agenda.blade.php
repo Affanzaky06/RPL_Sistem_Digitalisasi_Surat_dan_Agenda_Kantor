@@ -102,11 +102,11 @@
         }
     </style>
 
-    <div class="container-fluid pt-2 px-3 pb-3 position-relative" style="height: calc(100vh - 130px); overflow: hidden;">
+    <div class="container-fluid pt-2 px-3 position-relative" style="height: calc(100vh - 130px); overflow: hidden;">
         <div class="row h-100">
 
             <!-- KOLOM KIRI: KALENDER (Lebar 9) -->
-            <div class="col-lg-9 h-100">
+            <div class=" h-100">
                 <div class="border border-dark rounded-3 d-flex flex-column h-100 bg-white shadow-sm overflow-hidden">
                     <div class="d-flex justify-content-between align-items-center p-3 border-bottom border-dark">
 
@@ -140,11 +140,6 @@
             </div>
 
             <!-- KOLOM KANAN: RINGKASAN PESERTA (Lebar 3) -->
-            @php
-
-                $ringkasanAgenda = [];
-            @endphp
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
         </div>
 
         <!-- Panggil File JS Khusus Agenda -->
