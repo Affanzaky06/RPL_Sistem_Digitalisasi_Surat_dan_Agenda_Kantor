@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Disposisi;
 use App\Models\Pegawai;
 use App\Models\Surat;
+use App\Models\Agenda;
+use App\Models\Peserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,7 +29,16 @@ class DisposisiSubkoorController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        $ringkasanAgenda = collect();
+        $ringkasanAgenda = Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
+        })
+            ->with(['surat', 'peserta.pegawai'])
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->take(3)
+            ->get();
 
         $search = trim((string) request('search', ''));
         $sort = request('sort', 'prioritas');
@@ -181,5 +192,69 @@ class DisposisiSubkoorController extends Controller
             'success',
             'Disposisi berhasil dibatalkan'
         );
+    }
+
+    /**
+     * Konfirmasi Hadir Subkoor + buat agenda/peserta + ajak pendamping
+     */
+    public function konfirmasiHadir(Request $request, $id_surat)
+    {
+        $surat = Surat::findOrFail($id_surat);
+        $user = Auth::user();
+
+        // Update status disposisi Subkoor menjadi Hadir
+        Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->update(['status' => 'Hadir']);
+
+        // 1. PASTIKAN AGENDA SUDAH DIBUAT
+        $agenda = Agenda::firstOrCreate(
+            ['id_surat' => $surat->id_surat],
+            [
+                'nama_kegiatan' => $surat->perihal,
+                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                'lokasi' => $surat->lokasi_kegiatan,
+                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+            ]
+        );
+
+        // 2. MASUKKAN SUBKOOR SEBAGAI PESERTA PASTI HADIR
+        Peserta::updateOrCreate(
+            [
+                'id_agenda' => $agenda->id_agenda,
+                'nip' => $user->nip
+            ],
+            [
+                'status_kehadiran' => 'Hadir'
+            ]
+        );
+
+        // 3. JIKA SUBKOOR MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
+        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+            foreach ($request->nip_pendamping as $nipPenerima) {
+                $disposisi = Disposisi::create([
+                    'id_surat' => $surat->id_surat,
+                    'nip_pemberi' => $user->nip,
+                    'nip_penerima' => $nipPenerima,
+                    'tanggal' => now(),
+                    'catatan' => $request->catatan ?? 'Mendampingi atasan pada kegiatan ini.',
+                    'status' => 'Menunggu Konfirmasi'
+                ]);
+
+                Peserta::updateOrCreate(
+                    [
+                        'id_agenda' => $agenda->id_agenda,
+                        'nip' => $nipPenerima
+                    ],
+                    [
+                        'id_disposisi' => $disposisi->id_disposisi,
+                        'status_kehadiran' => 'Menunggu Konfirmasi'
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
     }
 }

@@ -57,6 +57,7 @@ class DisposisiKepalaController extends Controller
 
         $suratMasukQuery = Surat::with('disposisi')
             ->where('status', 'Terverifikasi')
+            ->whereDoesntHave('agenda') // Tambahkan ini! Jika sudah ada agenda, berarti sudah diproses (Kepala Hadir)
             ->where(function ($q) {
                 $q->whereDoesntHave('disposisi')
                     ->orWhereHas('disposisi', function ($sub) {
@@ -220,7 +221,7 @@ class DisposisiKepalaController extends Controller
                     'nip_penerima' => $nipPenerima,
                     'tanggal' => now(),
                     'catatan' => $request->catatan ?? 'Mendampingi Kepala Kantor pada kegiatan ini.',
-                    'status' => 'Belum Dibaca'
+                    'status' => 'Menunggu Konfirmasi'
                 ]);
 
                 // Masukkan mereka ke tabel Peserta (Menunggu Konfirmasi)

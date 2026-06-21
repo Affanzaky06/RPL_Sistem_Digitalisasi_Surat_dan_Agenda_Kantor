@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agenda;
 use App\Models\Disposisi;
+use App\Models\Pegawai;
+use App\Models\Peserta;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,30 +63,60 @@ class DisposisiStaffController extends Controller
 
         $suratMasuk = $suratMasukQuery->paginate(10)->withQueryString();
 
+        $ringkasanAgenda = Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
+        })
+            ->with(['surat', 'peserta.pegawai'])
+            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->take(3)
+            ->get();
+
         return view(
             'disposisi.disposisiStaff',
             [
                 'title' => $role,
                 'role' => $role,
                 'suratMasuk' => $suratMasuk,
-                'ringkasanAgenda' => collect()
+                'ringkasanAgenda' => $ringkasanAgenda
             ]
         );
     }
 
     public function konfirmasi_hadir($id_surat)
     {
-        Disposisi::where(
-            'id_surat',
-            $id_surat
-        )
-            ->where(
-                'nip_penerima',
-                Auth::user()->nip
-            )
-            ->update([
-                'status' => 'Hadir'
-            ]);
+        $surat = Surat::findOrFail($id_surat);
+        $user = Auth::user();
+
+        // Update status disposisi Staff menjadi Hadir
+        Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->update(['status' => 'Hadir']);
+
+        // PASTIKAN AGENDA SUDAH DIBUAT
+        $agenda = Agenda::firstOrCreate(
+            ['id_surat' => $surat->id_surat],
+            [
+                'nama_kegiatan' => $surat->perihal,
+                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                'lokasi' => $surat->lokasi_kegiatan,
+                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+            ]
+        );
+
+        // MASUKKAN STAFF SEBAGAI PESERTA PASTI HADIR
+        Peserta::updateOrCreate(
+            [
+                'id_agenda' => $agenda->id_agenda,
+                'nip' => $user->nip
+            ],
+            [
+                'status_kehadiran' => 'Hadir'
+            ]
+        );
 
         return back()->with(
             'success',

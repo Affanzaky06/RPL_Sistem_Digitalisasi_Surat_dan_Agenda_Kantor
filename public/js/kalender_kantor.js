@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             locale: 'id',
-            slotMinTime: '09:00:00',
-            slotMaxTime: '20:00:00',
+            slotMinTime: '00:00:00',
+            slotMaxTime: '24:00:00',
             allDaySlot: false,
             nowIndicator: true,
             height: '100%',
@@ -29,9 +29,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 let badgeClass = '';
                 let badgeText = '';
 
-                if (props.status === 'terlaksana') {
+                let now = new Date();
+                let eventStart = event.start;
+                let eventEnd = event.end || eventStart; // fallback ke start jika end tidak ada
+                let dynamicStatus = props.status; // fallback ke backend
+
+                if (eventEnd && now > eventEnd) {
+                    dynamicStatus = 'terlaksana';
+                } else if (eventStart && eventEnd && now >= eventStart && now <= eventEnd) {
+                    dynamicStatus = 'berlangsung';
+                } else if (eventStart && now < eventStart) {
+                    dynamicStatus = 'mendatang';
+                }
+
+                if (dynamicStatus === 'terlaksana') {
                     bgClass = 'bg-terlaksana'; badgeClass = 'badge-terlaksana'; badgeText = 'Terlaksana';
-                } else if (props.status === 'berlangsung') {
+                } else if (dynamicStatus === 'berlangsung') {
                     bgClass = 'bg-berlangsung'; badgeClass = 'badge-berlangsung'; badgeText = 'Sedang Berlangsung';
                 } else {
                     bgClass = 'bg-mendatang'; badgeClass = 'badge-mendatang'; badgeText = 'Akan Datang';

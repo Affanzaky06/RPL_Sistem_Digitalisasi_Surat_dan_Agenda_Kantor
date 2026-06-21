@@ -214,6 +214,163 @@
 
     </div>
 
+    <!-- MODAL KONFIRMASI PENDAMPING -->
+    <div class="modal fade" id="modalKonfirmasiPendamping" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-info-circle-fill me-2"></i>Jadikan Perwakilan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-3">Anda memiliki pendamping untuk kegiatan ini. Apakah Anda ingin menjadikan pendamping sebagai penerima disposisi (perwakilan)?</p>
+                    <div id="list-pendamping-konfirmasi" class="list-group mb-3">
+                        <!-- Diisi oleh JS -->
+                    </div>
+                    <hr>
+                    <p class="mb-2 text-muted small">Atau Anda dapat memilih bawahan lain untuk mewakili Anda:</p>
+                    <button type="button" class="btn btn-outline-secondary w-100 fw-bold mb-3" id="btn-lanjut-disposisi">
+                        <i class="bi bi-person-lines-fill me-2"></i>Pilih Bawahan Lain (Disposisi)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger w-100 fw-bold" id="btn-tolak-kirim-alasan" style="display: none;">
+                        <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PILIH AKSI BATAL (UNTUK KABID/SUBKOOR TANPA PENDAMPING) -->
+    <div class="modal fade" id="modalPilihAksiBatal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-4">Anda akan membatalkan kehadiran. Apa yang ingin Anda lakukan?</p>
+                    <div class="d-flex flex-column gap-3">
+                        <button type="button" class="btn btn-primary fw-bold" id="btn-aksi-disposisi">
+                            <i class="bi bi-person-lines-fill me-2"></i>Disposisikan ke Bawahan
+                        </button>
+                        <button type="button" class="btn btn-danger fw-bold" id="btn-aksi-tolak">
+                            <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DISPOSISI (KEMBALI KE TAMPILAN LAMA) -->
+    <div class="modal fade" id="modalDisposisiBatal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <form id="formDisposisiBatal" action="" method="POST">
+                    @csrf
+                    <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                        <h5 class="modal-title fw-bold fs-4">Disposisi Surat (Batal Hadir)</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                            <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-send me-2"></i>Pengirim</small>
+                                    <span class="fw-bold" id="dispo-batal-pengirim">-</span>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor Surat</small>
+                                    <span class="fw-bold" id="dispo-batal-nomor">-</span>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text me-2"></i>Perihal</small>
+                                    <span class="fw-bold" id="dispo-batal-perihal">-</span>
+                                </div>
+                            </div>
+                            <div class="col-6 ps-4">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                    <span class="fw-bold" id="dispo-batal-tanggal">-</span>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark me-2"></i>Jenis Surat</small>
+                                    <span class="fw-bold" id="dispo-batal-jenis">-</span>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                    <span id="dispo-batal-prioritas">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-4">
+                            <div class="text-uppercase text-secondary small fw-semibold mb-3">Tujuan Disposisi</div>
+                            <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="fw-bold mb-0 d-flex align-items-center text-dark">
+                                        <i class="bi bi-person-check me-2 fs-5"></i>Pilih Penerima Disposisi
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <div class="input-group input-group-sm border rounded-2" style="width:220px;">
+                                            <input type="text" class="form-control border-0 shadow-none search-penerima-batal" data-target="list-penerima-batal" placeholder="Cari nama...">
+                                            <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+                                        </div>
+                                        <select class="form-select form-select-sm border filter-jabatan-penerima-batal shadow-none" data-target="list-penerima-batal" style="width: 140px;">
+                                            <option value="ALL">Pilih Jabatan</option>
+                                            <option value="J002">Kabid</option>
+                                            <option value="J006">Sekretaris</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="list-group" id="list-penerima-batal" style="max-height:220px; overflow-y:auto;">
+                                    @if(isset($pegawai))
+                                        @foreach ($pegawai as $p)
+                                            <label class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle penerima-item-batal"
+                                                data-nama="{{ strtolower($p->nama) }}" data-jabatan="{{ $p->id_jabatan }}" style="cursor:pointer;">
+                                                <input class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle" type="radio" name="nip_penerima" value="{{ $p->nip }}" required>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <i class="bi bi-person-circle fs-2 text-secondary"></i>
+                                                    <div>
+                                                        <h6 class="mb-0 fw-bold">{{ $p->nama }}</h6>
+                                                        <small class="text-muted">
+                                                            @switch($p->id_jabatan)
+                                                                @case('J002') Kabid @break
+                                                                @case('J003') Subkoor @break
+                                                                @case('J004') Staff @break
+                                                                @case('J006') Sekretaris @break
+                                                            @endswitch
+                                                            @if ($p->bidang) | {{ $p->bidang->nama_bidang }} @endif
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 p-3 bg-white shadow-sm">
+                                <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                    <i class="bi bi-journal-text me-2 fs-5"></i>Catatan Disposisi
+                                </label>
+                                <textarea name="catatan" rows="3" class="form-control border-secondary-subtle" placeholder="Tulis Catatan Disini... (kosongkan jika tidak ada)" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
+                            <button type="submit" class="btn btn-primary px-4 fw-bold">Disposisikan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL TIDAK HADIR (untuk Kabid ke bawah, dengan alasan) -->
     <div class="modal fade" id="tidakHadirModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -284,5 +441,5 @@
     </div>
 
     <!-- Panggil File JS Khusus Agenda -->
-    <script src="{{ asset('js/agenda.js') }}"></script>
+    <script src="{{ asset('js/agenda.js') }}?v={{ time() }}"></script>
 </x-layout>

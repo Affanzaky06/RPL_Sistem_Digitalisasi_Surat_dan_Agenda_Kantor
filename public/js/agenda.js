@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
         let calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             locale: 'id',
-            slotMinTime: '09:00:00',
-            slotMaxTime: '20:00:00',
+            slotMinTime: '00:00:00',
+            slotMaxTime: '24:00:00',
             allDaySlot: false,
             nowIndicator: true,
             height: '100%',
@@ -62,9 +62,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 let badgeClass = '';
                 let badgeText = '';
 
-                if (props.status === 'terlaksana') {
+                let now = new Date();
+                let eventStart = event.start;
+                let eventEnd = event.end || eventStart;
+                let dynamicStatus = props.status;
+
+                if (eventEnd && now > eventEnd) {
+                    dynamicStatus = 'terlaksana';
+                } else if (eventStart && eventEnd && now >= eventStart && now <= eventEnd) {
+                    dynamicStatus = 'berlangsung';
+                } else if (eventStart && now < eventStart) {
+                    dynamicStatus = 'mendatang';
+                }
+
+                if (dynamicStatus === 'terlaksana') {
                     bgClass = 'bg-terlaksana'; badgeClass = 'badge-terlaksana'; badgeText = 'Terlaksana';
-                } else if (props.status === 'berlangsung') {
+                } else if (dynamicStatus === 'berlangsung') {
                     bgClass = 'bg-berlangsung'; badgeClass = 'badge-berlangsung'; badgeText = 'Sedang Berlangsung';
                 } else {
                     bgClass = 'bg-mendatang'; badgeClass = 'badge-mendatang'; badgeText = 'Akan Datang';
@@ -151,61 +164,241 @@ document.addEventListener('DOMContentLoaded', function () {
 
         calendar.render();
 
-        // TOMBOL "BATAL HADIR" di popup → buka modal atau langsung submit
+        // TOMBOL "BATAL HADIR" di popup
         if (popupBatalBtn) {
             popupBatalBtn.addEventListener('click', function () {
                 if (!activeEventProps) return;
 
                 let idAgenda = activeEventProps.id_agenda;
-                let formAction = '/agenda/' + idAgenda + '/batal-hadir';
+                let currentProps = activeEventProps;
 
-                if (userRole === 'Kepala') {
-                    // Kepala Kantor: langsung submit tanpa modal (tanpa alasan)
-                    let form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = formAction;
-
-                    let csrf = document.createElement('input');
-                    csrf.type = 'hidden';
-                    csrf.name = '_token';
-                    csrf.value = document.querySelector('meta[name="csrf-token"]')?.content 
-                                 || document.querySelector('input[name="_token"]')?.value || '';
-                    form.appendChild(csrf);
-
-                    document.body.appendChild(form);
-                    form.submit();
+                if (userRole === 'Kepala' || userRole === 'Kabid' || userRole === 'Subkoor' || userRole === 'Subkoordinator') {
+                    // Cek pendamping dulu via AJAX
+                    fetch('/agenda/' + idAgenda + '/cek-pendamping', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        closePopup();
+                        showBatalModalWithDispo(idAgenda, data, currentProps);
+                    })
+                    .catch(err => {
+                        console.error('Error cek pendamping:', err);
+                        // Fallback: langsung batal hadir tanpa cek
+                        submitBatalHadir(idAgenda);
+                    });
                 } else {
-                    // Kabid ke bawah: tampilkan modal dengan form alasan
-                    let modalForm = document.getElementById('form-tidak-hadir');
-                    modalForm.action = formAction;
-
-                    // Isi data modal
-                    document.getElementById('modal-pengirim').textContent = activeEventProps.pengirim || '-';
-                    document.getElementById('modal-nomor-surat').textContent = activeEventProps.nomor_surat || '-';
-                    document.getElementById('modal-perihal').textContent = activeEventProps.perihal || '-';
-                    document.getElementById('modal-tanggal-surat').textContent = activeEventProps.tanggal_surat || '-';
-                    document.getElementById('modal-waktu').textContent = activeEventProps.waktu || '-';
-
-                    // Prioritas badge
-                    let prioritasEl = document.getElementById('modal-prioritas');
-                    let prioritas = activeEventProps.prioritas || 'Rendah';
-                    if (prioritas === 'Tinggi') {
-                        prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Urgent</span>';
-                    } else if (prioritas === 'Sedang') {
-                        prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
-                    } else {
-                        prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';
-                    }
-
-                    // Reset textarea
-                    modalForm.querySelector('textarea[name="alasan_tidak_hadir"]').value = '';
-
-                    // Tutup popup dan buka modal
+                    // Staff: tampilkan modal dengan form alasan (batal biasa)
                     closePopup();
-                    let modal = new bootstrap.Modal(document.getElementById('tidakHadirModal'));
-                    modal.show();
+                    showModalTolakAlasan(idAgenda, currentProps);
                 }
             });
+        }
+
+        /**
+         * Tampilkan form alasan tidak hadir (fallback batal biasa)
+         */
+        function showModalTolakAlasan(idAgenda, eventProps) {
+            let formAction = '/agenda/' + idAgenda + '/batal-hadir';
+            let modalForm = document.getElementById('form-tidak-hadir');
+            modalForm.action = formAction;
+
+            // Isi data modal
+            document.getElementById('modal-pengirim').textContent = eventProps.pengirim || '-';
+            document.getElementById('modal-nomor-surat').textContent = eventProps.nomor_surat || '-';
+            document.getElementById('modal-perihal').textContent = eventProps.perihal || '-';
+            document.getElementById('modal-tanggal-surat').textContent = eventProps.tanggal_surat || '-';
+            document.getElementById('modal-waktu').textContent = eventProps.waktu || '-';
+
+            // Prioritas badge
+            let prioritasEl = document.getElementById('modal-prioritas');
+            let prioritas = eventProps.prioritas || 'Rendah';
+            if (prioritas === 'Tinggi') {
+                prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Urgent</span>';
+            } else if (prioritas === 'Sedang') {
+                prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
+            } else {
+                prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';
+            }
+
+            // Reset textarea
+            modalForm.querySelector('textarea[name="alasan_tidak_hadir"]').value = '';
+
+            let modal = new bootstrap.Modal(document.getElementById('tidakHadirModal'));
+            modal.show();
+        }
+
+        /**
+         * Tampilkan modal khusus saat batal hadir (Kepala/Kabid/Subkoor)
+         */
+        function showBatalModalWithDispo(idAgenda, data, eventProps) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                || document.querySelector('input[name="_token"]')?.value || '';
+
+            // JIKA MURNI SEBAGAI PENDAMPING (Bukan Penerima Disposisi Utama/Perwakilan)
+            // Langsung tampilkan form alasan tolak (tidak boleh disposisi/wakilkan lagi)
+            if (data.is_pendamping_only) {
+                showModalTolakAlasan(idAgenda, eventProps);
+                return;
+            }
+
+            if (data.ada_pendamping) {
+                // ADA PENDAMPING → Tampilkan modalKonfirmasiPendamping
+                let listContainer = document.getElementById('list-pendamping-konfirmasi');
+                let html = '';
+                data.pendamping.forEach(function(p) {
+                    html += `
+                        <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center bg-light">
+                            <div>
+                                <div class="fw-bold">${p.nama}</div>
+                                <small class="text-muted">${p.jabatan} | ${p.bidang}</small>
+                                <br><small class="badge ${p.status === 'Hadir' ? 'bg-success' : 'bg-warning text-dark'}">${p.status}</small>
+                            </div>
+                            <div class="d-flex flex-column gap-1">
+                                <form action="/agenda/${idAgenda}/wakilkan" method="POST">
+                                    <input type="hidden" name="_token" value="${csrfToken}">
+                                    <input type="hidden" name="nip_perwakilan" value="${p.nip}">
+                                    <button type="submit" class="btn btn-primary btn-sm" style="width:140px;">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Wakilkan
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+
+                let modalKonfirmasi = new bootstrap.Modal(document.getElementById('modalKonfirmasiPendamping'));
+                
+                // Event listener untuk tombol "Pilih Bawahan Lain" (Disposisi)
+                let btnLanjutDisposisi = document.getElementById('btn-lanjut-disposisi');
+                let newBtn = btnLanjutDisposisi.cloneNode(true);
+                btnLanjutDisposisi.parentNode.replaceChild(newBtn, btnLanjutDisposisi);
+                newBtn.addEventListener('click', function() {
+                    modalKonfirmasi.hide();
+                    showModalDisposisiBatal(idAgenda, data);
+                });
+
+                // Tombol "Batal dan Kirim Alasan" (Khusus non-Kepala)
+                let btnTolakKirimAlasan = document.getElementById('btn-tolak-kirim-alasan');
+                if (btnTolakKirimAlasan) {
+                    if (userRole === 'Kepala') {
+                        btnTolakKirimAlasan.style.display = 'none';
+                    } else {
+                        btnTolakKirimAlasan.style.display = 'block';
+                        let newBtnTolak = btnTolakKirimAlasan.cloneNode(true);
+                        btnTolakKirimAlasan.parentNode.replaceChild(newBtnTolak, btnTolakKirimAlasan);
+                        newBtnTolak.addEventListener('click', function() {
+                            modalKonfirmasi.hide();
+                            showModalTolakAlasan(idAgenda, eventProps);
+                        });
+                    }
+                }
+
+                modalKonfirmasi.show();
+
+            } else {
+                // TIDAK ADA PENDAMPING
+                if (userRole === 'Kepala') {
+                    // Kepala langsung ke disposisi (tidak ada atasan untuk kirim alasan)
+                    showModalDisposisiBatal(idAgenda, data);
+                } else {
+                    // Kabid / Subkoor beri pilihan: Disposisi atau Kirim Alasan
+                    let modalPilih = new bootstrap.Modal(document.getElementById('modalPilihAksiBatal'));
+                    
+                    let btnAksiDisposisi = document.getElementById('btn-aksi-disposisi');
+                    let newBtnDisposisi = btnAksiDisposisi.cloneNode(true);
+                    btnAksiDisposisi.parentNode.replaceChild(newBtnDisposisi, btnAksiDisposisi);
+                    newBtnDisposisi.addEventListener('click', function() {
+                        modalPilih.hide();
+                        showModalDisposisiBatal(idAgenda, data);
+                    });
+                    
+                    let btnAksiTolak = document.getElementById('btn-aksi-tolak');
+                    let newBtnTolak = btnAksiTolak.cloneNode(true);
+                    btnAksiTolak.parentNode.replaceChild(newBtnTolak, btnAksiTolak);
+                    newBtnTolak.addEventListener('click', function() {
+                        modalPilih.hide();
+                        showModalTolakAlasan(idAgenda, eventProps);
+                    });
+                    
+                    modalPilih.show();
+                }
+            }
+        }
+
+        function showModalDisposisiBatal(idAgenda, data) {
+            let form = document.getElementById('formDisposisiBatal');
+            form.action = `/agenda/${idAgenda}/disposisi-batal`;
+
+            // Isi detail surat dari data API
+            if (data.surat) {
+                document.getElementById('dispo-batal-pengirim').textContent = data.surat.asal_surat || '-';
+                document.getElementById('dispo-batal-nomor').textContent = data.surat.nomor_surat || '-';
+                document.getElementById('dispo-batal-perihal').textContent = data.surat.perihal || '-';
+                document.getElementById('dispo-batal-tanggal').textContent = data.surat.tanggal_surat || '-';
+                document.getElementById('dispo-batal-jenis').textContent = data.surat.jenis_surat || '-';
+                
+                let prioritasEl = document.getElementById('dispo-batal-prioritas');
+                let prio = data.surat.prioritas;
+                if (prio === 'Tinggi') prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Tinggi</span>';
+                else if (prio === 'Sedang') prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
+                else prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';
+            }
+
+            let modalDispo = new bootstrap.Modal(document.getElementById('modalDisposisiBatal'));
+            modalDispo.show();
+        }
+
+        // SEARCH & FILTER UNTUK MODAL DISPOSISI BATAL
+        const searchInputBatal = document.querySelector('.search-penerima-batal');
+        const filterSelectBatal = document.querySelector('.filter-jabatan-penerima-batal');
+        const listContainerBatal = document.getElementById('list-penerima-batal');
+
+        function filterListBatal() {
+            if (!searchInputBatal || !filterSelectBatal || !listContainerBatal) return;
+            const keyword = searchInputBatal.value.toLowerCase().trim();
+            const jabatan = filterSelectBatal.value;
+
+            listContainerBatal.querySelectorAll('.penerima-item-batal').forEach(item => {
+                const nama = item.dataset.nama || '';
+                const itemJab = item.dataset.jabatan || '';
+
+                const matchNama = keyword === '' || nama.includes(keyword);
+                const matchJab = jabatan === 'ALL' || itemJab === jabatan;
+
+                if (matchNama && matchJab) {
+                    item.style.setProperty('display', 'flex', 'important');
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+        }
+
+        if (searchInputBatal) searchInputBatal.addEventListener('input', filterListBatal);
+        if (filterSelectBatal) filterSelectBatal.addEventListener('change', filterListBatal);
+
+        /**
+         * Fallback: langsung submit batal hadir
+         */
+        function submitBatalHadir(idAgenda) {
+            let formAction = '/agenda/' + idAgenda + '/batal-hadir';
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = formAction;
+
+            let csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = document.querySelector('meta[name="csrf-token"]')?.content
+                         || document.querySelector('input[name="_token"]')?.value || '';
+            form.appendChild(csrf);
+
+            document.body.appendChild(form);
+            form.submit();
         }
 
         // KONTROL NAVIGATION PANAH

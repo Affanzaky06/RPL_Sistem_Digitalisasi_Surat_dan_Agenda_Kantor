@@ -46,12 +46,16 @@ class KalenderKantorController extends Controller
 
         $events = $agendaList->map(function ($item) {
             $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
-            $statusAcara = 'mendatang';
-
-            if ($kegiatanDate->isPast() && !Carbon::today()->isSameDay($kegiatanDate)) {
+            $now = Carbon::now();
+            $mulai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai_kegiatan);
+            $selesai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai_kegiatan);
+            
+            if ($now->gt($selesai)) {
                 $statusAcara = 'terlaksana';
-            } elseif (Carbon::today()->isSameDay($kegiatanDate)) {
+            } elseif ($now->gte($mulai) && $now->lte($selesai)) {
                 $statusAcara = 'berlangsung';
+            } else {
+                $statusAcara = 'mendatang';
             }
 
             // Kumpulkan NIP semua pegawai yang terlibat (pemberi + penerima disposisi)

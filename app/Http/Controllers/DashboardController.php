@@ -30,20 +30,28 @@ class DashboardController extends Controller
         // ==========================================
         // 1. LOGIKA UTAMA: NOTIFIKASI SURAT MASUK
         // ==========================================
+        // Untuk notifikasi list, kita ambil disposisi yang relevan
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
-            // Frontliner & Kepegawaian melihat semua surat terverifikasi kantor
-            $queryNotifikasi = Surat::where('status', 'Terverifikasi');
+            $notifList = collect(); // Frontliner/Kepegawaian tidak dapat disposisi
+            $totalSuratBaru = Surat::where('status', 'Terverifikasi')->whereDate('tanggal_verifikasi', Carbon::today())->count();
+            $totalNotifikasi = Surat::where('status', 'Terverifikasi')->count();
         } else {
-            // Role lain hanya melihat jika mereka menerima disposisi surat tersebut
-            $queryNotifikasi = Surat::where('status', 'Terverifikasi')
-                ->whereHas('disposisi', function ($q) use ($user) {
-                    $q->where('nip_penerima', $user->nip);
-                });
+            $notifList = \App\Models\Disposisi::with('surat')
+                ->where('nip_penerima', $user->nip)
+                ->whereIn('status', ['Menunggu Konfirmasi', 'Perwakilan'])
+                ->latest('tanggal')
+                ->take(5)
+                ->get();
+            
+            $totalSuratBaru = \App\Models\Disposisi::where('nip_penerima', $user->nip)
+                ->where('status', 'Menunggu Konfirmasi')
+                ->whereDate('tanggal', Carbon::today())
+                ->count();
+            
+            $totalNotifikasi = \App\Models\Disposisi::where('nip_penerima', $user->nip)
+                ->whereIn('status', ['Menunggu Konfirmasi', 'Perwakilan'])
+                ->count();
         }
-
-        $notifikasi = (clone $queryNotifikasi)->latest('tanggal_verifikasi')->take(5)->get();
-        $totalSuratBaru = (clone $queryNotifikasi)->whereDate('tanggal_verifikasi', Carbon::today())->count();
-        $totalNotifikasi = $queryNotifikasi->count();
 
         // ==========================================
         // 2. LOGIKA UTAMA: RINGKASAN AGENDA & PESERTA
@@ -62,14 +70,14 @@ class DashboardController extends Controller
             // Role Lain: Hanya mengambil agenda di mana NIP mereka terdaftar sebagai peserta
             $totalAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
                     $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
+                $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
                 })
                 ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
                 ->count();
             
             $ringkasanAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
                     $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
+                $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
                 })
                 ->with(['surat', 'peserta.pegawai']) // Tarik data surat dan info peserta rapat
                 ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
@@ -82,7 +90,7 @@ class DashboardController extends Controller
         return view('dashboardKepala', [ 
             'title' => $role,
             'role' => $role,
-            'notifikasi' => $notifikasi,
+            'notifikasi' => $notifList,
             'totalSuratBaru' => $totalSuratBaru,
             'totalNotifikasi' => $totalNotifikasi,
             'totalAgenda' => $totalAgenda,

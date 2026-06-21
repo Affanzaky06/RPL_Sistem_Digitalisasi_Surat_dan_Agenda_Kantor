@@ -210,7 +210,7 @@
                                                     <form
                                                         action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Tolak']) }}"
                                                         method="POST"
-                                                        onsubmit="return confirm('Tolak ajakan pendampingan Kepala?')">
+                                                        onsubmit="return confirm('Tolak ajakan pendampingan Atasan?')">
                                                         @csrf
                                                         <button type="submit" class="btn btn-danger btn-sm"
                                                             style="width:100px;">
@@ -330,9 +330,6 @@
                                     </div>
 
                                     <div>
-
-                                        <td>
-
                                             @if ($surat->prioritas == 'Tinggi')
                                                 <span class="badge bg-danger px-3 py-2"
                                                     style="width:110px;font-size:0.85rem;">
@@ -355,9 +352,6 @@
 
                                                 </span>
                                             @endif
-
-                                        </td>
-
                                     </div>
 
                                 </div>
@@ -546,14 +540,6 @@
                                         <i class="bi bi-eye"></i> Lihat Detail
                                     </button>
                                 </div>
-                            </div>
-
-                            <div class="border rounded-3 p-3 bg-white shadow-sm">
-                                <label class="fw-bold mb-2 d-flex align-items-center text-dark">
-                                    <i class="bi bi-pencil-square me-2 fs-5"></i> Catatan
-                                </label>
-                                <textarea name="catatan" rows="4" class="form-control border-secondary-subtle"
-                                    placeholder="Tulis Catatan Disini..."></textarea>
                             </div>
                         </div>
 
