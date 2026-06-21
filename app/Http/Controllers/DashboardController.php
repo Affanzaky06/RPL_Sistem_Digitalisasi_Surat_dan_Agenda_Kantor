@@ -62,12 +62,14 @@ class DashboardController extends Controller
             // Role Lain: Hanya mengambil agenda di mana NIP mereka terdaftar sebagai peserta
             $totalAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
                     $q->where('nip', $user->nip);
+                $q->where('status_kehadiran', 'Hadir');
                 })
                 ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
                 ->count();
             
             $ringkasanAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
                     $q->where('nip', $user->nip);
+                $q->where('status_kehadiran', 'Hadir');
                 })
                 ->with(['surat', 'peserta.pegawai']) // Tarik data surat dan info peserta rapat
                 ->whereDate('tanggal_kegiatan', '>=', Carbon::today())

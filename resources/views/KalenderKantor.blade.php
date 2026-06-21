@@ -1,6 +1,8 @@
 <x-layout :role="$role">
     <x-slot:title>{{ $title }}</x-slot:title>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <style>
         /* MENGHANCURKAN BORDER DAN BACKGROUND BIRU BAWAAN KALENDER */
@@ -60,7 +62,7 @@
         .fc-daygrid-day-number {
             color: #212529 !important;
             text-decoration: none !important;
-            font-size: 0.9rem !important; /* Ukuran bisa dikecilkan lagi jika perlu */
+            font-size: 0.9rem !important;
             font-weight: 500 !important;
             padding: 4px 8px !important;
         }
@@ -111,6 +113,29 @@
         .fc-header-toolbar {
             display: none !important;
         }
+
+        /* Tom Select styling */
+        #filter-staff-wrapper .ts-wrapper {
+            border: 1px solid #212529;
+            border-radius: 0.375rem;
+            min-height: 0;
+        }
+        #filter-staff-wrapper .ts-wrapper .ts-control {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-height: 0;
+            border: none;
+        }
+        #filter-staff-wrapper .ts-wrapper .ts-control input {
+            font-size: 0.9rem;
+        }
+        #filter-staff-wrapper .ts-dropdown {
+            font-size: 0.9rem;
+        }
+        #filter-staff-wrapper .ts-dropdown .option {
+            padding: 6px 10px;
+        }
     </style>
 
     <div class="container-fluid pt-2 px-3 pb-3" style="height: calc(100vh - 130px); overflow: hidden;">
@@ -138,24 +163,20 @@
                         style="font-size: 0.9rem;">Bulan</button>
                 </div>
 
-               <div class="position-relative" style="width: 220px;">
-                    <select id="filter-staff" class="form-select border-dark text-dark fw-medium ps-3 pe-5 py-1 rounded-2" style="appearance: none; font-size: 0.9rem;">
-                        <option value="all">Semua Staff / Agenda</option>
+               <div id="filter-staff-wrapper" style="width: 260px;">
+                    <select id="filter-staff" placeholder="Cari pegawai...">
+                        <option value="all">Semua Pegawai</option>
                         
-                        @foreach($daftarStaff as $nama)
-                            <option value="{{ $nama }}">{{ $nama }}</option>
+                        @foreach($daftarStaff as $pegawai)
+                            <option value="{{ $pegawai['nip'] }}">{{ $pegawai['label'] }}</option>
                         @endforeach
                         
                     </select>
-                    <div class="position-absolute top-50 translate-middle-y end-0 pe-2 d-flex gap-1" style="pointer-events: none;">
-                        <i class="bi bi-search text-dark mx-4" style="font-size: 0.85rem; "></i>
-                        {{-- <i class="bi bi-chevron-down text-dark" style="font-size: 0.85rem;"></i> --}}
-                    </div>
                 </div>
 
             </div>
 
-            <div id="calendar" class="flex-grow-1 p-2 overflow-auto"></div>
+            <div id="calendar" class="flex-grow-1 p-2 overflow-auto" data-events='@json($events)'></div>
 
         </div>
     </div>

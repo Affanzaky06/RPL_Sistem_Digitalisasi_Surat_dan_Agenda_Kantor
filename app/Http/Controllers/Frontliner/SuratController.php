@@ -28,6 +28,7 @@ class SuratController extends Controller
                 'surat.perihal'
             )
             ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
+            ->where('peserta.status_kehadiran', 'Hadir')
             ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
             ->orderBy('agenda.waktu_mulai', 'asc')
             ->distinct() // Mencegah data ganda jika 1 agenda punya banyak peserta
@@ -114,6 +115,7 @@ class SuratController extends Controller
                 'surat.perihal'
             )
             ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
+            ->where('peserta.status_kehadiran', 'Hadir')
             ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
             ->orderBy('agenda.waktu_mulai', 'asc')
             ->distinct()
@@ -146,6 +148,7 @@ class SuratController extends Controller
                 'surat.perihal'
             )
             ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
+            ->where('peserta.status_kehadiran', 'Hadir')
             ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
             ->orderBy('agenda.waktu_mulai', 'asc')
             ->distinct()

@@ -66,19 +66,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         calendar.render();
 
-        // 1. KONTROL FILTER DROPDOWN (Diberi pelindung IF agar anti-crash)
+        // 1. KONTROL FILTER DROPDOWN (Filter berdasarkan NIP pegawai dengan Tom Select)
         const filterStaff = document.getElementById('filter-staff');
         if (filterStaff) {
-            filterStaff.addEventListener('change', function () {
-                let selectedStaff = this.value;
-                let filteredEvents = selectedStaff === 'all' 
-                    ? databaseEvents 
-                    : databaseEvents.filter(ev => {
-                        return ev.extendedProps.daftar_staff && ev.extendedProps.daftar_staff.includes(selectedStaff);
-                    });
+            // Inisialisasi Tom Select untuk searchable dropdown
+            new TomSelect('#filter-staff', {
+                create: false,
+                sortField: { field: 'text', direction: 'asc' },
+                onChange: function (selectedNip) {
+                    let filteredEvents = selectedNip === 'all' 
+                        ? databaseEvents 
+                        : databaseEvents.filter(ev => {
+                            return ev.extendedProps.daftar_staff && ev.extendedProps.daftar_staff.includes(selectedNip);
+                        });
 
-                calendar.removeAllEvents();
-                calendar.addEventSource(filteredEvents);
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(filteredEvents);
+                }
             });
         }
 

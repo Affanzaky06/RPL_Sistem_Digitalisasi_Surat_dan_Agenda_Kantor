@@ -16,9 +16,11 @@
                 <p class="text-dark mb-2" style="font-size: 0.8rem; line-height: 1.4;">
                     <strong>Peserta:</strong> <br>
                     <span class="text-secondary">
-                        {{ $agenda->peserta->map(function($p) {
+                        {{ $agenda->peserta->filter(function($p) {
+                            return $p->status_kehadiran === 'Hadir';
+                        })->map(function($p) {
                             return $p->pegawai->nama ?? $p->nip;
-                        })->implode(', ') }}
+                        })->implode(', ') ?: '-' }}
                     </span>
                 </p>
 

@@ -32,6 +32,7 @@ class ProfilController extends Controller
         // LOGIKA AGENDA PRIBADI YANG SAMA DENGAN KALENDER/DASHBOARD
        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
                 $q->where('nip', $user->nip);
+                $q->where('status_kehadiran', 'Hadir');
             })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())

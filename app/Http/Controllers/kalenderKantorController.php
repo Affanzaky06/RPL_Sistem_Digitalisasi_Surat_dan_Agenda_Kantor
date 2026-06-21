@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pegawai;
 use App\Models\Surat;
-use App\Models\Peserta; // Tambahkan ini
+use App\Models\Peserta;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,13 +27,22 @@ class KalenderKantorController extends Controller
         
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        // 1. Tarik Data Utama untuk FullCalendar
-        $agendaList = Surat::with('disposisi')
+        // 1. Daftar semua pegawai untuk dropdown filter (format: "Nama - Jabatan")
+        $daftarStaff = Pegawai::with('jabatan')
+            ->orderBy('nama')
+            ->get()
+            ->map(function ($pegawai) {
+                return [
+                    'nip' => $pegawai->nip,
+                    'label' => $pegawai->nama . ' - ' . ($pegawai->jabatan->nama_jabatan ?? 'Umum'),
+                ];
+            });
+
+        // 2. Tarik Data Utama untuk FullCalendar
+        $agendaList = Surat::with(['disposisi.penerima.jabatan', 'disposisi.pemberi.jabatan'])
             ->whereNotNull('tanggal_kegiatan')
             ->where('status', 'Terverifikasi')
             ->get();
-
-        $daftarStaff = collect();
 
         $events = $agendaList->map(function ($item) {
             $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
@@ -44,10 +54,25 @@ class KalenderKantorController extends Controller
                 $statusAcara = 'berlangsung';
             }
 
-            $pegawaiDitugaskan = $item->disposisi
-                ->pluck('nip_penerima')
-                ->filter()
+            // Kumpulkan NIP semua pegawai yang terlibat (pemberi + penerima disposisi)
+            $nipPenerima = $item->disposisi->pluck('nip_penerima')->filter();
+            $nipPemberi = $item->disposisi->pluck('nip_pemberi')->filter();
+            $semuaNipTerlibat = $nipPenerima->merge($nipPemberi)
+                ->unique()
+                ->values()
                 ->toArray();
+
+            // Kumpulkan label nama-jabatan pegawai yang terlibat
+            $labelStaff = collect();
+            foreach ($item->disposisi as $d) {
+                if ($d->penerima) {
+                    $labelStaff->push($d->penerima->nama . ' - ' . ($d->penerima->jabatan->nama_jabatan ?? 'Umum'));
+                }
+                if ($d->pemberi) {
+                    $labelStaff->push($d->pemberi->nama . ' - ' . ($d->pemberi->jabatan->nama_jabatan ?? 'Umum'));
+                }
+            }
+            $labelStaff = $labelStaff->unique()->values()->toArray();
                 
             return [
                 'id' => $item->id_surat,
@@ -57,12 +82,13 @@ class KalenderKantorController extends Controller
                 'extendedProps' => [
                     'lokasi' => $item->lokasi_kegiatan,
                     'status' => $statusAcara,
-                    'daftar_staff' => $pegawaiDitugaskan
+                    'daftar_staff' => $semuaNipTerlibat,
+                    'daftar_staff_label' => $labelStaff,
                 ]
             ];
         });
 
-        // 2. Logika Cerdas untuk Card Sidebar (Ringkasan Agenda 3 Terdekat)
+        // 3. Logika Cerdas untuk Card Sidebar (Ringkasan Agenda 3 Terdekat)
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
             $ringkasanAgenda = Surat::select(
                     'id_surat as id_agenda',
@@ -89,6 +115,7 @@ class KalenderKantorController extends Controller
                     'surat.nomor_surat'
                 )
                 ->where('peserta.nip', $user->nip)
+                ->where('peserta.status_kehadiran', 'Hadir')
                 ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today())
                 ->orderBy('agenda.tanggal_kegiatan', 'asc')
                 ->orderBy('agenda.waktu_mulai', 'asc')
@@ -102,7 +129,7 @@ class KalenderKantorController extends Controller
             'role' => $role,
             'events' => $events,
             'daftarStaff' => $daftarStaff,
-            'ringkasanAgenda' => $ringkasanAgenda // Lempar ke View
+            'ringkasanAgenda' => $ringkasanAgenda
         ]);
     }
 }

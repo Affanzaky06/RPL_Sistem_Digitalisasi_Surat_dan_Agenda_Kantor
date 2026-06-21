@@ -100,9 +100,54 @@
         .fc-header-toolbar {
             display: none !important;
         }
+
+        /* Popup Card Style */
+        #event-popup-card {
+            display: none;
+            position: absolute;
+            z-index: 1050;
+            width: 320px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            padding: 16px;
+        }
+        #event-popup-card .popup-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+        #event-popup-card .popup-close:hover {
+            color: #212529;
+        }
     </style>
 
     <div class="container-fluid pt-2 px-3 position-relative" style="height: calc(100vh - 130px); overflow: hidden;">
+
+        @if (session('success'))
+            <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                <div class="toast show border-0 shadow">
+                    <div class="toast-body">
+                        <span class="text-success">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                        </span>
+                        {{ session('success') }}
+                    </div>
+                </div>
+            </div>
+        @endif
+        <script>
+            setTimeout(() => {
+                document.querySelectorAll('.toast').forEach(el => el.remove());
+            }, 6000);
+        </script>
+
         <div class="row h-100">
 
             <!-- KOLOM KIRI: KALENDER (Lebar 9) -->
@@ -135,13 +180,109 @@
 
                     <!-- Target Mesin FullCalendar -->
                     <div id="calendar-agenda" class="flex-grow-1 p-2 overflow-auto"
-                        data-events='@json($events)'></div>
+                        data-events='@json($events)' data-role="{{ $role }}"></div>
                 </div>
             </div>
 
             <!-- KOLOM KANAN: RINGKASAN PESERTA (Lebar 3) -->
         </div>
 
-        <!-- Panggil File JS Khusus Agenda -->
-        <script src="{{ asset('js/agenda.js') }}"></script>
+        <!-- POPUP CARD (muncul saat klik event di kalender) -->
+        <div id="event-popup-card">
+            <button class="popup-close" id="popup-close-btn">&times;</button>
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-calendar-event me-2 text-muted"></i>
+                <h6 class="fw-bold mb-0" id="popup-title"></h6>
+            </div>
+            <div class="text-muted mb-1" style="font-size: 0.8rem;">
+                <i class="bi bi-clock me-1"></i> <span id="popup-waktu"></span>
+            </div>
+            <div class="text-muted mb-2" style="font-size: 0.8rem;">
+                <i class="bi bi-calendar3 me-1"></i> <span id="popup-tanggal"></span>
+            </div>
+            <div class="text-muted mb-2" style="font-size: 0.8rem;">
+                <i class="bi bi-geo-alt me-1"></i> <span id="popup-lokasi"></span>
+            </div>
+            <div class="mb-3" id="popup-agenda-list">
+                <strong>Agenda</strong>
+                <div id="popup-perihal" class="text-muted" style="font-size: 0.85rem;"></div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" id="popup-batal-hadir-btn">
+                <i class="bi bi-x-lg me-1"></i> Batal Hadir
+            </button>
+        </div>
+
+    </div>
+
+    <!-- MODAL TIDAK HADIR (untuk Kabid ke bawah, dengan alasan) -->
+    <div class="modal fade" id="tidakHadirModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <form id="form-tidak-hadir" method="POST" action="">
+                    @csrf
+                    <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                        <h5 class="modal-title fw-bold fs-4">Tidak Hadir</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                            <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-send me-2"></i>Pengirim</small>
+                                    <span class="fw-bold text-dark" id="modal-pengirim"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor
+                                        Surat</small>
+                                    <span class="fw-bold text-dark" id="modal-nomor-surat"></span>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-file-earmark-text me-2"></i>Perihal Surat</small>
+                                    <span class="fw-bold text-dark" id="modal-perihal"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-6 ps-4 position-relative">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                    <span class="fw-bold text-dark" id="modal-tanggal-surat"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-clock me-2"></i>Waktu</small>
+                                    <span class="fw-bold text-dark" id="modal-waktu"></span>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                    <span id="modal-prioritas"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alasan Tidak Hadir (hanya untuk Kabid ke bawah) -->
+                        <div class="border rounded-3 p-3 bg-white shadow-sm" id="alasan-container">
+                            <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                <i class="bi bi-pencil-square me-2 fs-5"></i> Alasan Tidak Hadir
+                            </label>
+                            <textarea name="alasan_tidak_hadir" rows="4" class="form-control border-secondary-subtle"
+                                placeholder="Tulis Alasan Disini..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
+                        <button type="submit" class="btn btn-success px-4 fw-bold"
+                            style="background-color: #198754;">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panggil File JS Khusus Agenda -->
+    <script src="{{ asset('js/agenda.js') }}"></script>
 </x-layout>

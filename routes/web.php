@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pendamping/konfirmasi/{id_surat}/{keputusan}', [ProfilController::class, 'konfirmasiPendamping'])->name('pendamping.konfirmasi');
     Route::post('/laporan/dispo-ulang/{id}', [laporanPemantauanController::class, 'dispoUlang'])->name('laporan.dispo_ulang');
     Route::post('/laporan/setujui/{id}', [laporanPemantauanController::class, 'setujuiPenolakan'])->name('laporan.setujui');
+    Route::post('/agenda/{id_agenda}/batal-hadir', [AgendaController::class, 'batalHadir'])->name('agenda.batal_hadir');
 
     // --------------------------------------------------------
     // 1. RUTE KEPALA KANTOR (Role: J001)
@@ -231,9 +232,10 @@ Route::middleware('auth')->group(function () {
             [agendaController::class, 'index']
         )->name('staff.agenda');
 
-        Route::get('/staff/kalender_kantor', function () {
-            return view('KalenderKantor', ['title' => 'Staff', 'role' => 'Staff']);
-        })->name('staff.kalender');
+        Route::get(
+            '/staff/kalender_kantor',
+            [KalenderKantorController::class, 'index']
+        )->name('staff.kalender');
 
         Route::post(
             '/staff/{id_surat}/hadir',

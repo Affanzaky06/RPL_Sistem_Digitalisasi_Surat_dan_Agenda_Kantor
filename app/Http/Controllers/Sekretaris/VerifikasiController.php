@@ -41,6 +41,7 @@ class VerifikasiController extends Controller
         // LOGIKA AGENDA: Hanya mengambil agenda milik Sekretaris yang sedang login
         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
                 $q->where('nip', $user->nip);
+                $q->where('status_kehadiran', 'Hadir');
             })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
@@ -131,6 +132,7 @@ class VerifikasiController extends Controller
         // Jalankan logika agenda yang sama di halaman riwayat agar sidebar tidak kosong/error
         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
                 $q->where('nip', $user->nip);
+                $q->where('status_kehadiran', 'Hadir');
             })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
