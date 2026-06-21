@@ -41,10 +41,10 @@ class KepegawaianController extends Controller
         // =================================================================
         
         // Menampilkan 3 agenda kantor terdekat
-        $ringkasanAgenda = Surat::with('disposisi')
-            ->whereNotNull('tanggal_kegiatan')
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
             ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -72,10 +72,10 @@ class KepegawaianController extends Controller
         $user = Auth::user();
         $role = 'Kepegawaian';
 
-        $ringkasanAgenda = Surat::with('disposisi')
-            ->whereNotNull('tanggal_kegiatan')
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
             ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -141,10 +141,10 @@ class KepegawaianController extends Controller
         $user = Auth::user();
         $role = 'Kepegawaian';
 
-        $ringkasanAgenda = Surat::with('disposisi')
-            ->whereNotNull('tanggal_kegiatan')
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
             ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 

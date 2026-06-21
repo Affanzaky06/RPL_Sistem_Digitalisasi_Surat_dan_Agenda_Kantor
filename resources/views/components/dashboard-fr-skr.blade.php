@@ -54,33 +54,32 @@
             <h1 class="text-dark" style="font-size: 4rem; font-weight: 400;" id="jam-sekarang">23:55:50</h1>
         </div>
 
-        <div class="col-lg-3 ps-lg-4">
-            <h4 class="fw-bold mb-3 fs-5">
-                Ringkasan Agenda dan Peserta
-            </h4>
-
-            @forelse ($ringkasanAgenda as $index => $agenda)
-                <div class="card border-0 mb-3 shadow-sm" style="background-color: #f4f5f7; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <h6 class="fw-bold mb-0 text-primary">
-                            <i class="bi bi-clock me-1"></i>
-                            {{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }} WIB
-                        </h6>
-                        <h6 class="fw-bold mb-2 text-dark mt-1">{{ $agenda->nama_kegiatan }}</h6>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                            Dasar Surat: {{ $agenda->nomor_surat }}
-                        </p>
+        <div class="mt-2">
+            <h5 class="fw-bold text-dark text-center mb-4">Agenda dan Peserta Kantor</h5>
+            <div class="row g-3 justify-content-center">
+                @forelse ($ringkasanAgenda as $index => $agenda)
+                    <div class="col-md-4">
+                        <div class="card border-0 h-100 shadow-sm" style="background-color: #f4f5f7; border-radius: 12px;">
+                            <div class="card-body p-3">
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Meeting {{ $index + 1 }}:</h6>
+                                <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.95rem;">{{ $agenda->surat->nomor_surat ?? '-' }}</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.85rem;">
+                                    <strong>Peserta:</strong> 
+                                    {{ $agenda->peserta->filter(fn($p) => $p->status_kehadiran === 'Hadir')->map(fn($p) => $p->pegawai->nama ?? $p->nip)->implode(', ') ?: '-' }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            @empty
-                <div class="text-center p-3 text-muted" style="font-size: 0.85rem; border: 1px dashed #ccc; border-radius: 12px;">
-                    <i class="bi bi-calendar-check fs-4 d-block mb-1"></i>
-                    Tidak ada jadwal kegiatan tersisa untuk hari ini.
-                </div>
-            @endforelse
+                @empty
+                    <div class="col-12">
+                        <div class="text-center p-3 text-muted" style="font-size: 0.85rem; border: 1px dashed #ccc; border-radius: 12px;">
+                            <i class="bi bi-calendar-x fs-4 d-block mb-1"></i>
+                            Belum ada agenda terdaftar.
+                        </div>
+                    </div>
+                @endforelse
+            </div>
         </div>
-        </div>
-
     </div>
 
     <script>

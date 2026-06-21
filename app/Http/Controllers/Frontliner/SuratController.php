@@ -18,20 +18,10 @@ class SuratController extends Controller
         $role = "Frontliner";
 
         // Tarik data agenda hari ini dari tabel peserta, diurutkan dari waktu terdekat
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
-            ->where('peserta.status_kehadiran', 'Hadir')
-            ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('agenda.waktu_mulai', 'asc')
-            ->distinct() // Mencegah data ganda jika 1 agenda punya banyak peserta
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
+            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -105,20 +95,10 @@ class SuratController extends Controller
 
         $suratMasuk = $query->paginate(10)->withQueryString();
         
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
-            ->where('peserta.status_kehadiran', 'Hadir')
-            ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('agenda.waktu_mulai', 'asc')
-            ->distinct()
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
+            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
 
@@ -138,20 +118,10 @@ class SuratController extends Controller
         $jmltolak = Surat::where('status', 'Ditolak')->count();
         $TungguVeriv = Surat::where('status', 'Menunggu Verifikasi')->count();
         
-        $ringkasanAgenda = Peserta::join('agenda', 'peserta.id_agenda', '=', 'agenda.id_agenda')
-            ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
-            ->select(
-                'agenda.id_agenda',
-                'agenda.nama_kegiatan',
-                'agenda.waktu_mulai',
-                'surat.nomor_surat',
-                'surat.perihal'
-            )
-            ->whereDate('agenda.tanggal_kegiatan', Carbon::today())
-            ->where('peserta.status_kehadiran', 'Hadir')
-            ->whereTime('agenda.waktu_mulai', '>=', Carbon::now()->format('H:i:s'))
-            ->orderBy('agenda.waktu_mulai', 'asc')
-            ->distinct()
+        $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
+            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
         

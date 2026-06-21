@@ -30,16 +30,25 @@ class ProfilController extends Controller
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
         // LOGIKA AGENDA PRIBADI YANG SAMA DENGAN KALENDER/DASHBOARD
-       $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
-            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
-            ->orderBy('tanggal_kegiatan', 'asc')
-            ->orderBy('waktu_mulai', 'asc')
-            ->take(3)
-            ->get();
+        if (in_array($user->id_jabatan, ['J005', 'J007'])) {
+            $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
+                ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+                ->orderBy('tanggal_kegiatan', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->take(3)
+                ->get();
+        } else {
+            $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
+                    $q->where('nip', $user->nip);
+                    $q->where('status_kehadiran', 'Hadir');
+                })
+                ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+                ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+                ->orderBy('tanggal_kegiatan', 'asc')
+                ->orderBy('waktu_mulai', 'asc')
+                ->take(3)
+                ->get();
+        }
 
         return view('profil', [
             'title' =>  $role, 

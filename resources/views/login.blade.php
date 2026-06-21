@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     @vite(['resources/css/app.scss', 'resources/js/app.js'])
+    <link rel="icon" type="image/png" href="{{ asset('Lambang_Kabupaten_Blora copy.png') }}">
     <link rel="stylesheet" href="{{ asset('css/custom-login.css') }}">
     <title>Login</title>
 </head>
@@ -15,7 +16,7 @@
         <div class="card login-card shadow-lg">
             <div class="card-body">
                 <div class="text-center mb-3">
-                    <img src="{{ asset('image/Lambang_Kabupaten_Blora.gif') }}" alt="Logo" style="width: 130px;"">
+                    <img src="{{ asset('Lambang_Kabupaten_Blora copy.png') }}" alt="Logo" style="width: 130px;">
                 </div>
 
                 <h5 class=" text-center text-white mb-4" style="font-weight: 500;">Sistem Surat Dan Agenda Digital</h5>
