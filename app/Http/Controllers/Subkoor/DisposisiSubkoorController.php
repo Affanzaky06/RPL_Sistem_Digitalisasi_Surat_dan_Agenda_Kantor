@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Subkoor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Disposisi;
+use App\Models\Agenda;
 use App\Models\Pegawai;
+use App\Models\Peserta;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,10 +66,7 @@ class DisposisiSubkoorController extends Controller
         $suratMasuk = $suratMasukQuery->paginate(10)->withQueryString();
 
         $pegawai = Pegawai::with('bidang')
-            ->where(
-                'id_bidang',
-                $user->id_bidang
-            )
+            ->where('nip_atasan', $user->nip)
             ->where(
                 'id_jabatan',
                 'J004'
@@ -89,8 +88,20 @@ class DisposisiSubkoorController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'required|string|max:1000',
         ]);
+
+        $penerima = Pegawai::where('nip', $request->nip_penerima)
+            ->where('nip_atasan', Auth::user()->nip)
+            ->where('id_jabatan', 'J004')
+            ->first();
+
+        if (!$penerima) {
+            return back()->withErrors([
+                'nip_penerima' => 'Subkoor hanya dapat mendisposisikan ke Staff bawahannya.'
+            ]);
+        }
 
         Disposisi::where(
             'id_surat',
@@ -114,7 +125,7 @@ class DisposisiSubkoorController extends Controller
 
             'tanggal' => now(),
 
-            'catatan' => $request->catatan ?? '-',
+            'catatan' => $request->catatan,
 
             'status' => 'Menunggu Konfirmasi'
 
@@ -126,8 +137,78 @@ class DisposisiSubkoorController extends Controller
         );
     }
 
+    public function konfirmasiHadir(Request $request, $id_surat)
+    {
+        $surat = Surat::findOrFail($id_surat);
+        $user = Auth::user();
+
+        Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->update(['status' => 'Hadir']);
+
+        $agenda = Agenda::firstOrCreate(
+            ['id_surat' => $surat->id_surat],
+            [
+                'nama_kegiatan' => $surat->perihal,
+                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                'lokasi' => $surat->lokasi_kegiatan,
+                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+            ]
+        );
+
+        Peserta::updateOrCreate(
+            [
+                'id_agenda' => $agenda->id_agenda,
+                'nip' => $user->nip
+            ],
+            [
+                'status_kehadiran' => 'Hadir'
+            ]
+        );
+
+        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+            foreach ($request->nip_pendamping as $nipPenerima) {
+                $pegawai = Pegawai::where('nip', $nipPenerima)
+                    ->where('nip_atasan', $user->nip)
+                    ->where('id_jabatan', 'J004')
+                    ->first();
+
+                if (!$pegawai) {
+                    continue;
+                }
+
+                $disposisi = Disposisi::create([
+                    'id_surat' => $surat->id_surat,
+                    'nip_pemberi' => $user->nip,
+                    'nip_penerima' => $nipPenerima,
+                    'tanggal' => now(),
+                    'catatan' => $request->catatan ?: 'Mendampingi atasan pada kegiatan ini.',
+                    'status' => 'Menunggu Konfirmasi'
+                ]);
+
+                Peserta::updateOrCreate(
+                    [
+                        'id_agenda' => $agenda->id_agenda,
+                        'nip' => $nipPenerima
+                    ],
+                    [
+                        'id_disposisi' => $disposisi->id_disposisi,
+                        'status_kehadiran' => 'Menunggu Konfirmasi'
+                    ]
+                );
+            }
+        }
+
+        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+    }
+
     public function tolak(Request $request, $id_surat)
     {
+        $request->validate([
+            'alasan_tolak' => 'required|string|max:500',
+        ]);
+
         $disposisi = Disposisi::where(
             'id_surat',
             $id_surat
@@ -140,8 +221,16 @@ class DisposisiSubkoorController extends Controller
             ->firstOrFail();
 
         $disposisi->update([
-            'status' => 'Tidak Hadir'
+            'status' => 'Tidak Hadir',
+            'catatan' => 'Alasan Tidak Hadir: ' . $request->alasan_tolak
         ]);
+
+        $agenda = Agenda::where('id_surat', $id_surat)->first();
+        if ($agenda) {
+            Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', Auth::user()->nip)
+                ->update(['status_kehadiran' => 'Tidak Hadir']);
+        }
 
         return back()->with(
             'success',

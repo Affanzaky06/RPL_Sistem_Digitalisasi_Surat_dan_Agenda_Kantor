@@ -71,18 +71,25 @@
             </h4>
 
             @forelse($notifikasi as $surat)
+                @php
+                    $disposisiNotif = $surat->disposisi->first();
+                    $judulNotif = $disposisiNotif ? 'Disposisi Agenda' : 'Surat Terverifikasi';
+                    $isiNotif = $disposisiNotif->catatan ?? $surat->perihal;
+                @endphp
+
                 <div class="card mb-3 shadow-sm position-relative">
 
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;"
-                        aria-label="Close" onclick="this.closest('.card').remove()"></button>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2"
+                        style="z-index: 10;" aria-label="Close" onclick="this.closest('.card').remove()"></button>
 
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="fw-bold text-success">
-                                    <i class="bi bi-check-circle me-1"></i> Surat Terverifikasi
+                                    <i class="bi bi-check-circle me-1"></i> {{ $judulNotif }}
                                 </h6>
                                 <p class="mb-1 fw-medium">{{ $surat->perihal }}</p>
+                                <p class="mb-1">{{ $isiNotif }}</p>
                                 <small class="text-muted">{{ $surat->asal_surat }}</small>
                             </div>
 

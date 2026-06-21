@@ -114,8 +114,19 @@ class DisposisiKepalaController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'required|string|max:1000',
         ]);
+
+        $penerima = Pegawai::where('nip', $request->nip_penerima)
+            ->whereIn('id_jabatan', ['J002', 'J006'])
+            ->first();
+
+        if (!$penerima) {
+            return back()->withErrors([
+                'nip_penerima' => 'Kepala hanya dapat mendisposisikan ke Kabid atau Sekretaris.'
+            ]);
+        }
 
         Disposisi::where(
             'id_surat',
@@ -147,7 +158,7 @@ class DisposisiKepalaController extends Controller
 
             $disposisiLama->update([
                 'tanggal' => now(),
-                'catatan' => $request->catatan ?? '-',
+                'catatan' => $request->catatan,
                 'status' => 'Menunggu Konfirmasi'
             ]);
 
@@ -167,7 +178,7 @@ class DisposisiKepalaController extends Controller
 
             'tanggal' => now(),
 
-            'catatan' => $request->catatan ?? '-',
+            'catatan' => $request->catatan,
 
             'status' => 'Menunggu Konfirmasi'
 

@@ -100,15 +100,18 @@ class ProfilController extends Controller
    public function konfirmasiPendamping($id_surat, $keputusan)
     {
         $user = Auth::user();
+
+        abort_unless(in_array($keputusan, ['Hadir', 'Tolak']), 404);
         
         // Find agenda berdasarkan id_surat
         $agenda = Agenda::where('id_surat', $id_surat)->firstOrFail();
+        $peserta = Peserta::where('id_agenda', $agenda->id_agenda)
+            ->where('nip', $user->nip)
+            ->firstOrFail();
 
         if ($keputusan === 'Hadir') {
             // 1. Ubah status kehadiran di tabel Peserta menjadi 'Hadir'
-            Peserta::where('id_agenda', $agenda->id_agenda)
-                ->where('nip', $user->nip)
-                ->update(['status_kehadiran' => 'Hadir']);
+            $peserta->update(['status_kehadiran' => 'Hadir']);
 
             // 2. Ubah status di tabel Disposisi agar surat hilang dari antrean masuk
             Disposisi::where('id_surat', $id_surat)
@@ -118,10 +121,8 @@ class ProfilController extends Controller
 
             return back()->with('success', 'Berhasil menyetujui pendampingan agenda.');
         } else {
-            // 1. Jika menolak, hapus baris user tersebut dari daftar peserta agenda
-            Peserta::where('id_agenda', $agenda->id_agenda)
-                ->where('nip', $user->nip)
-                ->delete();
+            // 1. Jika menolak, simpan histori ketidakhadiran di daftar peserta agenda
+            $peserta->update(['status_kehadiran' => 'Tidak Hadir']);
 
             // 2. Ubah status di tabel Disposisi menjadi 'Tidak Hadir' atau 'Ditolak'
             Disposisi::where('id_surat', $id_surat)

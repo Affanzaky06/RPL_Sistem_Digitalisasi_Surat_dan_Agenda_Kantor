@@ -621,7 +621,7 @@
                                     </label>
 
                                     <textarea name="catatan" rows="3" class="form-control border-secondary-subtle"
-                                        placeholder="Tulis Catatan Disini... (kosongkan jika tidak ada)" autocomplete="off"></textarea>
+                                        placeholder="Tulis Catatan Disposisi..." autocomplete="off" required></textarea>
                                 </div>
                             </div>
 

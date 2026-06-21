@@ -41,7 +41,14 @@ class DashboardController extends Controller
                 });
         }
 
-        $notifikasi = (clone $queryNotifikasi)->latest('tanggal_verifikasi')->take(5)->get();
+        $notifikasi = (clone $queryNotifikasi)
+            ->with(['disposisi' => function ($q) use ($user) {
+                $q->where('nip_penerima', $user->nip)
+                    ->latest('id_disposisi');
+            }])
+            ->latest('tanggal_verifikasi')
+            ->take(5)
+            ->get();
         $totalSuratBaru = (clone $queryNotifikasi)->whereDate('tanggal_verifikasi', Carbon::today())->count();
         $totalNotifikasi = $queryNotifikasi->count();
 

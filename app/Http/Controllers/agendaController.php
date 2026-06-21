@@ -6,9 +6,11 @@ use App\Models\Surat;
 use App\Models\Agenda;
 use App\Models\Peserta;
 use App\Models\Disposisi;
+use App\Models\Pegawai;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AgendaController extends Controller
 {
@@ -46,14 +48,26 @@ class AgendaController extends Controller
         $agendaKalender = $queryKalender->distinct()->get();
 
         $events = $agendaKalender->map(function ($item) {
-            $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
-            $statusAcara = 'mendatang'; 
-            
-            if ($kegiatanDate->isPast() && !Carbon::today()->isSameDay($kegiatanDate)) {
-                $statusAcara = 'terlaksana';
-            } elseif (Carbon::today()->isSameDay($kegiatanDate)) {
-                $statusAcara = 'berlangsung';
-            }
+            $mulaiKegiatan = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai);
+            $selesaiKegiatan = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai);
+            $statusAcara = $this->statusAcara($mulaiKegiatan, $selesaiKegiatan);
+            $jumlahPesertaHadir = Peserta::where('id_agenda', $item->id_agenda)
+                ->where('status_kehadiran', 'Hadir')
+                ->count();
+            $pendampingHadir = Peserta::with(['pegawai.jabatan', 'pegawai.bidang'])
+                ->where('id_agenda', $item->id_agenda)
+                ->where('status_kehadiran', 'Hadir')
+                ->where('nip', '!=', Auth::user()->nip)
+                ->get()
+                ->map(function ($peserta) {
+                    return [
+                        'nip' => $peserta->nip,
+                        'nama' => $peserta->pegawai->nama ?? $peserta->nip,
+                        'jabatan' => $peserta->pegawai->jabatan->nama_jabatan ?? $peserta->pegawai->id_jabatan ?? null,
+                        'bidang' => $peserta->pegawai->bidang->nama_bidang ?? null,
+                    ];
+                })
+                ->values();
 
             return [
                 'id' => $item->id_agenda,
@@ -74,6 +88,8 @@ class AgendaController extends Controller
                              . ' - ' . 
                              ($item->waktu_selesai ? Carbon::parse($item->waktu_selesai)->format('H:i') : '-'),
                     'prioritas' => $item->prioritas,
+                    'jumlah_peserta_hadir' => $jumlahPesertaHadir,
+                    'pendamping_hadir' => $pendampingHadir,
                 ]
             ];
         });
@@ -88,11 +104,33 @@ class AgendaController extends Controller
             ->take(5)
             ->get();
 
+        $pegawaiDisposisi = collect();
+        if ($user->id_jabatan === 'J001') {
+            $pegawaiDisposisi = Pegawai::with(['bidang', 'jabatan'])
+                ->whereIn('id_jabatan', ['J002', 'J006'])
+                ->orderBy('nama')
+                ->get();
+        } elseif ($user->id_jabatan === 'J002') {
+            $pegawaiDisposisi = Pegawai::with(['bidang', 'jabatan'])
+                ->where('id_bidang', $user->id_bidang)
+                ->whereIn('id_jabatan', ['J003', 'J004'])
+                ->orderBy('id_jabatan')
+                ->orderBy('nama')
+                ->get();
+        } elseif ($user->id_jabatan === 'J003') {
+            $pegawaiDisposisi = Pegawai::with(['bidang', 'jabatan'])
+                ->where('nip_atasan', $user->nip)
+                ->where('id_jabatan', 'J004')
+                ->orderBy('nama')
+                ->get();
+        }
+
         return view('agenda', [
             'title' => $title,
             'role' => $role, 
             'events' => $events,
-            'ringkasanAgenda' => $ringkasanAgenda
+            'ringkasanAgenda' => $ringkasanAgenda,
+            'pegawaiDisposisi' => $pegawaiDisposisi
         ]);
     }
 
@@ -110,6 +148,45 @@ class AgendaController extends Controller
             ->where('nip', $user->nip)
             ->firstOrFail();
 
+        $agenda = Agenda::findOrFail($id_agenda);
+        $jumlahPesertaHadir = Peserta::where('id_agenda', $id_agenda)
+            ->where('status_kehadiran', 'Hadir')
+            ->count();
+        $pendampingHadir = Peserta::where('id_agenda', $id_agenda)
+            ->where('status_kehadiran', 'Hadir')
+            ->where('nip', '!=', $user->nip)
+            ->pluck('nip');
+        $kepalaPunyaPendamping = $user->id_jabatan === 'J001' && $pendampingHadir->isNotEmpty();
+        $perluDisposisiPengganti = !$kepalaPunyaPendamping
+            && $jumlahPesertaHadir <= 1
+            && in_array($user->id_jabatan, ['J001', 'J002', 'J003']);
+
+        if ($perluDisposisiPengganti) {
+            $request->validate([
+                'nip_pengganti' => 'required|exists:pegawai,nip',
+            ]);
+
+            $penerimaPengganti = Pegawai::where('nip', $request->nip_pengganti)
+                ->when($user->id_jabatan === 'J001', function ($query) {
+                    $query->whereIn('id_jabatan', ['J002', 'J006']);
+                })
+                ->when($user->id_jabatan === 'J002', function ($query) use ($user) {
+                    $query->where('id_bidang', $user->id_bidang)
+                        ->whereIn('id_jabatan', ['J003', 'J004']);
+                })
+                ->when($user->id_jabatan === 'J003', function ($query) use ($user) {
+                    $query->where('nip_atasan', $user->nip)
+                        ->where('id_jabatan', 'J004');
+                })
+                ->first();
+
+            if (!$penerimaPengganti) {
+                return back()->withErrors([
+                    'nip_pengganti' => 'Penerima disposisi tidak sesuai dengan kewenangan Anda.'
+                ]);
+            }
+        }
+
         $alasan = null;
         // Kepala (J001) tidak perlu alasan
         if ($user->id_jabatan !== 'J001') {
@@ -119,26 +196,84 @@ class AgendaController extends Controller
             $alasan = $request->alasan_tidak_hadir;
         }
 
-        $peserta->update([
-            'status_kehadiran' => 'Tidak Hadir',
-        ]);
+        DB::transaction(function () use ($request, $user, $peserta, $agenda, $alasan, $perluDisposisiPengganti, $kepalaPunyaPendamping, $pendampingHadir) {
+            $peserta->update([
+                'status_kehadiran' => 'Tidak Hadir',
+            ]);
 
-        // Teruskan info "Tidak Hadir" ini ke atasan melalui tabel disposisi 
-        // Cari disposisi yang mengundang user ke agenda ini
-        $agenda = Agenda::findOrFail($id_agenda);
-        $disposisi = Disposisi::where('id_surat', $agenda->id_surat)
-            ->where('nip_penerima', $user->nip)
-            ->latest('id_disposisi')
-            ->first();
+            // Teruskan info "Tidak Hadir" ini ke atasan melalui tabel disposisi
+            // Cari disposisi yang mengundang user ke agenda ini
+            $disposisi = Disposisi::where('id_surat', $agenda->id_surat)
+                ->where('nip_penerima', $user->nip)
+                ->latest('id_disposisi')
+                ->first();
 
-        if ($disposisi) {
-            $disposisi->status = 'Tidak Hadir';
-            if ($alasan) {
-                $disposisi->catatan = "Alasan Tidak Hadir: " . $alasan;
+            if ($disposisi) {
+                $disposisi->status = 'Tidak Hadir';
+                if ($alasan) {
+                    $disposisi->catatan = "Alasan Tidak Hadir: " . $alasan;
+                }
+                $disposisi->save();
             }
-            $disposisi->save();
+
+            if ($kepalaPunyaPendamping) {
+                foreach ($pendampingHadir as $nipPendamping) {
+                    Disposisi::create([
+                        'id_surat' => $agenda->id_surat,
+                        'nip_pemberi' => $user->nip,
+                        'nip_penerima' => $nipPendamping,
+                        'tanggal' => now(),
+                        'catatan' => 'Menggantikan Kepala Kantor pada agenda ini.',
+                        'status' => 'Menunggu Konfirmasi',
+                    ]);
+                }
+            } elseif ($perluDisposisiPengganti) {
+                $catatan = $request->catatan_pengganti
+                    ?: 'Menggantikan kehadiran pada agenda karena peserta terakhir batal hadir.';
+
+                $disposisiPengganti = Disposisi::create([
+                    'id_surat' => $agenda->id_surat,
+                    'nip_pemberi' => $user->nip,
+                    'nip_penerima' => $request->nip_pengganti,
+                    'tanggal' => now(),
+                    'catatan' => $catatan,
+                    'status' => 'Menunggu Konfirmasi',
+                ]);
+
+                Peserta::updateOrCreate(
+                    [
+                        'id_agenda' => $agenda->id_agenda,
+                        'nip' => $request->nip_pengganti,
+                    ],
+                    [
+                        'id_disposisi' => $disposisiPengganti->id_disposisi,
+                        'status_kehadiran' => 'Menunggu Konfirmasi',
+                    ]
+                );
+            }
+        });
+
+        $pesan = $kepalaPunyaPendamping
+            ? 'Kehadiran Kepala dibatalkan dan notifikasi pengganti telah dikirim ke pendamping.'
+            : ($perluDisposisiPengganti
+            ? 'Status kehadiran berhasil diubah dan agenda telah didisposisikan ke pengganti.'
+            : 'Status kehadiran berhasil diubah menjadi Tidak Hadir.');
+
+        return back()->with('success', $pesan);
+    }
+
+    private function statusAcara(Carbon $mulaiKegiatan, Carbon $selesaiKegiatan): string
+    {
+        $sekarang = now();
+
+        if ($sekarang->lt($mulaiKegiatan)) {
+            return 'mendatang';
         }
 
-        return back()->with('success', 'Status kehadiran berhasil diubah menjadi Tidak Hadir.');
+        if ($sekarang->lte($selesaiKegiatan)) {
+            return 'berlangsung';
+        }
+
+        return 'terlaksana';
     }
 }

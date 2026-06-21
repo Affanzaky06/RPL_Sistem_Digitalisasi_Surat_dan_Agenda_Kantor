@@ -110,9 +110,10 @@
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
             padding: 16px;
         }
+
         #event-popup-card .popup-close {
             position: absolute;
             top: 8px;
@@ -123,6 +124,7 @@
             cursor: pointer;
             color: #6c757d;
         }
+
         #event-popup-card .popup-close:hover {
             color: #212529;
         }
@@ -138,6 +140,18 @@
                             <i class="bi bi-check-circle-fill me-2"></i>
                         </span>
                         {{ session('success') }}
+                    </div>
+                </div>
+            </div>
+        @endif
+        @if ($errors->any())
+            <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                <div class="toast show border-0 shadow">
+                    <div class="toast-body">
+                        <span class="text-danger">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                        </span>
+                        {{ $errors->first() }}
                     </div>
                 </div>
             </div>
@@ -179,8 +193,22 @@
                     </div>
 
                     <!-- Target Mesin FullCalendar -->
+                    @php
+                        $disposisiCandidates = $pegawaiDisposisi
+                            ->map(function ($pegawai) {
+                                return [
+                                    'nip' => $pegawai->nip,
+                                    'nama' => $pegawai->nama,
+                                    'jabatan' => $pegawai->jabatan->nama_jabatan ?? $pegawai->id_jabatan,
+                                    'bidang' => $pegawai->bidang->nama_bidang ?? null,
+                                ];
+                            })
+                            ->values();
+                    @endphp
                     <div id="calendar-agenda" class="flex-grow-1 p-2 overflow-auto"
-                        data-events='@json($events)' data-role="{{ $role }}"></div>
+                        data-events='@json($events)' data-role="{{ $role }}"
+                        data-disposisi-candidates='@json($disposisiCandidates)'>
+                    </div>
                 </div>
             </div>
 
@@ -247,8 +275,8 @@
 
                             <div class="col-6 ps-4 position-relative">
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i
-                                            class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal
+                                        Surat</small>
                                     <span class="fw-bold text-dark" id="modal-tanggal-surat"></span>
                                 </div>
                                 <div class="mb-3">
@@ -271,6 +299,20 @@
                             </label>
                             <textarea name="alasan_tidak_hadir" rows="4" class="form-control border-secondary-subtle"
                                 placeholder="Tulis Alasan Disini..." required></textarea>
+                        </div>
+
+                        <div class="border rounded-3 p-3 bg-white shadow-sm mt-3 d-none"
+                            id="disposisi-pengganti-container">
+                            <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                <i class="bi bi-person-plus me-2 fs-5"></i> Disposisikan ke Pengganti
+                            </label>
+                            <select name="nip_pengganti" class="form-select border-secondary-subtle mb-3"
+                                id="select-pengganti">
+                                <option value="">Pilih pegawai</option>
+                            </select>
+                            <textarea name="catatan_pengganti" rows="3" class="form-control border-secondary-subtle"
+                                placeholder="Catatan disposisi (opsional)"></textarea>
+                            <small class="text-muted d-block mt-2" id="disposisi-pengganti-help"></small>
                         </div>
                     </div>
 

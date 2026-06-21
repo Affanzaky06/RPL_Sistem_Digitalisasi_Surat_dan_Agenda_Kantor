@@ -123,8 +123,20 @@ class DisposisiKabidController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'required|string|max:1000',
         ]);
+
+        $penerima = Pegawai::where('nip', $request->nip_penerima)
+            ->where('id_bidang', Auth::user()->id_bidang)
+            ->whereIn('id_jabatan', ['J003', 'J004'])
+            ->first();
+
+        if (!$penerima) {
+            return back()->withErrors([
+                'nip_penerima' => 'Kabid hanya dapat mendisposisikan ke Subkoor atau Staff pada bidangnya.'
+            ]);
+        }
 
         Disposisi::where(
             'id_surat',
@@ -148,7 +160,7 @@ class DisposisiKabidController extends Controller
 
             'tanggal' => now(),
 
-            'catatan' => $request->catatan ?? '-',
+            'catatan' => $request->catatan,
 
             'status' => 'Menunggu Konfirmasi'
 
@@ -228,6 +240,10 @@ class DisposisiKabidController extends Controller
 
     public function tolak(Request $request, $id_surat)
     {
+        $request->validate([
+            'alasan_tolak' => 'required|string|max:500',
+        ]);
+
         $disposisi = Disposisi::where(
             'id_surat',
             $id_surat
@@ -240,8 +256,16 @@ class DisposisiKabidController extends Controller
             ->firstOrFail();
 
         $disposisi->update([
-            'status' => 'Tidak Hadir'
+            'status' => 'Tidak Hadir',
+            'catatan' => 'Alasan Tidak Hadir: ' . $request->alasan_tolak
         ]);
+
+        $agenda = \App\Models\Agenda::where('id_surat', $id_surat)->first();
+        if ($agenda) {
+            \App\Models\Peserta::where('id_agenda', $agenda->id_agenda)
+                ->where('nip', Auth::user()->nip)
+                ->update(['status_kehadiran' => 'Tidak Hadir']);
+        }
 
         return back()->with(
             'success',

@@ -174,7 +174,7 @@
                                                         @csrf
                                                         <button type="submit" class="btn btn-success btn-sm"
                                                             style="width:100px;">
-                                                            <i class="bi bi-check-lg"></i> Hadir
+                                                            Hadir
                                                         </button>
                                                     </form>
 
@@ -185,13 +185,13 @@
                                                         @csrf
                                                         <button type="submit" class="btn btn-danger btn-sm"
                                                             style="width:100px;">
-                                                            <i class="bi bi-x"></i> Tolak
+                                                            Tolak
                                                         </button>
                                                     </form>
 
                                                     <small class="text-primary fw-bold mt-1"
                                                         style="font-size: 0.7rem;"><i class="bi bi-info-circle"></i>
-                                                        Diajak Pendamping</small>
+                                                        Diajak Mendampingi</small>
                                                 </div>
                                             @else
                                                 <div class="d-flex flex-column align-items-center gap-1">
@@ -338,33 +338,40 @@
                                 $catatanDisposisi = $surat->disposisi
                                     ->where('catatan', '!=', '-')
                                     ->whereNotNull('catatan');
+                                $catatanTerbaru = $catatanDisposisi->sortByDesc('id_disposisi')->first();
                             @endphp
 
-                            @if ($catatanDisposisi->count())
-                                @foreach ($catatanDisposisi as $d)
-                                    <div class="border rounded p-2 mb-2">
-                                        <div class="fw-semibold">
-                                            {{ $d->pemberi->nama ?? '-' }}
+                            @if ($catatanTerbaru)
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-semibold">
+                                        {{ $catatanTerbaru->pemberi->nama ?? '-' }}
 
-                                            <span class="text-muted fw-normal">
-                                                -
-                                                @switch($d->pemberi->id_jabatan)
-                                                    @case('J001')
-                                                        Kepala Kantor
-                                                    @break
-                                                @endswitch
-                                            </span>
-                                        </div>
+                                        <span class="text-muted fw-normal">
+                                            -
+                                            @switch($catatanTerbaru->pemberi->id_jabatan)
+                                                @case('J001')
+                                                    Kepala Kantor
+                                                @break
 
-                                        <small class="text-muted">
-                                            {{ $d->created_at->format('d-m-Y H:i') }}
-                                        </small>
+                                                @case('J002')
+                                                    Kabid
+                                                @break
 
-                                        <div class="mt-1">
-                                            {{ $d->catatan }}
-                                        </div>
+                                                @case('J006')
+                                                    Sekretaris
+                                                @break
+                                            @endswitch
+                                        </span>
                                     </div>
-                                @endforeach
+
+                                    <small class="text-muted">
+                                        {{ $catatanTerbaru->created_at->format('d-m-Y H:i') }}
+                                    </small>
+
+                                    <div class="mt-1">
+                                        {{ $catatanTerbaru->catatan }}
+                                    </div>
+                                </div>
                             @else
                                 <div class="text-muted">
                                     Tidak ada catatan disposisi
@@ -566,7 +573,7 @@
                                     </label>
 
                                     <textarea name="catatan" rows="3" class="form-control border-secondary-subtle"
-                                        placeholder="Tulis Catatan Disini... (kosongkan jika tidak ada)" autocomplete="off"></textarea>
+                                        placeholder="Tulis Catatan Disposisi..." autocomplete="off" required></textarea>
                                 </div>
                             </div>
 

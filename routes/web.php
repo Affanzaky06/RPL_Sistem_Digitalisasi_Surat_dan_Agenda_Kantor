@@ -256,36 +256,38 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
     // 5. RUTE KEPEGAWAIAN (Role: J005)
     // --------------------------------------------------------
-    Route::get(
-        '/kepegawaian',
-        [kepegawaianController::class, 'index']
-    )->name('kepegawaian.dashboard');
+    Route::middleware('role:J005')->group(function () {
+        Route::get(
+            '/kepegawaian',
+            [kepegawaianController::class, 'index']
+        )->name('kepegawaian.dashboard');
 
-    Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
-        ->name('kepegawaian.input_data');
+        Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
+            ->name('kepegawaian.input_data');
 
-    // ROUTE UNTUK MEMPROSES FORM
-    Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
-        ->name('kepegawaian.store');
+        // ROUTE UNTUK MEMPROSES FORM
+        Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
+            ->name('kepegawaian.store');
 
-    Route::get('/kepegawaian/list', [kepegawaianController::class, 'listPegawai'])
-        ->name('kepegawaian.list');
+        Route::get('/kepegawaian/list', [kepegawaianController::class, 'listPegawai'])
+            ->name('kepegawaian.list');
 
-    // TAMBAHKAN DUA ROUTE INI
-    Route::put('/kepegawaian/update/{nip}', [kepegawaianController::class, 'updatePegawai'])
-        ->name('kepegawaian.update');
+        // TAMBAHKAN DUA ROUTE INI
+        Route::put('/kepegawaian/update/{nip}', [kepegawaianController::class, 'updatePegawai'])
+            ->name('kepegawaian.update');
 
-    Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
-        ->name('kepegawaian.delete');
-    Route::get(
-        '/kepegawaian/kalender_kantor',
-        [KalenderKantorController::class, 'index']
-    )->name('kepegawaian.kalender');
+        Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
+            ->name('kepegawaian.delete');
+        Route::get(
+            '/kepegawaian/kalender_kantor',
+            [KalenderKantorController::class, 'index']
+        )->name('kepegawaian.kalender');
 
-    Route::get(
-        '/kepegawaian/profil',
-        [ProfilController::class, 'index']
-    )->name('kepegawian.profil');
+        Route::get(
+            '/kepegawaian/profil',
+            [ProfilController::class, 'index']
+        )->name('kepegawian.profil');
+    });
 
 
     // --------------------------------------------------------

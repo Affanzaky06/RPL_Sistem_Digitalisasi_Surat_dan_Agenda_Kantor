@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calendarEl) {
         let databaseEvents = JSON.parse(calendarEl.dataset.events || '[]');
         let userRole = calendarEl.dataset.role || '';
+        let disposisiCandidates = JSON.parse(calendarEl.dataset.disposisiCandidates || '[]');
 
         // Referensi ke popup card
         const popupCard = document.getElementById('event-popup-card');
@@ -19,6 +20,83 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Data event yang sedang aktif di popup
         let activeEventProps = null;
+
+        function hasAvailablePendamping() {
+            return userRole === 'Kepala'
+                && Array.isArray(activeEventProps?.pendamping_hadir)
+                && activeEventProps.pendamping_hadir.length > 0;
+        }
+
+        function needsReplacementDisposisi() {
+            if (!activeEventProps) return false;
+            if (hasAvailablePendamping()) return false;
+
+            return Number(activeEventProps.jumlah_peserta_hadir || 0) <= 1
+                && (userRole === 'Kepala' || userRole === 'Kabid' || userRole === 'Subkoor');
+        }
+
+        function fillAttendanceModal(formAction) {
+            let modalForm = document.getElementById('form-tidak-hadir');
+            modalForm.action = formAction;
+
+            document.getElementById('modal-pengirim').textContent = activeEventProps.pengirim || '-';
+            document.getElementById('modal-nomor-surat').textContent = activeEventProps.nomor_surat || '-';
+            document.getElementById('modal-perihal').textContent = activeEventProps.perihal || '-';
+            document.getElementById('modal-tanggal-surat').textContent = activeEventProps.tanggal_surat || '-';
+            document.getElementById('modal-waktu').textContent = activeEventProps.waktu || '-';
+
+            let prioritasEl = document.getElementById('modal-prioritas');
+            let prioritas = activeEventProps.prioritas || 'Rendah';
+            if (prioritas === 'Tinggi') {
+                prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Urgent</span>';
+            } else if (prioritas === 'Sedang') {
+                prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
+            } else {
+                prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';
+            }
+
+            let alasanContainer = document.getElementById('alasan-container');
+            let alasanTextarea = modalForm.querySelector('textarea[name="alasan_tidak_hadir"]');
+            if (userRole === 'Kepala') {
+                alasanContainer.classList.add('d-none');
+                alasanTextarea.required = false;
+                alasanTextarea.value = '';
+            } else {
+                alasanContainer.classList.remove('d-none');
+                alasanTextarea.required = true;
+                alasanTextarea.value = '';
+            }
+
+            let replacementNeeded = needsReplacementDisposisi();
+            let disposisiContainer = document.getElementById('disposisi-pengganti-container');
+            let selectPengganti = document.getElementById('select-pengganti');
+            let helpPengganti = document.getElementById('disposisi-pengganti-help');
+            let catatanPengganti = modalForm.querySelector('textarea[name="catatan_pengganti"]');
+
+            disposisiContainer.classList.toggle('d-none', !replacementNeeded);
+            selectPengganti.required = replacementNeeded;
+            selectPengganti.innerHTML = '<option value="">Pilih pegawai</option>';
+            catatanPengganti.value = '';
+
+            if (replacementNeeded) {
+                disposisiCandidates.forEach(function (pegawai) {
+                    let option = document.createElement('option');
+                    option.value = pegawai.nip;
+                    option.textContent = [
+                        pegawai.nama,
+                        pegawai.jabatan,
+                        pegawai.bidang
+                    ].filter(Boolean).join(' - ');
+                    selectPengganti.appendChild(option);
+                });
+
+                helpPengganti.textContent = userRole === 'Kepala'
+                    ? 'Agenda hanya memiliki Anda sebagai peserta. Pilih Kabid atau Sekretaris sebagai pengganti.'
+                    : userRole === 'Kabid'
+                    ? 'Agenda hanya memiliki Anda sebagai peserta. Pilih Subkoor atau Staff pada bidang Anda sebagai pengganti.'
+                    : 'Agenda hanya memiliki Anda sebagai peserta. Pilih Staff bawahan Anda sebagai pengganti.';
+            }
+        }
 
         // Fungsi untuk menutup popup
         function closePopup() {
@@ -159,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 let idAgenda = activeEventProps.id_agenda;
                 let formAction = '/agenda/' + idAgenda + '/batal-hadir';
 
-                if (userRole === 'Kepala') {
+                if (userRole === 'Kepala' && (!needsReplacementDisposisi() || hasAvailablePendamping())) {
                     // Kepala Kantor: langsung submit tanpa modal (tanpa alasan)
                     let form = document.createElement('form');
                     form.method = 'POST';
@@ -175,31 +253,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.body.appendChild(form);
                     form.submit();
                 } else {
-                    // Kabid ke bawah: tampilkan modal dengan form alasan
-                    let modalForm = document.getElementById('form-tidak-hadir');
-                    modalForm.action = formAction;
-
-                    // Isi data modal
-                    document.getElementById('modal-pengirim').textContent = activeEventProps.pengirim || '-';
-                    document.getElementById('modal-nomor-surat').textContent = activeEventProps.nomor_surat || '-';
-                    document.getElementById('modal-perihal').textContent = activeEventProps.perihal || '-';
-                    document.getElementById('modal-tanggal-surat').textContent = activeEventProps.tanggal_surat || '-';
-                    document.getElementById('modal-waktu').textContent = activeEventProps.waktu || '-';
-
-                    // Prioritas badge
-                    let prioritasEl = document.getElementById('modal-prioritas');
-                    let prioritas = activeEventProps.prioritas || 'Rendah';
-                    if (prioritas === 'Tinggi') {
-                        prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Urgent</span>';
-                    } else if (prioritas === 'Sedang') {
-                        prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
-                    } else {
-                        prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';
-                    }
-
-                    // Reset textarea
-                    modalForm.querySelector('textarea[name="alasan_tidak_hadir"]').value = '';
-
+                    // Kabid ke bawah wajib alasan. Kepala juga memakai modal saat harus disposisi pengganti.
+                    fillAttendanceModal(formAction);
                     // Tutup popup dan buka modal
                     closePopup();
                     let modal = new bootstrap.Modal(document.getElementById('tidakHadirModal'));

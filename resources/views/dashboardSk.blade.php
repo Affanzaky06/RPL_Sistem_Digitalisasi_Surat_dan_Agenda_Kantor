@@ -78,7 +78,16 @@
     </h4>
 
     @forelse($notifikasi as $surat)
-        <div class="card mb-3 shadow-sm">
+        @php
+            $disposisiNotif = $surat->disposisi->first();
+            $judulNotif = $disposisiNotif ? 'Disposisi Agenda' : 'Surat Baru';
+            $isiNotif = $disposisiNotif->catatan ?? $surat->perihal;
+        @endphp
+
+        <div class="card mb-3 shadow-sm position-relative">
+
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2"
+                style="z-index: 10;" aria-label="Close" onclick="this.closest('.card').remove()"></button>
 
             <div class="card-body">
 
@@ -87,11 +96,15 @@
                     <div>
 
                         <h6 class="fw-bold mb-1">
-                            Surat Baru
+                            {{ $judulNotif }}
                         </h6>
 
                         <p class="mb-1">
                             {{ $surat->perihal }}
+                        </p>
+
+                        <p class="mb-1">
+                            {{ $isiNotif }}
                         </p>
 
                         <small class="text-muted">

@@ -45,14 +45,9 @@ class KalenderKantorController extends Controller
             ->get();
 
         $events = $agendaList->map(function ($item) {
-            $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
-            $statusAcara = 'mendatang';
-
-            if ($kegiatanDate->isPast() && !Carbon::today()->isSameDay($kegiatanDate)) {
-                $statusAcara = 'terlaksana';
-            } elseif (Carbon::today()->isSameDay($kegiatanDate)) {
-                $statusAcara = 'berlangsung';
-            }
+            $mulaiKegiatan = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai_kegiatan);
+            $selesaiKegiatan = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai_kegiatan);
+            $statusAcara = $this->statusAcara($mulaiKegiatan, $selesaiKegiatan);
 
             // Kumpulkan NIP semua pegawai yang terlibat (pemberi + penerima disposisi)
             $nipPenerima = $item->disposisi->pluck('nip_penerima')->filter();
@@ -131,5 +126,20 @@ class KalenderKantorController extends Controller
             'daftarStaff' => $daftarStaff,
             'ringkasanAgenda' => $ringkasanAgenda
         ]);
+    }
+
+    private function statusAcara(Carbon $mulaiKegiatan, Carbon $selesaiKegiatan): string
+    {
+        $sekarang = now();
+
+        if ($sekarang->lt($mulaiKegiatan)) {
+            return 'mendatang';
+        }
+
+        if ($sekarang->lte($selesaiKegiatan)) {
+            return 'berlangsung';
+        }
+
+        return 'terlaksana';
     }
 }

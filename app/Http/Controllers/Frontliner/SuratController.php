@@ -38,10 +38,19 @@ class SuratController extends Controller
                 'tanggal_surat' => 'required',
                 'asal_surat' => 'required',
                 'berkas_surat' => 'required|mimes:pdf,jpg,jpeg,png|max:5120',
+                'tanggal_kegiatan' => 'required_if:jenis_surat,Undangan,Surat Undangan|nullable|date',
+                'lokasi' => 'required_if:jenis_surat,Undangan,Surat Undangan|nullable|string',
+                'waktu_mulai' => 'required_if:jenis_surat,Undangan,Surat Undangan|nullable|date_format:H:i',
+                'waktu_selesai' => 'required_if:jenis_surat,Undangan,Surat Undangan|nullable|date_format:H:i|after:waktu_mulai',
             ],
             [
                 'nomor_surat.required' => 'Nomor surat wajib diisi.',
                 'nomor_surat.unique' => 'Nomor surat sudah terdaftar.',
+                'tanggal_kegiatan.required_if' => 'Tanggal kegiatan wajib diisi untuk surat undangan.',
+                'lokasi.required_if' => 'Lokasi kegiatan wajib diisi untuk surat undangan.',
+                'waktu_mulai.required_if' => 'Waktu mulai wajib diisi untuk surat undangan.',
+                'waktu_selesai.required_if' => 'Waktu selesai wajib diisi untuk surat undangan.',
+                'waktu_selesai.after' => 'Waktu selesai harus setelah waktu mulai.',
             ]
         );
 

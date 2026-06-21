@@ -50,7 +50,7 @@ class laporanPemantauanController extends Controller
         } elseif ($user->id_jabatan === 'J002') {
             $pegawai = \App\Models\Pegawai::with('bidang')->where('id_bidang', $user->id_bidang)->whereIn('id_jabatan', ['J003', 'J004'])->get();
         } elseif ($user->id_jabatan === 'J003') {
-            $pegawai = \App\Models\Pegawai::with('bidang')->where('id_bidang', $user->id_bidang)->where('id_jabatan', 'J004')->get();
+            $pegawai = \App\Models\Pegawai::with('bidang')->where('nip_atasan', $user->nip)->where('id_jabatan', 'J004')->get();
         } else {
             $pegawai = collect();
         }
@@ -95,30 +95,60 @@ class laporanPemantauanController extends Controller
     public function dispoUlang(Request $request, $id_disposisi)
     {
         $dispoLama = Disposisi::findOrFail($id_disposisi);
+        $user = Auth::user();
 
-        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
-            foreach ($request->nip_pendamping as $nipBaru) {
-                
-                // Buat Disposisi Baru
-                $dispoBaru = Disposisi::create([
-                    'id_surat' => $dispoLama->id_surat,
-                    'nip_pemberi' => Auth::user()->nip,
-                    'nip_penerima' => $nipBaru,
-                    'tanggal' => now(),
-                    'catatan' => $request->catatan ?? $dispoLama->catatan, // Bawa catatan baru atau lama
-                    'status' => 'Menunggu Konfirmasi'
+        abort_unless($dispoLama->nip_pemberi === $user->nip, 403);
+
+        $request->validate([
+            'nip_pendamping' => 'required|array|min:1',
+            'nip_pendamping.*' => 'required|exists:pegawai,nip',
+            'catatan' => 'required|string|max:1000',
+        ]);
+
+        foreach ($request->nip_pendamping as $nipBaru) {
+            $penerimaValid = \App\Models\Pegawai::where('nip', $nipBaru)
+                ->when($user->id_jabatan === 'J001', function ($query) {
+                    $query->whereIn('id_jabatan', ['J002', 'J006']);
+                })
+                ->when($user->id_jabatan === 'J002', function ($query) use ($user) {
+                    $query->where('id_bidang', $user->id_bidang)
+                        ->whereIn('id_jabatan', ['J003', 'J004']);
+                })
+                ->when($user->id_jabatan === 'J003', function ($query) use ($user) {
+                    $query->where('nip_atasan', $user->nip)
+                        ->where('id_jabatan', 'J004');
+                })
+                ->exists();
+
+            if (!$penerimaValid) {
+                return back()->withErrors([
+                    'nip_pendamping' => 'Penerima disposisi ulang tidak sesuai dengan hierarki Anda.'
                 ]);
+            }
 
-                // Jika surat ini punya Agenda, ikat orang baru ini ke tabel Peserta
-                $agenda = Agenda::where('id_surat', $dispoLama->id_surat)->first();
-                if ($agenda) {
-                    Peserta::create([
+            // Buat Disposisi Baru
+            $dispoBaru = Disposisi::create([
+                'id_surat' => $dispoLama->id_surat,
+                'nip_pemberi' => $user->nip,
+                'nip_penerima' => $nipBaru,
+                'tanggal' => now(),
+                'catatan' => $request->catatan,
+                'status' => 'Menunggu Konfirmasi'
+            ]);
+
+            // Jika surat ini punya Agenda, ikat orang baru ini ke tabel Peserta
+            $agenda = Agenda::where('id_surat', $dispoLama->id_surat)->first();
+            if ($agenda) {
+                Peserta::updateOrCreate(
+                    [
                         'id_agenda' => $agenda->id_agenda,
                         'nip' => $nipBaru,
+                    ],
+                    [
                         'id_disposisi' => $dispoBaru->id_disposisi,
                         'status_kehadiran' => 'Menunggu Konfirmasi'
-                    ]);
-                }
+                    ]
+                );
             }
         }
 
@@ -132,6 +162,8 @@ class laporanPemantauanController extends Controller
     public function setujuiPenolakan($id_disposisi)
     {
         $dispoLama = Disposisi::findOrFail($id_disposisi);
+        abort_unless($dispoLama->nip_pemberi === Auth::user()->nip, 403);
+
         // Ubah status menjadi dimaklumi, jadi sistem tidak minta dispo ulang lagi
         $dispoLama->update(['status' => 'Dimaklumi']);
         
