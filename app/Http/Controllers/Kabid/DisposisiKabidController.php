@@ -40,10 +40,10 @@ class DisposisiKabidController extends Controller
             });
         }
 
-        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->where('status_kehadiran', 'Hadir');
+        })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
             ->orderBy('tanggal_kegiatan', 'asc')
@@ -51,40 +51,53 @@ class DisposisiKabidController extends Controller
             ->take(3)
             ->get();
 
-        $suratMasuk = Surat::with([
-            'disposisi.pemberi.bidang'
+        $search = trim((string) request('search', ''));
+        $sort = request('sort', 'prioritas');
+
+        $suratMasukQuery = Surat::with([
+            'disposisi.pemberi.bidang',
+            'disposisi.penerima'
         ])
             ->where(function ($query) {
-
-                // surat yang memang diterima Kabid
                 $query->whereHas('disposisi', function ($q) {
-
-                    $q->where(
-                        'nip_penerima',
-                        Auth::user()->nip
-                    )
+                    $q->where('nip_penerima', Auth::user()->nip)
                         ->whereIn('status', [
                             'Menunggu Konfirmasi',
                             'Belum Dibaca',
                             'Dalam Proses'
                         ]);
                 })
-
-                    // surat yang ditolak bawahan Kabid
                     ->orWhereHas('disposisi', function ($q) {
-
-                        $q->where(
-                            'nip_pemberi',
-                            Auth::user()->nip
-                        )
-                            ->where(
-                                'status',
-                                'Tidak Hadir'
-                            );
+                        $q->whereRaw("
+                id_disposisi = (
+                    SELECT MAX(d2.id_disposisi)
+                    FROM disposisi d2
+                    WHERE d2.id_surat = disposisi.id_surat
+                )
+            ")
+                            ->where('nip_pemberi', Auth::user()->nip)
+                            ->where('status', 'Tidak Hadir');
                     });
-            })
-            ->latest()
-            ->paginate(10);
+            });
+
+        if ($search !== '') {
+            $suratMasukQuery->where(function ($q) use ($search) {
+                $q->where('asal_surat', 'like', "%{$search}%")
+                    ->orWhere('perihal', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sort === 'terbaru') {
+            $suratMasukQuery->orderBy('tanggal_surat', 'desc');
+        } elseif ($sort === 'terlama') {
+            $suratMasukQuery->orderBy('tanggal_surat', 'asc');
+        } else {
+            $suratMasukQuery
+                ->orderByRaw("CASE prioritas WHEN 'Tinggi' THEN 1 WHEN 'Sedang' THEN 2 WHEN 'Rendah' THEN 3 ELSE 4 END")
+                ->orderBy('tanggal_surat', 'desc');
+        }
+
+        $suratMasuk = $suratMasukQuery->paginate(10)->withQueryString();
 
         $pegawai = Pegawai::with('bidang')
             ->where('id_bidang', $user->id_bidang)
@@ -102,7 +115,7 @@ class DisposisiKabidController extends Controller
                 'suratMasuk' => $suratMasuk,
                 'ringkasanAgenda' => $ringkasanAgenda,
 
-                'pegawai'=> $pegawai
+                'pegawai' => $pegawai
             ]
         );
     }
@@ -182,10 +195,10 @@ class DisposisiKabidController extends Controller
 
         // 3. JIKA KABID MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
         if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
-            
+
             // Lakukan perulangan untuk setiap NIP yang diceklis di form
             foreach ($request->nip_pendamping as $nipPenerima) {
-                
+
                 // Buat Disposisi untuk masing-masing Pendamping
                 $disposisi = \App\Models\Disposisi::create([
                     'id_surat' => $surat->id_surat,
@@ -203,8 +216,8 @@ class DisposisiKabidController extends Controller
                         'nip' => $nipPenerima // <-- Diambil dari variabel perulangan
                     ],
                     [
-                        'id_disposisi' => $disposisi->id_disposisi, 
-                        'status_kehadiran' => 'Menunggu Konfirmasi' 
+                        'id_disposisi' => $disposisi->id_disposisi,
+                        'status_kehadiran' => 'Menunggu Konfirmasi'
                     ]
                 );
             }
@@ -269,6 +282,4 @@ class DisposisiKabidController extends Controller
             'Disposisi berhasil dibatalkan'
         );
     }
-
-    
 }

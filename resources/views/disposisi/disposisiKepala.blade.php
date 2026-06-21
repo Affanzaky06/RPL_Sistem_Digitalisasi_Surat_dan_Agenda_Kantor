@@ -45,6 +45,50 @@
                 <h3 class="fw-bold mb-4">
                     Surat Masuk dan Disposisi
                 </h3>
+
+                <form method="GET" class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        {{-- Search --}}
+                        <div class="input-group" style="max-width: 450px;">
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Cari pengirim atau perihal..." value="{{ request('search') }}">
+
+                            <button class="btn btn-outline-dark" type="submit">
+                                <i class="bi bi-search me-1"></i>
+                                Cari
+                            </button>
+                        </div>
+
+                        {{-- Sort --}}
+                        <div class="d-flex align-items-center gap-2">
+
+                            <span class="text-uppercase fw-semibold" style="font-size:12px; color:#555;">
+                                Sort By
+                            </span>
+
+                            <select name="sort" class="form-select" style="width:140px;"
+                                onchange="this.form.submit()">
+
+                                <option value="prioritas" @selected(request('sort', 'prioritas') === 'prioritas')>
+                                    Default
+                                </option>
+
+                                <option value="terbaru" @selected(request('sort') === 'terbaru')>
+                                    Terbaru
+                                </option>
+
+                                <option value="terlama" @selected(request('sort') === 'terlama')>
+                                    Terlama
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+                </form>
+
                 <div class="border border-dark rounded-3 overflow-hidden shadow-sm">
                     <div class="table-responsive">
 

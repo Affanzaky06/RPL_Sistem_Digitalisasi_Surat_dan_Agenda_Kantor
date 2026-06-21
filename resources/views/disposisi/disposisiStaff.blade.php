@@ -45,6 +45,50 @@
                 <h3 class="fw-bold mb-4">
                     Surat Masuk dan Disposisi
                 </h3>
+
+                <form method="GET" class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        {{-- Search --}}
+                        <div class="input-group" style="max-width: 450px;">
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Cari pengirim atau perihal..." value="{{ request('search') }}">
+
+                            <button class="btn btn-outline-dark" type="submit">
+                                <i class="bi bi-search me-1"></i>
+                                Cari
+                            </button>
+                        </div>
+
+                        {{-- Sort --}}
+                        <div class="d-flex align-items-center gap-2">
+
+                            <span class="text-uppercase fw-semibold" style="font-size:12px; color:#555;">
+                                Sort By
+                            </span>
+
+                            <select name="sort" class="form-select" style="width:140px;"
+                                onchange="this.form.submit()">
+
+                                <option value="prioritas" @selected(request('sort', 'prioritas') === 'prioritas')>
+                                    Default
+                                </option>
+
+                                <option value="terbaru" @selected(request('sort') === 'terbaru')>
+                                    Terbaru
+                                </option>
+
+                                <option value="terlama" @selected(request('sort') === 'terlama')>
+                                    Terlama
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+                </form>
+
                 <div class="border border-dark rounded-3 overflow-hidden shadow-sm">
                     <div class="table-responsive">
 
@@ -52,12 +96,12 @@
 
                             <thead class="table-light">
                                 <tr>
-                                    <th class="fw-semibold fs-6">Nomor Surat</th>
                                     <th class="fw-semibold fs-6">Pengirim</th>
                                     <th class="fw-semibold fs-6">Perihal</th>
                                     <th class="fw-semibold fs-6">Prioritas</th>
                                     <th class="fw-semibold fs-6">Tanggal Kegiatan</th>
                                     <th class="fw-semibold fs-6">Pendisposisi</th>
+                                    <th class="fw-semibold fs-6">Catatan</th>
                                     <th class="fw-semibold fs-6">Detail Surat</th>
                                     <th class="fw-semibold fs-6">Aksi</th>
                                 </tr>
@@ -71,16 +115,15 @@
 
                                     <tr style="border-bottom:1px solid #dee2e6;">
 
-                                        <td>
-                                            {{ $surat->nomor_surat }}
-                                        </td>
 
                                         <td>
                                             {{ $surat->asal_surat }}
                                         </td>
 
                                         <td>
-                                            {{ $surat->perihal }}
+                                            <span title="{{ $surat->perihal }}">
+                                                {{ \Illuminate\Support\Str::limit($surat->perihal, 15) }}
+                                            </span>
                                         </td>
 
                                         <td>
@@ -120,7 +163,16 @@
                                                 </small>
                                             @endif
                                         </td>
+                                        <td
+                                            title="{{ optional($surat->disposisi->where('nip_penerima', Auth::user()->nip)->sortByDesc('id_disposisi')->first())->catatan ?? '-' }}">
 
+                                            {{ \Illuminate\Support\Str::limit(
+                                                optional(
+                                                    $surat->disposisi->where('nip_penerima', Auth::user()->nip)->sortByDesc('id_disposisi')->first(),
+                                                )->catatan ?? '-',
+                                                15,
+                                            ) }}
+                                        </td>
                                         <td>
                                             <button class="btn btn-dark btn-sm" style="width:100px;"
                                                 data-bs-toggle="modal"
@@ -218,6 +270,7 @@
 
     </div>
     </div>
+
     @foreach ($suratMasuk as $surat)
         <div class="modal fade" id="detailModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -353,6 +406,57 @@
                                 </div>
                             </div>
                         @endif
+                        <hr>
+                        <h6 class="fw-bold mb-3">
+                            Catatan Pendisposisi
+                        </h6>
+
+                        <div class="mb-3">
+                            @php
+                                $catatanDisposisi = $surat->disposisi
+                                    ->where('catatan', '!=', '-')
+                                    ->whereNotNull('catatan');
+                                $d = $catatanDisposisi->last();
+                            @endphp
+
+                            @if ($d)
+                                <div class="border rounded p-2 mb-2">
+                                    <div class="fw-semibold">
+                                        {{ $d->pemberi->nama ?? '-' }}
+
+                                        <span class="text-muted fw-normal">
+                                            -
+                                            @switch($d->pemberi->id_jabatan)
+                                                @case('J001')
+                                                    Kepala Kantor
+                                                @break
+
+                                                @case('J002')
+                                                    Kabid
+                                                @break
+
+                                                @case('J003')
+                                                    Subkoor
+                                                @break
+                                            @endswitch
+                                        </span>
+                                    </div>
+
+                                    <small class="text-muted">
+                                        {{ $d->created_at->format('d-m-Y H:i') }}
+                                    </small>
+
+                                    <div class="mt-1">
+                                        {{ $d->catatan }}
+                                    </div>
+                                </div>
+                            @else
+                                <div class="text-muted">
+                                    Tidak ada catatan disposisi
+                                </div>
+                            @endif
+
+                        </div>
                         <hr>
                         <div>
                             <div class="text-uppercase text-secondary small fw-semibold mb-3"> Lampiran Surat

@@ -40,10 +40,10 @@ class DisposisiKepalaController extends Controller
             });
         }
 
-         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->where('status_kehadiran', 'Hadir');
+        })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
             ->orderBy('tanggal_kegiatan', 'asc')
@@ -51,26 +51,44 @@ class DisposisiKepalaController extends Controller
             ->take(3)
             ->get();
 
-        $suratMasuk = Surat::with('disposisi')
+
+        $search = trim((string) request('search', ''));
+        $sort = request('sort', 'prioritas');
+
+        $suratMasukQuery = Surat::with('disposisi')
             ->where('status', 'Terverifikasi')
             ->where(function ($q) {
-
                 $q->whereDoesntHave('disposisi')
-
                     ->orWhereHas('disposisi', function ($sub) {
-
                         $sub->whereRaw("
-                            id_disposisi = (
-                                SELECT MAX(d2.id_disposisi)
-                                FROM disposisi d2
-                                WHERE d2.id_surat = disposisi.id_surat
-                            )
-                        ")
+                    id_disposisi = (
+                        SELECT MAX(d2.id_disposisi)
+                        FROM disposisi d2
+                        WHERE d2.id_surat = disposisi.id_surat
+                    )
+                ")
                             ->where('status', 'Tidak Hadir');
                     });
-            })
-            ->latest('tanggal_verifikasi')
-            ->paginate(10);
+            });
+
+        if ($search !== '') {
+            $suratMasukQuery->where(function ($q) use ($search) {
+                $q->where('asal_surat', 'like', "%{$search}%")
+                    ->orWhere('perihal', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sort === 'terbaru') {
+            $suratMasukQuery->latest('tanggal_verifikasi');
+        } elseif ($sort === 'terlama') {
+            $suratMasukQuery->oldest('tanggal_verifikasi');
+        } else {
+            $suratMasukQuery
+                ->orderByRaw("CASE prioritas WHEN 'Tinggi' THEN 1 WHEN 'Sedang' THEN 2 WHEN 'Rendah' THEN 3 ELSE 4 END")
+                ->latest('tanggal_verifikasi');
+        }
+
+        $suratMasuk = $suratMasukQuery->paginate(10)->withQueryString();
 
         $pegawai = Pegawai::with('bidang')
             ->whereIn('id_jabatan', [
@@ -161,10 +179,10 @@ class DisposisiKepalaController extends Controller
         );
     }
 
-   public function konfirmasiHadir(Request $request, $id_surat)
+    public function konfirmasiHadir(Request $request, $id_surat)
     {
         $surat = Surat::findOrFail($id_surat);
-        $user = Auth::user(); 
+        $user = Auth::user();
 
         // 1. Buat Agenda jika belum ada
         $agenda = \App\Models\Agenda::firstOrCreate(
@@ -185,16 +203,16 @@ class DisposisiKepalaController extends Controller
                 'nip' => $user->nip
             ],
             [
-                'status_kehadiran' => 'Hadir' 
+                'status_kehadiran' => 'Hadir'
             ]
         );
 
         // 3. JIKA ADA PENDAMPING YANG DICEKLIS (Bisa lebih dari 1 orang)
         if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
-            
+
             // Lakukan perulangan untuk setiap NIP yang diceklis di UI
             foreach ($request->nip_pendamping as $nipPenerima) {
-                
+
                 // Buat Disposisi untuk masing-masing pendamping
                 $disposisi = \App\Models\Disposisi::create([
                     'id_surat' => $surat->id_surat,
@@ -212,8 +230,8 @@ class DisposisiKepalaController extends Controller
                         'nip' => $nipPenerima
                     ],
                     [
-                        'id_disposisi' => $disposisi->id_disposisi, 
-                        'status_kehadiran' => 'Menunggu Konfirmasi' 
+                        'id_disposisi' => $disposisi->id_disposisi,
+                        'status_kehadiran' => 'Menunggu Konfirmasi'
                     ]
                 );
             }

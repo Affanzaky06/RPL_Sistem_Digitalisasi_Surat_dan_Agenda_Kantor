@@ -26,23 +26,39 @@ class DisposisiStaffController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        $suratMasuk = Surat::with([
+        $search = trim((string) request('search', ''));
+        $sort = request('sort', 'prioritas');
+
+        $suratMasukQuery = Surat::with([
             'disposisi.pemberi.bidang'
         ])
-            ->whereHas('disposisi', function ($q) {
-
-                $q->where(
-                    'nip_penerima',
-                    Auth::user()->nip
-                )
+            ->whereHas('disposisi', function ($q) use ($user) {
+                $q->where('nip_penerima', $user->nip)
                     ->whereIn('status', [
                         'Menunggu Konfirmasi',
                         'Belum Dibaca',
                         'Dalam Proses'
                     ]);
-            })
-            ->latest()
-            ->paginate(10);
+            });
+
+        if ($search !== '') {
+            $suratMasukQuery->where(function ($q) use ($search) {
+                $q->where('asal_surat', 'like', "%{$search}%")
+                    ->orWhere('perihal', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sort === 'terbaru') {
+            $suratMasukQuery->orderByDesc('tanggal_surat');
+        } elseif ($sort === 'terlama') {
+            $suratMasukQuery->orderBy('tanggal_surat', 'asc');
+        } else {
+            $suratMasukQuery
+                ->orderByRaw("CASE prioritas WHEN 'Tinggi' THEN 1 WHEN 'Sedang' THEN 2 WHEN 'Rendah' THEN 3 ELSE 4 END")
+                ->orderByDesc('tanggal_surat');
+        }
+
+        $suratMasuk = $suratMasukQuery->paginate(10)->withQueryString();
 
         return view(
             'disposisi.disposisiStaff',
