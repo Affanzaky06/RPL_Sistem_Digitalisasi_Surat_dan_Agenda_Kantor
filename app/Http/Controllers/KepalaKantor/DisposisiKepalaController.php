@@ -45,7 +45,13 @@ class DisposisiKepalaController extends Controller
             $q->where('status_kehadiran', 'Hadir');
         })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -58,19 +64,7 @@ class DisposisiKepalaController extends Controller
         $suratMasukQuery = Surat::with('disposisi')
             ->where('status', 'Terverifikasi')
             ->whereDoesntHave('agenda') // Tambahkan ini! Jika sudah ada agenda, berarti sudah diproses (Kepala Hadir)
-            ->where(function ($q) {
-                $q->whereDoesntHave('disposisi')
-                    ->orWhereHas('disposisi', function ($sub) {
-                        $sub->whereRaw("
-                    id_disposisi = (
-                        SELECT MAX(d2.id_disposisi)
-                        FROM disposisi d2
-                        WHERE d2.id_surat = disposisi.id_surat
-                    )
-                ")
-                            ->where('status', 'Tidak Hadir');
-                    });
-            });
+            ->whereDoesntHave('disposisi');
 
         if ($search !== '') {
             $suratMasukQuery->where(function ($q) use ($search) {
@@ -118,44 +112,40 @@ class DisposisiKepalaController extends Controller
             'nip_penerima' => 'required',
         ]);
 
-        Disposisi::where(
-            'id_surat',
-            $id
-        )
-            ->where(
-                'nip_penerima',
-                Auth::user()->nip
-            )
-            ->update([
-                'status' => 'Didisposisikan'
-            ]);
-
-        $disposisiLama = Disposisi::where(
-            'id_surat',
-            $id
-        )
-            ->where(
-                'nip_penerima',
-                $request->nip_penerima
-            )
-            ->where(
-                'status',
-                'Tidak Hadir'
-            )
+        $suratValid = Surat::where('id_surat', $id)
+            ->whereIn('status', ['Terverifikasi', 'Didisposisikan'])
             ->first();
 
-        if ($disposisiLama) {
+        if (!$suratValid) {
+            return back()->with('error', 'Akses ditolak: Surat belum diverifikasi atau tidak valid.');
+        }
 
-            $disposisiLama->update([
-                'tanggal' => now(),
-                'catatan' => $request->catatan ?? '-',
-                'status' => 'Menunggu Konfirmasi'
-            ]);
+        $suratValid->update([
+            'status' => 'Didisposisikan'
+        ]);
 
-            return back()->with(
-                'success',
-                'Disposisi berhasil dikirim ulang'
-            );
+        $disposisiEksis = Disposisi::where('id_surat', $id)
+            ->where('nip_penerima', $request->nip_penerima)
+            ->first();
+
+        if ($disposisiEksis) {
+            if ($disposisiEksis->status === 'Tidak Hadir') {
+                $disposisiEksis->update([
+                    'tanggal' => now(),
+                    'catatan' => $request->catatan ?? '-',
+                    'status' => 'Menunggu Konfirmasi'
+                ]);
+
+                return back()->with(
+                    'success',
+                    'Disposisi berhasil dikirim ulang'
+                );
+            } else {
+                return back()->with(
+                    'error',
+                    'Surat sudah didisposisikan ke pegawai tersebut.'
+                );
+            }
         }
 
         Disposisi::create([
@@ -184,6 +174,20 @@ class DisposisiKepalaController extends Controller
     {
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user();
+
+        // Cek Bentrok Jadwal
+        if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
+            $bentrok = \App\Models\Agenda::checkConflict(
+                $user->nip, 
+                $surat->tanggal_kegiatan, 
+                $surat->waktu_mulai_kegiatan, 
+                $surat->waktu_selesai_kegiatan
+            );
+            
+            if ($bentrok) {
+                return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan disposisikan surat ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
+            }
+        }
 
         // 1. Buat Agenda jika belum ada
         $agenda = \App\Models\Agenda::firstOrCreate(
@@ -264,6 +268,10 @@ class DisposisiKepalaController extends Controller
     public function batalDisposisi($id)
     {
         $disposisi = Disposisi::findOrFail($id);
+
+        if ($disposisi->nip_pemberi !== Auth::user()->nip) {
+            return back()->with('error', 'Akses ditolak: Anda bukan pemberi disposisi ini.');
+        }
 
         $disposisi->delete();
 

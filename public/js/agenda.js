@@ -110,6 +110,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 let event = info.event;
                 let props = event.extendedProps;
 
+                // Jangan munculkan popup jika agenda sudah terlaksana
+                if (props.status === 'terlaksana') {
+                    return;
+                }
+
                 // Isi konten popup
                 popupTitle.textContent = event.title;
                 popupWaktu.textContent = props.waktu || '-';
@@ -248,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.ada_pendamping) {
                 // ADA PENDAMPING → Tampilkan modalKonfirmasiPendamping
                 let listContainer = document.getElementById('list-pendamping-konfirmasi');
-                let html = '';
+                let html = '<hr><p class="mb-2 text-muted small">Pilih pendamping yang akan menjadi perwakilan:</p>';
                 data.pendamping.forEach(function(p) {
                     html += `
                         <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center bg-light">
@@ -270,25 +275,35 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                 });
                 listContainer.innerHTML = html;
+                listContainer.style.display = 'none'; // Sembunyikan list pendamping awalnya
 
                 let modalKonfirmasi = new bootstrap.Modal(document.getElementById('modalKonfirmasiPendamping'));
                 
-                // Event listener untuk tombol "Pilih Bawahan Lain" (Disposisi)
-                let btnLanjutDisposisi = document.getElementById('btn-lanjut-disposisi');
-                let newBtn = btnLanjutDisposisi.cloneNode(true);
-                btnLanjutDisposisi.parentNode.replaceChild(newBtn, btnLanjutDisposisi);
-                newBtn.addEventListener('click', function() {
+                // Tombol "Disposisikan ke Pendamping"
+                let btnShowPendamping = document.getElementById('btn-show-pendamping');
+                let newBtnShow = btnShowPendamping.cloneNode(true);
+                btnShowPendamping.parentNode.replaceChild(newBtnShow, btnShowPendamping);
+                newBtnShow.addEventListener('click', function() {
+                    listContainer.style.display = 'block'; // Tampilkan list pendamping
+                });
+
+                // Tombol "Batalkan Semua Agenda dan Buat Dispo Ulang Biasa"
+                let btnBatalkanSemua = document.getElementById('btn-batalkan-semua-agenda');
+                let newBtnBatalSemua = btnBatalkanSemua.cloneNode(true);
+                btnBatalkanSemua.parentNode.replaceChild(newBtnBatalSemua, btnBatalkanSemua);
+                newBtnBatalSemua.addEventListener('click', function() {
                     modalKonfirmasi.hide();
-                    showModalDisposisiBatal(idAgenda, data);
+                    showModalDisposisiBatal(idAgenda, data, eventProps);
                 });
 
                 // Tombol "Batal dan Kirim Alasan" (Khusus non-Kepala)
+                let fallbackButtons = document.getElementById('fallback-buttons');
                 let btnTolakKirimAlasan = document.getElementById('btn-tolak-kirim-alasan');
-                if (btnTolakKirimAlasan) {
+                if (btnTolakKirimAlasan && fallbackButtons) {
                     if (userRole === 'Kepala') {
-                        btnTolakKirimAlasan.style.display = 'none';
+                        fallbackButtons.style.display = 'none';
                     } else {
-                        btnTolakKirimAlasan.style.display = 'block';
+                        fallbackButtons.style.display = 'block';
                         let newBtnTolak = btnTolakKirimAlasan.cloneNode(true);
                         btnTolakKirimAlasan.parentNode.replaceChild(newBtnTolak, btnTolakKirimAlasan);
                         newBtnTolak.addEventListener('click', function() {
@@ -299,51 +314,50 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 modalKonfirmasi.show();
-
             } else {
-                // TIDAK ADA PENDAMPING
+                // JIKA TIDAK ADA PENDAMPING
+                // 1. Kepala: Langsung tampilkan form disposisi ke bawahan (Sesuai instruksi user)
                 if (userRole === 'Kepala') {
-                    // Kepala langsung ke disposisi (tidak ada atasan untuk kirim alasan)
-                    showModalDisposisiBatal(idAgenda, data);
+                    showModalDisposisiBatal(idAgenda, data, eventProps);
                 } else {
-                    // Kabid / Subkoor beri pilihan: Disposisi atau Kirim Alasan
+                    // 2. Kabid & Subkoor: Tawarkan opsi Tolak (Tulis Alasan) atau Disposisikan
                     let modalPilih = new bootstrap.Modal(document.getElementById('modalPilihAksiBatal'));
-                    
-                    let btnAksiDisposisi = document.getElementById('btn-aksi-disposisi');
-                    let newBtnDisposisi = btnAksiDisposisi.cloneNode(true);
-                    btnAksiDisposisi.parentNode.replaceChild(newBtnDisposisi, btnAksiDisposisi);
+
+                    let btnDisposisi = document.getElementById('btn-aksi-disposisi');
+                    let newBtnDisposisi = btnDisposisi.cloneNode(true);
+                    btnDisposisi.parentNode.replaceChild(newBtnDisposisi, btnDisposisi);
                     newBtnDisposisi.addEventListener('click', function() {
                         modalPilih.hide();
-                        showModalDisposisiBatal(idAgenda, data);
+                        showModalDisposisiBatal(idAgenda, data, eventProps);
                     });
-                    
-                    let btnAksiTolak = document.getElementById('btn-aksi-tolak');
-                    let newBtnTolak = btnAksiTolak.cloneNode(true);
-                    btnAksiTolak.parentNode.replaceChild(newBtnTolak, btnAksiTolak);
+
+                    let btnTolak = document.getElementById('btn-aksi-tolak');
+                    let newBtnTolak = btnTolak.cloneNode(true);
+                    btnTolak.parentNode.replaceChild(newBtnTolak, btnTolak);
                     newBtnTolak.addEventListener('click', function() {
                         modalPilih.hide();
                         showModalTolakAlasan(idAgenda, eventProps);
                     });
-                    
+
                     modalPilih.show();
                 }
             }
         }
 
-        function showModalDisposisiBatal(idAgenda, data) {
+        function showModalDisposisiBatal(idAgenda, data, eventProps) {
             let form = document.getElementById('formDisposisiBatal');
             form.action = `/agenda/${idAgenda}/disposisi-batal`;
 
-            // Isi detail surat dari data API
-            if (data.surat) {
-                document.getElementById('dispo-batal-pengirim').textContent = data.surat.asal_surat || '-';
-                document.getElementById('dispo-batal-nomor').textContent = data.surat.nomor_surat || '-';
-                document.getElementById('dispo-batal-perihal').textContent = data.surat.perihal || '-';
-                document.getElementById('dispo-batal-tanggal').textContent = data.surat.tanggal_surat || '-';
-                document.getElementById('dispo-batal-jenis').textContent = data.surat.jenis_surat || '-';
+            // Isi detail surat dari eventProps (lebih aman karena selalu ada dari FullCalendar)
+            if (eventProps) {
+                document.getElementById('dispo-batal-pengirim').textContent = eventProps.pengirim || '-';
+                document.getElementById('dispo-batal-nomor').textContent = eventProps.nomor_surat || '-';
+                document.getElementById('dispo-batal-perihal').textContent = eventProps.perihal || '-';
+                document.getElementById('dispo-batal-tanggal').textContent = eventProps.tanggal_surat || '-';
+                document.getElementById('dispo-batal-jenis').textContent = eventProps.jenis_surat || '-';
                 
                 let prioritasEl = document.getElementById('dispo-batal-prioritas');
-                let prio = data.surat.prioritas;
+                let prio = eventProps.prioritas || 'Rendah';
                 if (prio === 'Tinggi') prioritasEl.innerHTML = '<span class="badge bg-danger px-3 py-1">Tinggi</span>';
                 else if (prio === 'Sedang') prioritasEl.innerHTML = '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
                 else prioritasEl.innerHTML = '<span class="badge bg-success px-3 py-1">Rendah</span>';

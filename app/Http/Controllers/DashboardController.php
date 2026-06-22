@@ -28,28 +28,18 @@ class DashboardController extends Controller
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
         // ==========================================
-        // 1. LOGIKA UTAMA: NOTIFIKASI SURAT MASUK
+        // 1. LOGIKA UTAMA: NOTIFIKASI
         // ==========================================
-        // Untuk notifikasi list, kita ambil disposisi yang relevan
+        $unreadNotifs = $user->unreadNotifications;
+        $totalNotifikasi = $unreadNotifs->count();
+        $notifList = $unreadNotifs->take(5);
+
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
-            $notifList = collect(); // Frontliner/Kepegawaian tidak dapat disposisi
             $totalSuratBaru = Surat::where('status', 'Terverifikasi')->whereDate('tanggal_verifikasi', Carbon::today())->count();
-            $totalNotifikasi = Surat::where('status', 'Terverifikasi')->count();
         } else {
-            $notifList = \App\Models\Disposisi::with('surat')
-                ->where('nip_penerima', $user->nip)
-                ->whereIn('status', ['Menunggu Konfirmasi', 'Perwakilan'])
-                ->latest('tanggal')
-                ->take(5)
-                ->get();
-            
             $totalSuratBaru = \App\Models\Disposisi::where('nip_penerima', $user->nip)
                 ->where('status', 'Menunggu Konfirmasi')
                 ->whereDate('tanggal', Carbon::today())
-                ->count();
-            
-            $totalNotifikasi = \App\Models\Disposisi::where('nip_penerima', $user->nip)
-                ->whereIn('status', ['Menunggu Konfirmasi', 'Perwakilan'])
                 ->count();
         }
 
@@ -58,10 +48,22 @@ class DashboardController extends Controller
         // ==========================================
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
             // Frontliner & Kepegawaian: Ambil 3 Agenda Kantor terdekat mendatang
-            $totalAgenda = Agenda::whereDate('tanggal_kegiatan', '>=', Carbon::today())->count();
+            $totalAgenda = Agenda::where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })->count();
             
             $ringkasanAgenda = Agenda::with(['surat', 'peserta.pegawai']) // Eager load relasi
-                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->orderBy('tanggal_kegiatan', 'asc')
                 ->orderBy('waktu_mulai', 'asc')
                 ->take(3)
@@ -72,7 +74,13 @@ class DashboardController extends Controller
                     $q->where('nip', $user->nip);
                 $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
                 })
-                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->count();
             
             $ringkasanAgenda = Agenda::whereHas('peserta', function($q) use ($user) {
@@ -80,7 +88,13 @@ class DashboardController extends Controller
                 $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
                 })
                 ->with(['surat', 'peserta.pegawai']) // Tarik data surat dan info peserta rapat
-                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->orderBy('tanggal_kegiatan', 'asc')
                 ->orderBy('waktu_mulai', 'asc')
                 ->take(3)

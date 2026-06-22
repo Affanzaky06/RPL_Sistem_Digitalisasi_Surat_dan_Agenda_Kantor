@@ -38,13 +38,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/profil/update', [ProfilController::class, 'update'])->name('profil.update');
 
     // 2. Rute Konfirmasi Pendamping (Ditaruh di sini agar Kabid & Sekretaris sama-sama bisa akses)
-    Route::post('/pendamping/konfirmasi/{id_surat}/{keputusan}', [ProfilController::class, 'konfirmasiPendamping'])->name('pendamping.konfirmasi');
+    // 3. Rute Notifikasi
+    Route::get('/notifications/unread', [\App\Http\Controllers\NotificationController::class, 'getUnread'])->name('notifications.unread');
+    Route::post('/notifications/read/{id}', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+
+    // 2. Rute Laporan Pemantauan
     Route::post('/laporan/dispo-ulang/{id}', [laporanPemantauanController::class, 'dispoUlang'])->name('laporan.dispo_ulang');
+    Route::post('/laporan/hadir/{id}', [laporanPemantauanController::class, 'hadirAmbilAlih'])->name('laporan.hadir');
+    Route::post('/laporan/tolak/{id}', [laporanPemantauanController::class, 'tolakKeAtasan'])->name('laporan.tolak');
     Route::post('/laporan/setujui/{id}', [laporanPemantauanController::class, 'setujuiPenolakan'])->name('laporan.setujui');
     Route::post('/agenda/{id_agenda}/batal-hadir', [AgendaController::class, 'batalHadir'])->name('agenda.batal_hadir');
     Route::get('/agenda/{id_agenda}/cek-pendamping', [AgendaController::class, 'cekPendamping'])->name('agenda.cek_pendamping');
     Route::post('/agenda/{id_agenda}/wakilkan', [AgendaController::class, 'wakilkan'])->name('agenda.wakilkan');
     Route::post('/agenda/{id_agenda}/disposisi-batal', [AgendaController::class, 'disposisiDariBatalHadir'])->name('agenda.disposisi_batal');
+    Route::post('/pendamping/konfirmasi/{id_surat}/{keputusan}', [ProfilController::class, 'konfirmasiPendamping'])->name('pendamping.konfirmasi');
 
     // --------------------------------------------------------
     // 1. RUTE KEPALA KANTOR (Role: J001)
@@ -259,36 +267,49 @@ Route::middleware('auth')->group(function () {
     // --------------------------------------------------------
     // 5. RUTE KEPEGAWAIAN (Role: J005)
     // --------------------------------------------------------
-    Route::get(
-        '/kepegawaian',
-        [kepegawaianController::class, 'index']
-    )->name('kepegawaian.dashboard');
+    Route::middleware('role:J005')->group(function () {
+        Route::get(
+            '/kepegawaian',
+            [kepegawaianController::class, 'index']
+        )->name('kepegawaian.dashboard');
 
-    Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
-        ->name('kepegawaian.input_data');
+        Route::get('/kepegawaian/input_data', [kepegawaianController::class, 'inputPegawai'])
+            ->name('kepegawaian.input_data');
 
-    // ROUTE UNTUK MEMPROSES FORM
-    Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
-        ->name('kepegawaian.store');
+        // ROUTE UNTUK MEMPROSES FORM
+        Route::post('/kepegawaian/store_pegawai', [kepegawaianController::class, 'storePegawai'])
+            ->name('kepegawaian.store');
 
-    Route::get('/kepegawaian/list', [kepegawaianController::class, 'listPegawai'])
-        ->name('kepegawaian.list');
+        Route::get('/kepegawaian/list', [kepegawaianController::class, 'listPegawai'])
+            ->name('kepegawaian.list');
 
-    // TAMBAHKAN DUA ROUTE INI
-    Route::put('/kepegawaian/update/{nip}', [kepegawaianController::class, 'updatePegawai'])
-        ->name('kepegawaian.update');
+        Route::put('/kepegawaian/update/{nip}', [kepegawaianController::class, 'updatePegawai'])
+            ->name('kepegawaian.update');
 
-    Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
-        ->name('kepegawaian.delete');
-    Route::get(
-        '/kepegawaian/kalender_kantor',
-        [KalenderKantorController::class, 'index']
-    )->name('kepegawaian.kalender');
+        Route::delete('/kepegawaian/delete/{nip}', [kepegawaianController::class, 'destroyPegawai'])
+            ->name('kepegawaian.delete');
 
-    Route::get(
-        '/kepegawaian/profil',
-        [ProfilController::class, 'index']
-    )->name('kepegawian.profil');
+        // RESET PASSWORD
+        Route::post('/kepegawaian/reset-password/{nip}', [kepegawaianController::class, 'resetPassword'])
+            ->name('kepegawaian.reset_password');
+
+        Route::get(
+            '/kepegawaian/kalender_kantor',
+            [KalenderKantorController::class, 'index']
+        )->name('kepegawaian.kalender');
+
+        Route::get(
+            '/kepegawaian/profil',
+            [ProfilController::class, 'index']
+        )->name('kepegawian.profil');
+
+        // CRUD BIDANG
+        Route::get('/kepegawaian/bidang', [kepegawaianController::class, 'indexBidang'])->name('kepegawaian.bidang');
+        Route::post('/kepegawaian/bidang', [kepegawaianController::class, 'storeBidang'])->name('kepegawaian.bidang.store');
+        Route::put('/kepegawaian/bidang/{id_bidang}', [kepegawaianController::class, 'updateBidang'])->name('kepegawaian.bidang.update');
+        Route::delete('/kepegawaian/bidang/{id_bidang}', [kepegawaianController::class, 'destroyBidang'])->name('kepegawaian.bidang.delete');
+    });
+
 
 
     // --------------------------------------------------------

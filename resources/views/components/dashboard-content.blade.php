@@ -50,36 +50,24 @@
 
             <div id="notification-container">
                 @forelse ($notifikasi as $notif)
-                    {{-- ID Unik untuk notifikasi (berdasarkan id_disposisi dan statusnya supaya kalau status berubah notif muncul lagi) --}}
-                    @php 
-                        $notifId = 'notif_' . $notif->id_disposisi . '_' . Str::slug($notif->status); 
-                    @endphp
-
                     <div class="card shadow-sm mb-3 border-secondary-subtle rounded-3 notification-card" 
-                         id="{{ $notifId }}" data-notif-id="{{ $notifId }}">
+                         id="notif_{{ $notif->id }}" data-notif-id="notif_{{ $notif->id }}">
                         <div class="card-body position-relative">
-                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3 btn-close-notif"
-                                style="font-size: 10px;" aria-label="Close" data-target="{{ $notifId }}"></button>
+                            <form action="{{ route('notifications.read', $notif->id) }}" method="POST" class="m-0 p-0">
+                                @csrf
+                                <button type="submit" class="btn-close position-absolute top-0 end-0 m-3 btn-close-notif"
+                                    style="font-size: 10px;" aria-label="Close"></button>
+                            </form>
 
-                            @if($notif->status === 'Perwakilan')
-                                <h6 class="card-title fw-semibold text-warning">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Perubahan Peran (Perwakilan)
-                                </h6>
-                                <p class="card-text text-muted mb-2" style="font-size: 0.9rem;">
-                                    Anda telah ditunjuk sebagai <strong>Perwakilan Kepala Kantor</strong> untuk agenda:
-                                    <br><span class="text-dark fw-medium">{{ $notif->surat->perihal ?? 'Agenda Rapat' }}</span>
-                                </p>
-                            @else
-                                <h6 class="card-title fw-semibold text-primary">
-                                    <i class="bi bi-envelope-fill me-1"></i> Surat Masuk Baru
-                                </h6>
-                                <p class="card-text text-muted mb-2" style="font-size: 0.9rem;">
-                                    Ada surat / disposisi baru:
-                                    <br><span class="text-dark fw-medium">{{ $notif->surat->perihal ?? 'Surat Baru' }}</span>
-                                </p>
-                            @endif
-                            
-                            <a href="{{ route(strtolower($role).'.surat_masuk') }}" class="btn btn-dark btn-sm rounded-pill px-4 mt-1">Lihat Detail</a>
+                            <h6 class="card-title fw-semibold text-primary">
+                                <i class="bi bi-bell-fill me-1"></i> {{ $notif->data['title'] ?? 'Notifikasi' }}
+                            </h6>
+                            <p class="card-text text-muted mb-2" style="font-size: 0.9rem;">
+                                {{ $notif->data['body'] ?? '' }}
+                            </p>
+                            <small class="text-muted">{{ $notif->created_at->diffForHumans() }}</small>
+                            <br>
+                            <a href="{{ $notif->data['url'] ?? '#' }}" class="btn btn-dark btn-sm rounded-pill px-4 mt-2">Lihat Detail</a>
                         </div>
                     </div>
                 @empty
@@ -90,57 +78,7 @@
                 @endforelse
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    // 1. Cek localStorage untuk notif yang sudah di-dismiss
-                    const cards = document.querySelectorAll('.notification-card');
-                    
-                    // Observer untuk auto-hide saat masuk viewport
-                    const observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const card = entry.target;
-                                const notifId = card.dataset.notifId;
-                                
-                                // Tandai sudah dilihat di localStorage (biar ga muncul lagi pas refresh)
-                                localStorage.setItem(notifId, 'seen');
-                                
-                                // Optional: Kita biarkan saja tampil saat ini, baru hilang pas di-refresh
-                                // Tapi kalau mau auto hilang perlahan saat di-scroll:
-                                // setTimeout(() => { card.style.display = 'none'; }, 3000); 
-                                
-                                // Stop observing after it's marked seen
-                                observer.unobserve(card);
-                            }
-                        });
-                    }, { threshold: 0.5 }); // Memicu jika 50% elemen terlihat
 
-                    cards.forEach(card => {
-                        const notifId = card.dataset.notifId;
-                        
-                        // Sembunyikan elemen jika sudah ada di localStorage
-                        if (localStorage.getItem(notifId) === 'seen') {
-                            card.style.display = 'none';
-                        } else {
-                            // Observasi elemen yang belum dilihat
-                            observer.observe(card);
-                        }
-                    });
-
-                    // 2. Event Listener untuk tombol ✕ (Close manual)
-                    const closeBtns = document.querySelectorAll('.btn-close-notif');
-                    closeBtns.forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const targetId = this.dataset.target;
-                            const card = document.getElementById(targetId);
-                            if(card) {
-                                card.style.display = 'none';
-                                localStorage.setItem(targetId, 'seen'); // Simpan ke localStorage
-                            }
-                        });
-                    });
-                });
-            </script>
 
         </div>
 

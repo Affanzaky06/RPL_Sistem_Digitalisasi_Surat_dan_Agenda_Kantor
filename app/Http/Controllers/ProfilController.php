@@ -32,7 +32,13 @@ class ProfilController extends Controller
         // LOGIKA AGENDA PRIBADI YANG SAMA DENGAN KALENDER/DASHBOARD
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
             $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-                ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->orderBy('tanggal_kegiatan', 'asc')
                 ->orderBy('waktu_mulai', 'asc')
                 ->take(3)
@@ -43,7 +49,13 @@ class ProfilController extends Controller
                     $q->where('status_kehadiran', 'Hadir');
                 })
                 ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-                ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->orderBy('tanggal_kegiatan', 'asc')
                 ->orderBy('waktu_mulai', 'asc')
                 ->take(3)
@@ -66,6 +78,7 @@ class ProfilController extends Controller
         $request->validate([
             'email' => 'nullable|email',
             'no_telp' => 'nullable|max:20',
+            'current_password' => 'nullable|required_with:password',
             'password' => 'nullable|min:8|confirmed',
             'foto_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
@@ -89,7 +102,10 @@ class ProfilController extends Controller
 
         // 4. Jika form yang dikirim adalah Password Baru
         if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+            if (!\Hash::check($request->current_password, $user->password)) {
+                return back()->with('error', 'Password saat ini tidak cocok.');
+            }
+            $user->password = \Hash::make($request->password);
         }
 
         $user->save();
@@ -97,7 +113,7 @@ class ProfilController extends Controller
         return back()->with('success', 'Profil berhasil diperbarui');
     }
 
-   public function konfirmasiPendamping($id_surat, $keputusan)
+   public function konfirmasiPendamping(Request $request, $id_surat, $keputusan)
     {
         $user = Auth::user();
         
@@ -105,16 +121,30 @@ class ProfilController extends Controller
         $agenda = Agenda::where('id_surat', $id_surat)->firstOrFail();
 
         if ($keputusan === 'Hadir') {
+            // Cek Bentrok Jadwal
+            if ($agenda->tanggal_kegiatan && $agenda->waktu_mulai && $agenda->waktu_selesai) {
+                $bentrok = Agenda::checkConflict(
+                    $user->nip, 
+                    $agenda->tanggal_kegiatan, 
+                    $agenda->waktu_mulai, 
+                    $agenda->waktu_selesai
+                );
+                
+                if ($bentrok) {
+                    return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan tolak undangan pendampingan ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
+                }
+            }
+
             // 1. Ubah status kehadiran di tabel Peserta menjadi 'Hadir'
-            Peserta::where('id_agenda', $agenda->id_agenda)
-                ->where('nip', $user->nip)
-                ->update(['status_kehadiran' => 'Hadir']);
+            $peserta = Peserta::where('id_agenda', $agenda->id_agenda)->where('nip', $user->nip)->first();
+            if ($peserta) $peserta->update(['status_kehadiran' => 'Hadir']);
 
             // 2. Ubah status di tabel Disposisi agar surat hilang dari antrean masuk
-            Disposisi::where('id_surat', $id_surat)
+            $disposisi = Disposisi::where('id_surat', $id_surat)
                 ->where('nip_penerima', $user->nip)
                 ->whereIn('status', ['Belum Dibaca', 'Menunggu Konfirmasi'])
-                ->update(['status' => 'Hadir']); // Atau bisa gunakan 'Hadir'
+                ->first();
+            if ($disposisi) $disposisi->update(['status' => 'Hadir']);
 
             return back()->with('success', 'Berhasil menyetujui pendampingan agenda.');
         } else {
@@ -124,9 +154,15 @@ class ProfilController extends Controller
                 ->delete();
 
             // 2. Ubah status di tabel Disposisi menjadi 'Tidak Hadir' atau 'Ditolak'
-            Disposisi::where('id_surat', $id_surat)
+            $disposisi = Disposisi::where('id_surat', $id_surat)
                 ->where('nip_penerima', $user->nip)
-                ->update(['status' => 'Tidak Hadir']);
+                ->first();
+            if ($disposisi) {
+                $disposisi->update([
+                    'status' => 'Tidak Hadir',
+                    'catatan' => 'Ditolak Pendampingan: ' . ($request->alasan_tolak ?? '')
+                ]);
+            }
 
             return back()->with('success', 'Anda menolak undangan pendampingan agenda.');
         }

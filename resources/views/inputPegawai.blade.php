@@ -64,6 +64,17 @@
                         <input type="text" name="nama" class="form-control border-dark border" required>
                     </div>
 
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-medium">Email <span class="text-secondary small">(Opsional)</span></label>
+                            <input type="email" name="email" class="form-control border-dark border" placeholder="Contoh: pegawai@kantor.com">
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label text-dark fw-medium">No. Telepon <span class="text-secondary small">(Opsional)</span></label>
+                            <input type="text" name="no_telp" class="form-control border-dark border" placeholder="Contoh: 08123456789">
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label text-dark fw-medium">Alamat</label>
                         <input type="text" name="alamat" class="form-control border-dark border" required>

@@ -38,7 +38,7 @@ class AgendaController extends Controller
             ->where('peserta.nip', $user->nip)
             ->whereIn('peserta.status_kehadiran', ['Hadir', 'Perwakilan'])
             ->select('agenda.*', 'surat.perihal', 'surat.nomor_surat', 'surat.asal_surat', 
-                     'surat.tanggal_surat', 'surat.prioritas', 'surat.id_surat');
+                     'surat.tanggal_surat', 'surat.jenis_surat', 'surat.prioritas', 'surat.id_surat');
 
         // --- A. Eksekusi Data untuk FullCalendar ---
         $queryKalender = clone $baseQuery; 
@@ -71,6 +71,7 @@ class AgendaController extends Controller
                     'nomor_surat' => $item->nomor_surat,
                     'perihal' => $item->perihal,
                     'tanggal_surat' => $item->tanggal_surat ? Carbon::parse($item->tanggal_surat)->format('d-m-Y') : '-',
+                    'jenis_surat' => $item->jenis_surat,
                     'tanggal_kegiatan' => $item->tanggal_kegiatan ? Carbon::parse($item->tanggal_kegiatan)->format('d-m-Y') : '-',
                     'waktu' => ($item->waktu_mulai ? Carbon::parse($item->waktu_mulai)->format('H:i') : '-') 
                              . ' - ' . 
@@ -83,16 +84,32 @@ class AgendaController extends Controller
         // --- B. Eksekusi Data untuk Sidebar Ringkasan (5 Terdekat) ---
         $querySidebar = clone $baseQuery;
         $ringkasanAgenda = $querySidebar
-            ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('agenda.tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('agenda.tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('agenda.waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('agenda.tanggal_kegiatan', 'asc')
             ->orderBy('agenda.waktu_mulai', 'asc')
             ->distinct()
             ->take(5)
             ->get();
 
-        $pegawai = \App\Models\Pegawai::with('bidang')
-            ->whereIn('id_jabatan', ['J002', 'J006'])
-            ->get();
+        $bawahanQuery = \App\Models\Pegawai::with('bidang');
+        if ($user->id_jabatan === 'J001') {
+            $bawahanQuery->whereIn('id_jabatan', ['J002', 'J006']);
+        } elseif ($user->id_jabatan === 'J002') {
+            $bawahanQuery->where('id_bidang', $user->id_bidang)
+                         ->whereIn('id_jabatan', ['J003', 'J004']);
+        } elseif ($user->id_jabatan === 'J003') {
+            $bawahanQuery->where('id_bidang', $user->id_bidang)
+                         ->where('id_jabatan', 'J004');
+        } else {
+            $bawahanQuery->where('nip', 'invalid');
+        }
+        $pegawai = $bawahanQuery->get();
 
         return view('agenda', [
             'title' => $title,
@@ -146,6 +163,72 @@ class AgendaController extends Controller
             $disposisi->save();
         }
 
+        // --- KHUSUS KEPALA: Hapus Agenda Sepenuhnya ---
+        // Jika Kepala memilih "Hapus Agenda Sepenuhnya", ini me-reset surat kembali ke Surat Masuk.
+        if ($user->id_jabatan === 'J001') {
+            // 1. Hapus semua peserta di agenda ini TERLEBIH DAHULU!
+            // Ini untuk mencegah error Foreign Key constraint (peserta_id_disposisi_foreign)
+            Peserta::where('id_agenda', $id_agenda)->delete();
+
+            // 2. Notifikasi & Hapus Disposisi
+            $disposisiLama = Disposisi::where('id_surat', $agenda->id_surat)
+                ->where('nip_pemberi', $user->nip)
+                ->get();
+
+            foreach ($disposisiLama as $dispo) {
+                if ($dispo->status === 'Hadir') {
+                    // Update status ke Dibatalkan akan memicu DisposisiObserver untuk mengirim notif ke pendamping
+                    $dispo->update(['status' => 'Dibatalkan']);
+                }
+                // Hapus agar hilang dari Laporan Pemantauan/Surat Masuk pendamping
+                $dispo->delete(); 
+            }
+
+            // 3. Hapus agendanya
+            $agenda->delete();
+
+            // 4. Pastikan status surat kembali 'Terverifikasi' agar muncul di Surat Masuk Kepala
+            if ($agenda->surat) {
+                $agenda->surat->update(['status' => 'Terverifikasi']);
+            }
+
+            return back()->with('success', 'Agenda berhasil dihapus sepenuhnya. Surat telah kembali ke kotak Surat Masuk untuk didisposisikan ulang.');
+        }
+
+        // --- LOGIKA PEMBATALAN PENDAMPING (Berlaku untuk Kabid/Subkoor juga) ---
+        // Jika atasan batal hadir, semua undangan pendamping yang dibuat olehnya harus dihapus
+        $disposisiBawahan = Disposisi::where('id_surat', $agenda->id_surat)
+            ->where('nip_pemberi', $user->nip)
+            ->get();
+
+        foreach($disposisiBawahan as $dispo) {
+            if (in_array($dispo->status, ['Hadir', 'Menunggu Konfirmasi'])) {
+                // Hapus peserta pendamping terlebih dahulu untuk hindari Foreign Key constraint
+                Peserta::where('id_agenda', $id_agenda)->where('nip', $dispo->nip_penerima)->delete();
+
+                if ($dispo->status === 'Hadir') {
+                    // Jika sudah ACC (Hadir), ubah status jadi Dibatalkan agar Observer mengirim Notif
+                    $dispo->update(['status' => 'Dibatalkan']);
+                }
+                
+                // Hapus disposisi agar langsung hilang dari Laporan Pemantauan / Surat Masuk pendamping
+                $dispo->delete();
+            }
+        }
+        // ------------------------------------------------------------------------------------
+
+        // AUTO-DELETE: Cek apakah masih ada orang yang hadir/perwakilan di agenda ini
+        $adaPeserta = Peserta::where('id_agenda', $id_agenda)
+            ->whereIn('status_kehadiran', ['Hadir', 'Perwakilan'])
+            ->exists();
+
+        if (!$adaPeserta) {
+            // Hapus agenda & peserta yang tersisa karena sudah kosong total
+            Peserta::where('id_agenda', $id_agenda)->delete();
+            $agenda->delete();
+            return back()->with('success', 'Agenda berhasil dihapus karena seluruh peserta telah membatalkan kehadiran.');
+        }
+
         return back()->with('success', 'Status kehadiran berhasil diubah menjadi Tidak Hadir.');
     }
 
@@ -174,6 +257,9 @@ class AgendaController extends Controller
         // Cek apakah user saat ini murni HANYA SEBAGAI PENDAMPING
         // Syarat: Ada disposisi ke user ini dari atasan, dan atasan tersebut statusnya 'Hadir' di agenda ini.
         $isPendampingOnly = false;
+        $disposisiUser = null;
+        $atasanHadir = false;
+        
         if ($user->id_jabatan !== 'J001') {
             $disposisiUser = \App\Models\Disposisi::where('id_surat', $agenda->id_surat)
                 ->where('nip_penerima', $user->nip)
@@ -320,25 +406,52 @@ class AgendaController extends Controller
             'nip_penerima' => 'required|string',
         ]);
 
-        // 1. Update status Kepala menjadi Tidak Hadir
+        // 1. Update status user menjadi Tidak Hadir
         Peserta::where('id_agenda', $id_agenda)
             ->where('nip', $user->nip)
             ->update(['status_kehadiran' => 'Tidak Hadir']);
 
-        // 2. Hapus agenda & peserta yang sudah dibuat supaya tidak terdobel
-        Peserta::where('id_agenda', $id_agenda)->delete();
-        $agenda->delete();
+        // Hapus peserta pendamping yang masih Menunggu Konfirmasi/Hadir (Berlaku untuk semua role)
+        $disposisiLama = Disposisi::where('id_surat', $agenda->id_surat)
+            ->where('nip_pemberi', $user->nip)
+            ->get();
+            
+        foreach ($disposisiLama as $dispoLama) {
+            if (in_array($dispoLama->status, ['Hadir', 'Menunggu Konfirmasi'])) {
+                // Hapus peserta terlebih dahulu untuk hindari Foreign Key constraint
+                Peserta::where('id_agenda', $id_agenda)->where('nip', $dispoLama->nip_penerima)->delete();
 
-        // 3. Buat disposisi baru ke bawahan yang dipilih
+                if ($dispoLama->status === 'Hadir') {
+                    // Jika sudah ACC (Hadir), ubah status jadi Dibatalkan agar Observer mengirim Notif
+                    $dispoLama->update(['status' => 'Dibatalkan']);
+                }
+                
+                // Hapus disposisi agar langsung hilang dari Laporan Pemantauan / Surat Masuk pendamping
+                $dispoLama->delete();
+            }
+        }
+
+        // 2. Buat disposisi baru ke bawahan yang dipilih
         Disposisi::create([
             'id_surat' => $agenda->id_surat,
             'nip_pemberi' => $user->nip,
             'nip_penerima' => $request->nip_penerima,
             'tanggal' => now(),
-            'catatan' => $request->catatan ?? 'Disposisi dari Kepala Kantor (batal hadir).',
+            'catatan' => $request->catatan ?? 'Disposisi (batal hadir).',
             'status' => 'Menunggu Konfirmasi'
         ]);
 
-        return back()->with('success', 'Agenda dihapus dan surat berhasil didisposisikan ke bawahan.');
+        // AUTO-DELETE: Cek apakah masih ada orang yang hadir/perwakilan di agenda ini
+        $adaPeserta = Peserta::where('id_agenda', $id_agenda)
+            ->whereIn('status_kehadiran', ['Hadir', 'Perwakilan'])
+            ->exists();
+
+        if (!$adaPeserta) {
+            Peserta::where('id_agenda', $id_agenda)->delete();
+            $agenda->delete();
+            return back()->with('success', 'Agenda berhasil dibatalkan sepenuhnya dan surat didisposisikan ulang.');
+        }
+
+        return back()->with('success', 'Kehadiran dibatalkan dan surat berhasil didisposisikan ke bawahan.');
     }
 }

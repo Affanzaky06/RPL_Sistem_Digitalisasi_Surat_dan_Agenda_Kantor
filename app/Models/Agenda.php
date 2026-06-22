@@ -29,4 +29,29 @@ class Agenda extends Model
         // Sesuaikan 'id_agenda' jika nama primary key Anda berbeda
         return $this->hasMany(Peserta::class, 'id_agenda', 'id_agenda'); 
     }
+
+    /**
+     * Mengecek apakah user memiliki jadwal bentrok
+     */
+    public static function checkConflict($nip, $tanggal_kegiatan, $waktu_mulai, $waktu_selesai)
+    {
+        if (!$tanggal_kegiatan || !$waktu_mulai || !$waktu_selesai) {
+            return null;
+        }
+
+        return self::whereHas('peserta', function($query) use ($nip) {
+                $query->where('nip', $nip)
+                      ->where('status_kehadiran', 'Hadir');
+            })
+            ->where('tanggal_kegiatan', $tanggal_kegiatan)
+            ->where(function($query) use ($waktu_mulai, $waktu_selesai) {
+                // Rentang waktu bersinggungan jika:
+                // waktu mulai acara lama < waktu selesai acara baru 
+                // DAN waktu selesai acara lama > waktu mulai acara baru
+                $query->where('waktu_mulai', '<', $waktu_selesai)
+                      ->where('waktu_selesai', '>', $waktu_mulai);
+            })
+            ->first();
+    }
 }
+

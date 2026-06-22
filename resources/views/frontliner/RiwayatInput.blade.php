@@ -150,20 +150,18 @@
                                                     </button>
 
                                                     <form action="{{ route('surat.destroy', $surat->id_surat) }}"
-                                                        method="POST" class="m-0">
+                                                        method="POST" class="m-0" id="formDeleteSurat{{ $surat->id_surat }}">
 
                                                         @csrf
                                                         @method('DELETE')
 
-                                                        <button type="submit"
+                                                        <button type="button"
                                                             class="btn btn-danger btn-sm rounded-1 w-100"
                                                             style="font-size:0.7rem;"
-                                                            onclick="return confirm('Yakin ingin menghapus surat ini?')">
-
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteSuratModal{{ $surat->id_surat }}">
                                                             Hapus
-
                                                         </button>
-
                                                     </form>
                                                 @endif
 
@@ -422,6 +420,24 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label class="form-label">Jenis Surat</label>
+                                    <select name="jenis_surat" class="form-select" required>
+                                        <option value="Biasa" {{ old('jenis_surat', $surat->jenis_surat) == 'Biasa' ? 'selected' : '' }}>Biasa</option>
+                                        <option value="Undangan" {{ old('jenis_surat', $surat->jenis_surat) == 'Undangan' ? 'selected' : '' }}>Undangan</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Prioritas</label>
+                                    <select name="prioritas" class="form-select" required>
+                                        <option value="Biasa" {{ old('prioritas', $surat->prioritas) == 'Biasa' ? 'selected' : '' }}>Biasa</option>
+                                        <option value="Penting" {{ old('prioritas', $surat->prioritas) == 'Penting' ? 'selected' : '' }}>Penting</option>
+                                        <option value="Sangat Penting" {{ old('prioritas', $surat->prioritas) == 'Sangat Penting' ? 'selected' : '' }}>Sangat Penting</option>
+                                        <option value="Segera" {{ old('prioritas', $surat->prioritas) == 'Segera' ? 'selected' : '' }}>Segera</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
                                     <label class="form-label">
                                         Tanggal Kegiatan
                                     </label>
@@ -530,6 +546,24 @@
 
             </div>
 
+        </div>
+        <div class="modal fade" id="deleteSuratModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                        <h5 class="modal-title fw-bold fs-4">Konfirmasi Hapus</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="fs-6">Yakin ingin menghapus surat <strong>{{ $surat->perihal }}</strong>?</p>
+                        <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Data yang dihapus tidak dapat dikembalikan.</p>
+                    </div>
+                    <div class="modal-footer border-top-0 px-4 pb-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" form="formDeleteSurat{{ $surat->id_surat }}" class="btn btn-danger px-4 fw-bold">Hapus Surat</button>
+                    </div>
+                </div>
+            </div>
         </div>
     @endforeach
 

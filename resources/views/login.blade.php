@@ -19,7 +19,7 @@
                     <img src="{{ asset('Lambang_Kabupaten_Blora copy.png') }}" alt="Logo" style="width: 130px;">
                 </div>
 
-                <h5 class=" text-center text-white mb-4" style="font-weight: 500;">Sistem Surat Dan Agenda Digital</h5>
+                <h5 class=" text-center text-white mb-2" style="font-weight: 500;">Sistem Surat Dan Agenda Digital</h5>
 
                     <form action="{{ route('login.post') }}" method="POST" class="row g-3 needs-validation" novalidate>
                         @csrf
@@ -49,6 +49,12 @@
 
                         <div class="text-center mt-2">
                             <button type="submit" class="btn btn-success text-white">Login</button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-white-50" style="font-size: 0.8rem;">
+                                Lupa password? Hubungi bagian <b>Kepegawaian</b> untuk mereset sandi Anda.
+                            </small>
                         </div>
                     </form>
 

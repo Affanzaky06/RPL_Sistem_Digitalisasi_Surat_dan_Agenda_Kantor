@@ -45,4 +45,13 @@ class Disposisi extends Model
             'nip'
         );
     }
+
+    public function peserta()
+    {
+        return $this->hasOne(
+            Peserta::class,
+            'id_disposisi',
+            'id_disposisi'
+        );
+    }
 }

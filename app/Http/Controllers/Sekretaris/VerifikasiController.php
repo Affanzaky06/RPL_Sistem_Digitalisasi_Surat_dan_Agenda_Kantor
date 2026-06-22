@@ -44,7 +44,13 @@ class VerifikasiController extends Controller
                 $q->where('status_kehadiran', 'Hadir');
             })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -135,7 +141,13 @@ class VerifikasiController extends Controller
                 $q->where('status_kehadiran', 'Hadir');
             })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)

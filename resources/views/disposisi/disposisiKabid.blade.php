@@ -22,9 +22,9 @@
                 @endif
                 @if (session('error'))
                     <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
-                        <div class="toast show border-0 shadow">
+                        <div class="toast show border-0 text-bg-danger shadow">
                             <div class="toast-body">
-                                <span class="text-danger">
+                                <span class="text-white">
                                     <i class="bi bi-exclamation-circle-fill me-2"></i>
                                 </span>
                                 {{ session('error') }}
@@ -178,16 +178,9 @@
                                                         </button>
                                                     </form>
 
-                                                    <form
-                                                        action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Tolak']) }}"
-                                                        method="POST"
-                                                        onsubmit="return confirm('Tolak ajakan pendampingan Atasan?')">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-danger btn-sm"
-                                                            style="width:100px;">
-                                                            <i class="bi bi-x"></i> Tolak
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" class="btn btn-danger btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
+                                                        <i class="bi bi-x"></i> Tolak
+                                                    </button>
 
                                                     <small class="text-primary fw-bold mt-1"
                                                         style="font-size: 0.7rem;"><i class="bi bi-info-circle"></i>
@@ -797,6 +790,83 @@
                                     placeholder="Tulis Alasan Disini..." required></textarea>
                             </div>
                         </div>
+                        <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
+                            <button type="submit" class="btn btn-success px-4 fw-bold"
+                                style="background-color: #198754;">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="tolakPendampingModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <form action="{{ route('pendamping.konfirmasi', [$surat->id_surat, 'Tolak']) }}" method="POST">
+                        @csrf
+                        <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                            <h5 class="modal-title fw-bold fs-4">Tolak Pendampingan</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body p-4">
+                            <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                                <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i
+                                                class="bi bi-send me-2"></i>Pengirim</small>
+                                        <span class="fw-bold text-dark">{{ $surat->asal_surat }}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor
+                                            Surat</small>
+                                        <span class="fw-bold text-dark">{{ $surat->nomor_surat }}</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i
+                                                class="bi bi-file-earmark-text me-2"></i>Perihal Surat</small>
+                                        <span class="fw-bold text-dark">{{ $surat->perihal }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-6 ps-4 position-relative">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i
+                                                class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                        <span
+                                            class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block mb-1"><i
+                                                class="bi bi-clock me-2"></i>Waktu</small>
+                                        <span class="fw-bold text-dark">
+                                            {{ $surat->waktu_mulai_kegiatan ? \Carbon\Carbon::parse($surat->waktu_mulai_kegiatan)->format('H:i') : '-' }}
+                                            -
+                                            {{ $surat->waktu_selesai_kegiatan ? \Carbon\Carbon::parse($surat->waktu_selesai_kegiatan)->format('H:i') : '-' }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i
+                                                class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                        @if ($surat->prioritas == 'Tinggi')
+                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                        @elseif($surat->prioritas == 'Sedang')
+                                            <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
+                                        @else
+                                            <span class="badge bg-success px-3 py-1">Rendah</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 p-3 bg-white shadow-sm">
+                                <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                    <i class="bi bi-pencil-square me-2 fs-5"></i> Alasan Menolak Pendampingan
+                                </label>
+                                <textarea name="alasan_tolak" rows="4" class="form-control border-secondary-subtle"
+                                    placeholder="Tulis Alasan Disini..." required></textarea>
+                            </div>
+                        </div>
+
                         <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
                             <button type="submit" class="btn btn-success px-4 fw-bold"
                                 style="background-color: #198754;">Submit</button>

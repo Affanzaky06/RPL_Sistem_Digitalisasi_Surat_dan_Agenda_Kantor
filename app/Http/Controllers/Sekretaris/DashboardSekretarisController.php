@@ -12,13 +12,8 @@ class DashboardSekretarisController extends Controller
 {
     public function index()
     {
-        $notifikasi = Surat::where(
-            'status',
-            'Menunggu Verifikasi'
-        )
-            ->latest()
-            ->take(5)
-            ->get();
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $notifikasi = $user->unreadNotifications->take(5);
             
         $totalSurat = Surat::count(); // Total semua surat masuk di sistem
         $menungguVerifikasi = Surat::where('status', 'Menunggu Verifikasi')->count();

@@ -68,7 +68,13 @@ class DisposisiStaffController extends Controller
             $q->whereIn('status_kehadiran', ['Hadir', 'Perwakilan']);
         })
             ->with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -89,6 +95,20 @@ class DisposisiStaffController extends Controller
     {
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user();
+
+        // Cek Bentrok Jadwal
+        if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
+            $bentrok = Agenda::checkConflict(
+                $user->nip, 
+                $surat->tanggal_kegiatan, 
+                $surat->waktu_mulai_kegiatan, 
+                $surat->waktu_selesai_kegiatan
+            );
+            
+            if ($bentrok) {
+                return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan tolak surat ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
+            }
+        }
 
         // Update status disposisi Staff menjadi Hadir
         Disposisi::where('id_surat', $id_surat)
@@ -141,23 +161,7 @@ class DisposisiStaffController extends Controller
             'status' => 'Tidak Hadir'
         ]);
 
-        $disposisiMasuk = Disposisi::where(
-            'id_surat',
-            $id_surat
-        )
-            ->where(
-                'nip_penerima',
-                $disposisi->nip_pemberi
-            )
-            ->latest('id_disposisi')
-            ->first();
 
-        if ($disposisiMasuk) {
-
-            $disposisiMasuk->update([
-                'status' => 'Menunggu Konfirmasi'
-            ]);
-        }
 
         return back()->with(
             'success',

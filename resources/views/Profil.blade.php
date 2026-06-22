@@ -94,6 +94,13 @@
                             <form action="{{ route('profil.update') }}" method="POST" class="d-flex flex-column bg-light p-3 rounded-3 border">
                                 @csrf  
                                 <div class="input-group input-group-sm mb-2">
+                                    <input type="password" id="input-password-current" name="current_password" class="form-control border-dark-subtle" placeholder="Password Saat Ini" required>
+                                    <button class="btn btn-outline-secondary border-dark-subtle bg-white" type="button" onclick="togglePasswordVisibility('input-password-current', 'icon-pw0')">
+                                        <i class="bi bi-eye-slash text-dark" id="icon-pw0"></i>
+                                    </button>
+                                </div>
+
+                                <div class="input-group input-group-sm mb-2">
                                     <input type="password" id="input-password" name="password" class="form-control border-dark-subtle" placeholder="Password Baru (Min 8)" required>
                                     <button class="btn btn-outline-secondary border-dark-subtle bg-white" type="button" onclick="togglePasswordVisibility('input-password', 'icon-pw1')">
                                         <i class="bi bi-eye-slash text-dark" id="icon-pw1"></i>

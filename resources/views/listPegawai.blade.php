@@ -62,13 +62,25 @@
                                                 style="max-width: 100px; font-size: 0.8rem;" data-bs-toggle="modal"
                                                 data-bs-target="#editModal{{ $pegawai->nip }}">Edit</button>
 
+                                            <form action="{{ route('kepegawaian.reset_password', $pegawai->nip) }}" method="POST"
+                                                class="w-100" style="max-width: 100px;" id="formReset{{ $pegawai->nip }}">
+                                                @csrf
+                                                <button type="button" class="btn btn-dark btn-sm w-100"
+                                                    style="font-size: 0.8rem;"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#resetModal{{ $pegawai->nip }}">
+                                                    <i class="bi bi-key-fill me-1 text-warning"></i>Reset Sandi
+                                                </button>
+                                            </form>
+
                                             <form action="{{ route('kepegawaian.delete', $pegawai->nip) }}" method="POST"
-                                                class="w-100" style="max-width: 100px;">
+                                                class="w-100" style="max-width: 100px;" id="formDelete{{ $pegawai->nip }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm w-100"
+                                                <button type="button" class="btn btn-danger btn-sm w-100"
                                                     style="font-size: 0.8rem;"
-                                                    onclick="return confirm('Yakin ingin menghapus pegawai ini?')">Hapus</button>
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ $pegawai->nip }}">Hapus</button>
                                             </form>
                                         </div>
                                     </td>
@@ -100,6 +112,18 @@
                                                     <label class="form-label text-dark fw-medium">Nama Lengkap</label>
                                                     <input type="text" class="form-control border-dark"
                                                         value="{{ $pegawai->nama }}" disabled>
+                                                </div>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label text-dark fw-medium">Email</label>
+                                                        <input type="text" class="form-control border-dark"
+                                                            value="{{ $pegawai->email ?? '-' }}" disabled>
+                                                    </div>
+                                                    <div class="col-md-6 mt-3 mt-md-0">
+                                                        <label class="form-label text-dark fw-medium">No. Telepon</label>
+                                                        <input type="text" class="form-control border-dark"
+                                                            value="{{ $pegawai->no_telp ?? '-' }}" disabled>
+                                                    </div>
                                                 </div>
                                                 <div class="row mb-4">
                                                     <div class="col-md-6">
@@ -171,6 +195,19 @@
 
                                                     <div class="row mb-3">
                                                         <div class="col-md-6">
+                                                            <label class="form-label text-dark fw-medium">Email <span class="text-secondary small">(Opsional)</span></label>
+                                                            <input type="email" name="email" class="form-control border-dark"
+                                                                value="{{ $pegawai->email }}">
+                                                        </div>
+                                                        <div class="col-md-6 mt-3 mt-md-0">
+                                                            <label class="form-label text-dark fw-medium">No. Telepon <span class="text-secondary small">(Opsional)</span></label>
+                                                            <input type="text" name="no_telp" class="form-control border-dark"
+                                                                value="{{ $pegawai->no_telp }}">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
                                                             <label class="form-label text-dark fw-medium">Bidang</label>
                                                             <select name="bidang" class="form-select border-dark" required>
                                                                 <option value="" disabled>Pilih Bidang...</option>
@@ -218,6 +255,45 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="modal fade" id="resetModal{{ $pegawai->nip }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow rounded-4">
+                                            <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                                                <h5 class="modal-title fw-bold fs-4">Konfirmasi Reset Sandi</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <p class="fs-6">Yakin ingin mereset password <strong>{{ $pegawai->nama }}</strong>?</p>
+                                                <p class="text-muted small">Password akan direset menjadi default yaitu <strong>Pegawai123</strong>.</p>
+                                            </div>
+                                            <div class="modal-footer border-top-0 px-4 pb-4">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" form="formReset{{ $pegawai->nip }}" class="btn btn-dark px-4 fw-bold">Reset Sandi</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="deleteModal{{ $pegawai->nip }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow rounded-4">
+                                            <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                                                <h5 class="modal-title fw-bold fs-4">Konfirmasi Hapus</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <p class="fs-6">Yakin ingin menghapus pegawai <strong>{{ $pegawai->nama }}</strong>?</p>
+                                                <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Data yang dihapus tidak dapat dikembalikan.</p>
+                                            </div>
+                                            <div class="modal-footer border-top-0 px-4 pb-4">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" form="formDelete{{ $pegawai->nip }}" class="btn btn-danger px-4 fw-bold">Hapus</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
 
                             @empty
                                 <tr>

@@ -142,6 +142,16 @@
                 </div>
             </div>
         @endif
+        @if (session('error'))
+            <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                <div class="toast show border-0 text-bg-danger shadow">
+                    <div class="toast-body">
+                        <span class="text-white"><i class="bi bi-exclamation-circle-fill me-2"></i></span>
+                        {{ session('error') }}
+                    </div>
+                </div>
+            </div>
+        @endif
         <script>
             setTimeout(() => {
                 document.querySelectorAll('.toast').forEach(el => el.remove());
@@ -219,25 +229,35 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
-                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-info-circle-fill me-2"></i>Jadikan Perwakilan</h5>
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-info-circle-fill me-2"></i>Pilih Tindakan (Ada Pendamping)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <p class="mb-3">Anda memiliki pendamping untuk kegiatan ini. Apakah Anda ingin menjadikan pendamping sebagai penerima disposisi (perwakilan)?</p>
-                    <div id="list-pendamping-konfirmasi" class="list-group mb-3">
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-4">Anda memiliki pendamping untuk kegiatan ini. Apa yang ingin Anda lakukan?</p>
+                    <div class="d-flex flex-column gap-3 mb-3">
+                        <button type="button" class="btn btn-primary fw-bold" id="btn-show-pendamping">
+                            <i class="bi bi-people-fill me-2"></i>Disposisikan ke Pendamping
+                        </button>
+                        <button type="button" class="btn btn-danger fw-bold" id="btn-batalkan-semua-agenda">
+                            <i class="bi bi-trash-fill me-2"></i>Batalkan Semua Agenda dan Buat Dispo Ulang Biasa
+                        </button>
+                    </div>
+
+                    <div id="list-pendamping-konfirmasi" class="list-group mt-4 text-start" style="display: none;">
+                        <hr>
+                        <p class="mb-2 text-muted small">Pilih pendamping yang akan menjadi perwakilan:</p>
                         <!-- Diisi oleh JS -->
                     </div>
-                    <hr>
-                    <p class="mb-2 text-muted small">Atau Anda dapat memilih bawahan lain untuk mewakili Anda:</p>
-                    <button type="button" class="btn btn-outline-secondary w-100 fw-bold mb-3" id="btn-lanjut-disposisi">
-                        <i class="bi bi-person-lines-fill me-2"></i>Pilih Bawahan Lain (Disposisi)
-                    </button>
-                    <button type="button" class="btn btn-outline-danger w-100 fw-bold" id="btn-tolak-kirim-alasan" style="display: none;">
-                        <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
-                    </button>
+                    
+                    <div class="mt-3" id="fallback-buttons" style="display: none;">
+                        <button type="button" class="btn btn-outline-danger w-100 fw-bold mt-3" id="btn-tolak-kirim-alasan">
+                            <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- MODAL PILIH AKSI BATAL (UNTUK KABID/SUBKOOR TANPA PENDAMPING) -->
@@ -257,6 +277,32 @@
                         <button type="button" class="btn btn-danger fw-bold" id="btn-aksi-tolak">
                             <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL PILIH AKSI BATAL KEPALA (TANPA PENDAMPING) -->
+    <div class="modal fade" id="modalPilihAksiBatalKepala" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan Pembatalan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-4">Anda akan membatalkan kehadiran pada agenda ini. Apa yang ingin Anda lakukan selanjutnya?</p>
+                    <div class="d-flex flex-column gap-3">
+                        <button type="button" class="btn btn-primary fw-bold" id="btn-aksi-kepala-disposisi">
+                            <i class="bi bi-person-lines-fill me-2"></i>Buat Disposisi Ulang ke Bawahan
+                        </button>
+                        <form action="" method="POST" id="form-kepala-batal-murni">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger fw-bold w-100">
+                                <i class="bi bi-trash-fill me-2"></i>Hapus Agenda Sepenuhnya
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -321,8 +367,10 @@
                                             <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
                                         </div>
                                         <select class="form-select form-select-sm border filter-jabatan-penerima-batal shadow-none" data-target="list-penerima-batal" style="width: 140px;">
-                                            <option value="ALL">Pilih Jabatan</option>
+                                            <option value="ALL">Semua Jabatan</option>
                                             <option value="J002">Kabid</option>
+                                            <option value="J003">Subkoor</option>
+                                            <option value="J004">Staff</option>
                                             <option value="J006">Sekretaris</option>
                                         </select>
                                     </div>

@@ -30,7 +30,13 @@ class DisposisiSekretarisController extends Controller
                 $q->where('status_kehadiran', 'Hadir');
         })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
-            ->whereDate('tanggal_kegiatan', '>=', \Carbon\Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -66,6 +72,22 @@ class DisposisiSekretarisController extends Controller
 
     public function konfirmasi_hadir($id_surat)
     {
+        $surat = Surat::findOrFail($id_surat);
+        $user = Auth::user();
+
+        // Cek Bentrok Jadwal
+        if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
+            $bentrok = \App\Models\Agenda::checkConflict(
+                $user->nip, 
+                $surat->tanggal_kegiatan, 
+                $surat->waktu_mulai_kegiatan, 
+                $surat->waktu_selesai_kegiatan
+            );
+            
+            if ($bentrok) {
+                return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan tolak surat ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
+            }
+        }
         Disposisi::where(
             'id_surat',
             $id_surat

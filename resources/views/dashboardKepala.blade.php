@@ -70,34 +70,28 @@
                 <i class="bi bi-bell"></i> Notifikasi Terbaru
             </h4>
 
-            @forelse($notifikasi as $surat)
+            @forelse($notifikasi as $notif)
                 <div class="card mb-3 shadow-sm position-relative">
-
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;"
-                        aria-label="Close" onclick="this.closest('.card').remove()"></button>
-
+                    <form action="{{ route('notifications.read', $notif->id) }}" method="POST" class="m-0 p-0">
+                        @csrf
+                        <button type="submit" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;"
+                            aria-label="Close"></button>
+                    </form>
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="fw-bold text-success">
-                                    <i class="bi bi-check-circle me-1"></i> Surat Terverifikasi
+                                    <i class="bi bi-bell me-1"></i> {{ $notif->data['title'] ?? 'Notifikasi' }}
                                 </h6>
-                                <p class="mb-1 fw-medium">{{ $surat->perihal }}</p>
-                                <small class="text-muted">{{ $surat->asal_surat }}</small>
-                            </div>
-
-                            <div class="me-4">
-                                <button class="btn btn-dark btn-sm px-3" data-bs-toggle="modal"
-                                    data-bs-target="#detailModal{{ $surat->id_surat }}">
-                                    Detail
-                                </button>
+                                <p class="mb-1 fw-medium">{{ $notif->data['body'] ?? '' }}</p>
+                                <small class="text-muted">{{ $notif->created_at->diffForHumans() }}</small>
                             </div>
                         </div>
                     </div>
                 </div>
             @empty
                 <div class="alert alert-secondary shadow-sm border-0">
-                    <i class="bi bi-info-circle me-2"></i> Belum ada surat terverifikasi terbaru.
+                    <i class="bi bi-info-circle me-2"></i> Belum ada notifikasi terbaru.
                 </div>
             @endforelse
         </div>

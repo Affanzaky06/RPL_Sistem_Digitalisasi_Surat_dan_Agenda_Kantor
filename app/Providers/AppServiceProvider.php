@@ -22,5 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+        \App\Models\Surat::observe(\App\Observers\SuratObserver::class);
+        \App\Models\Disposisi::observe(\App\Observers\DisposisiObserver::class);
     }
 }

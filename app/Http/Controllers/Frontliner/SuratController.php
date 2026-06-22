@@ -19,7 +19,13 @@ class SuratController extends Controller
 
         // Tarik data agenda hari ini dari tabel peserta, diurutkan dari waktu terdekat
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -38,10 +44,12 @@ class SuratController extends Controller
                 'tanggal_surat' => 'required',
                 'asal_surat' => 'required',
                 'berkas_surat' => 'required|mimes:pdf,jpg,jpeg,png|max:5120',
+                'waktu_selesai' => 'nullable|after:waktu_mulai',
             ],
             [
                 'nomor_surat.required' => 'Nomor surat wajib diisi.',
                 'nomor_surat.unique' => 'Nomor surat sudah terdaftar.',
+                'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
             ]
         );
 
@@ -96,7 +104,13 @@ class SuratController extends Controller
         $suratMasuk = $query->paginate(10)->withQueryString();
         
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -119,7 +133,13 @@ class SuratController extends Controller
         $TungguVeriv = Surat::where('status', 'Menunggu Verifikasi')->count();
         
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -150,16 +170,20 @@ class SuratController extends Controller
             $request->all(),
             [
                 'nomor_surat' => 'required|unique:surat,nomor_surat,' . $id . ',id_surat',
+                'jenis_surat' => 'required',
+                'prioritas' => 'required',
                 'perihal' => 'required',
                 'tanggal_surat' => 'required',
                 'asal_surat' => 'required',
-                'file_scan' => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120'
+                'file_scan' => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
+                'waktu_selesai_kegiatan' => 'nullable|after:waktu_mulai_kegiatan',
             ],
             [
                 'nomor_surat.required' => 'Nomor surat wajib diisi.',
                 'nomor_surat.unique' => 'Nomor surat sudah terdaftar.',
                 'file_scan.mimes' => 'File harus PDF/JPG/JPEG/PNG.',
-                'file_scan.max' => 'Ukuran file maksimal 5 MB.'
+                'file_scan.max' => 'Ukuran file maksimal 5 MB.',
+                'waktu_selesai_kegiatan.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
             ]
         );
 
@@ -192,6 +216,8 @@ class SuratController extends Controller
         $surat->update([
             'perihal' => $request->perihal,
             'nomor_surat' => $request->nomor_surat,
+            'jenis_surat' => $request->jenis_surat,
+            'prioritas' => $request->prioritas,
             'tanggal_surat' => $request->tanggal_surat,
             'tanggal_kegiatan' => $request->tanggal_kegiatan,
             'lokasi_kegiatan' => $request->lokasi_kegiatan,

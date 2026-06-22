@@ -42,6 +42,57 @@
 
     </div>
 
-</body>
+    <!-- Script Notifikasi Real-time & Desktop -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Minta izin notifikasi desktop jika belum
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
 
+            let lastCount = 0;
+            const navBadge = document.getElementById('nav-notif-badge');
+
+            function fetchNotifications() {
+                fetch('{{ route("notifications.unread") }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update Sidebar Badge if exists
+                    if (navBadge) {
+                        if (data.count > 0) {
+                            navBadge.style.display = 'inline-block';
+                            navBadge.innerText = data.count > 99 ? '99+' : data.count;
+                        } else {
+                            navBadge.style.display = 'none';
+                        }
+                    }
+
+                    // Tembak Notifikasi Desktop jika ada penambahan count
+                    if (data.count > lastCount && lastCount !== 0) {
+                        if (data.notifications.length > 0) {
+                            const latest = data.notifications[0];
+                            if (Notification.permission === "granted") {
+                                new Notification(latest.title, {
+                                    body: latest.body,
+                                    icon: '{{ asset("Lambang_Kabupaten_Blora copy.png") }}'
+                                });
+                            }
+                        }
+                    }
+                    
+                    if (lastCount === 0 || data.count !== lastCount) {
+                        lastCount = data.count;
+                    }
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+            }
+
+            // Fetch pertama kali, lalu setiap 10 detik
+            fetchNotifications();
+            setInterval(fetchNotifications, 10000);
+        });
+    </script>
+</body>
 </html>

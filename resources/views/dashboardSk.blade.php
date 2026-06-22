@@ -77,95 +77,32 @@
 
     </h4>
 
-    @forelse($notifikasi as $surat)
-        <div class="card mb-3 shadow-sm">
-
+    @forelse($notifikasi as $notif)
+        <div class="card mb-3 shadow-sm position-relative">
+            <form action="{{ route('notifications.read', $notif->id) }}" method="POST" class="m-0 p-0">
+                @csrf
+                <button type="submit" class="btn-close position-absolute top-0 end-0 m-2" style="z-index: 10;"
+                    aria-label="Close"></button>
+            </form>
             <div class="card-body">
-
                 <div class="d-flex justify-content-between align-items-start">
-
                     <div>
-
-                        <h6 class="fw-bold mb-1">
-                            Surat Baru
+                        <h6 class="fw-bold mb-1 text-primary">
+                            <i class="bi bi-bell-fill me-1"></i> {{ $notif->data['title'] ?? 'Notifikasi' }}
                         </h6>
-
                         <p class="mb-1">
-                            {{ $surat->perihal }}
+                            {{ $notif->data['body'] ?? '' }}
                         </p>
-
                         <small class="text-muted">
-                            {{ $surat->asal_surat }}
+                            {{ $notif->created_at->diffForHumans() }}
                         </small>
-
                     </div>
-
-                    <button class="btn btn-dark btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#detailModal{{ $surat->id_surat }}">
-
-                        Detail
-
-                    </button>
-
                 </div>
-
             </div>
-
         </div>
-
     @empty
-
         <div class="alert alert-secondary">
-            Belum ada surat menunggu verifikasi.
+            Belum ada notifikasi terbaru.
         </div>
     @endforelse
-
-    @foreach ($notifikasi as $surat)
-        <div class="modal fade" id="detailModal{{ $surat->id_surat }}" tabindex="-1">
-
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                <div class="modal-content">
-
-                    <div class="modal-header">
-
-                        <h5 class="modal-title">
-                            Detail Surat
-                        </h5>
-
-                        <button type="button" class="btn-close" data-bs-dismiss="modal">
-                        </button>
-
-                    </div>
-
-                    <div class="modal-body">
-
-                        <p>
-                            <strong>Perihal:</strong>
-                            {{ $surat->perihal }}
-                        </p>
-
-                        <p>
-                            <strong>Nomor Surat:</strong>
-                            {{ $surat->nomor_surat }}
-                        </p>
-
-                        <p>
-                            <strong>Asal Surat:</strong>
-                            {{ $surat->asal_surat }}
-                        </p>
-
-                        <p>
-                            <strong>Jenis Surat:</strong>
-                            {{ $surat->jenis_surat }}
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-    @endforeach
 </x-layout>

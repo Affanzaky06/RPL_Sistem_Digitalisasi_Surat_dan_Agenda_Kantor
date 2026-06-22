@@ -39,16 +39,14 @@ class KalenderKantorController extends Controller
             });
 
         // 2. Tarik Data Utama untuk FullCalendar
-        $agendaList = Surat::with(['disposisi.penerima.jabatan', 'disposisi.pemberi.jabatan'])
-            ->whereNotNull('tanggal_kegiatan')
-            ->where('status', 'Terverifikasi')
-            ->get();
+        $agendaList = \App\Models\Agenda::with(['surat', 'peserta.pegawai.jabatan'])->get();
 
         $events = $agendaList->map(function ($item) {
+            $surat = $item->surat;
             $kegiatanDate = Carbon::parse($item->tanggal_kegiatan);
             $now = Carbon::now();
-            $mulai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai_kegiatan);
-            $selesai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai_kegiatan);
+            $mulai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai);
+            $selesai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai);
             
             if ($now->gt($selesai)) {
                 $statusAcara = 'terlaksana';
@@ -58,33 +56,27 @@ class KalenderKantorController extends Controller
                 $statusAcara = 'mendatang';
             }
 
-            // Kumpulkan NIP semua pegawai yang terlibat (pemberi + penerima disposisi)
-            $nipPenerima = $item->disposisi->pluck('nip_penerima')->filter();
-            $nipPemberi = $item->disposisi->pluck('nip_pemberi')->filter();
-            $semuaNipTerlibat = $nipPenerima->merge($nipPemberi)
-                ->unique()
-                ->values()
-                ->toArray();
+            // Kumpulkan NIP dan Label pegawai yang hadir/perwakilan saja
+            $semuaNipTerlibat = [];
+            $labelStaff = [];
 
-            // Kumpulkan label nama-jabatan pegawai yang terlibat
-            $labelStaff = collect();
-            foreach ($item->disposisi as $d) {
-                if ($d->penerima) {
-                    $labelStaff->push($d->penerima->nama . ' - ' . ($d->penerima->jabatan->nama_jabatan ?? 'Umum'));
-                }
-                if ($d->pemberi) {
-                    $labelStaff->push($d->pemberi->nama . ' - ' . ($d->pemberi->jabatan->nama_jabatan ?? 'Umum'));
+            foreach ($item->peserta as $p) {
+                if (in_array($p->status_kehadiran, ['Hadir', 'Perwakilan'])) {
+                    $semuaNipTerlibat[] = $p->nip;
+                    $labelStaff[] = ($p->pegawai->nama ?? $p->nip) . ' - ' . ($p->pegawai->jabatan->nama_jabatan ?? 'Umum');
                 }
             }
-            $labelStaff = $labelStaff->unique()->values()->toArray();
+
+            $semuaNipTerlibat = array_values(array_unique($semuaNipTerlibat));
+            $labelStaff = array_values(array_unique($labelStaff));
                 
             return [
-                'id' => $item->id_surat,
-                'title' => $item->perihal,
-                'start' => $item->tanggal_kegiatan . 'T' . $item->waktu_mulai_kegiatan,
-                'end' => $item->tanggal_kegiatan . 'T' . $item->waktu_selesai_kegiatan,
+                'id' => $item->id_agenda,
+                'title' => $item->nama_kegiatan ?? ($surat->perihal ?? '-'),
+                'start' => $item->tanggal_kegiatan . 'T' . $item->waktu_mulai,
+                'end' => $item->tanggal_kegiatan . 'T' . $item->waktu_selesai,
                 'extendedProps' => [
-                    'lokasi' => $item->lokasi_kegiatan,
+                    'lokasi' => $item->lokasi,
                     'status' => $statusAcara,
                     'daftar_staff' => $semuaNipTerlibat,
                     'daftar_staff_label' => $labelStaff,
@@ -94,18 +86,23 @@ class KalenderKantorController extends Controller
 
         // 3. Logika Cerdas untuk Card Sidebar (Ringkasan Agenda 3 Terdekat)
         if (in_array($user->id_jabatan, ['J005', 'J007'])) {
-            $ringkasanAgenda = Surat::select(
-                    'id_surat as id_agenda',
-                    'perihal as nama_kegiatan',
-                    'tanggal_kegiatan',
-                    'waktu_mulai_kegiatan as waktu_mulai',
-                    'nomor_surat'
+            $ringkasanAgenda = \App\Models\Agenda::join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
+                ->select(
+                    'agenda.id_agenda',
+                    'agenda.nama_kegiatan',
+                    'agenda.tanggal_kegiatan',
+                    'agenda.waktu_mulai',
+                    'surat.nomor_surat'
                 )
-                ->whereNotNull('tanggal_kegiatan')
-                ->where('status', 'Terverifikasi')
-                ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
-                ->orderBy('tanggal_kegiatan', 'asc')
-                ->orderBy('waktu_mulai_kegiatan', 'asc')
+                ->where(function ($query) {
+                $query->whereDate('agenda.tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('agenda.tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('agenda.waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
+                ->orderBy('agenda.tanggal_kegiatan', 'asc')
+                ->orderBy('agenda.waktu_mulai', 'asc')
                 ->take(3)
                 ->get();
         } else {
@@ -120,7 +117,13 @@ class KalenderKantorController extends Controller
                 )
                 ->where('peserta.nip', $user->nip)
                 ->where('peserta.status_kehadiran', 'Hadir')
-                ->whereDate('agenda.tanggal_kegiatan', '>=', Carbon::today())
+                ->where(function ($query) {
+                $query->whereDate('agenda.tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('agenda.tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('agenda.waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
                 ->orderBy('agenda.tanggal_kegiatan', 'asc')
                 ->orderBy('agenda.waktu_mulai', 'asc')
                 ->distinct()

@@ -176,12 +176,11 @@
                                                         @csrf
                                                         @method('PUT')
 
-                                                        <button type="submit" class="btn btn-danger btn-sm"
+                                                        <button type="button" class="btn btn-danger btn-sm"
                                                             style="width:100px;"
-                                                            onclick="return confirm('Yakin ingin menolak surat ini?')">
-
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#tolakSuratModal{{ $surat->id_surat }}">
                                                             Tolak
-
                                                         </button>
 
                                                     </form>
@@ -379,6 +378,31 @@
                             </div>
 
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    @foreach ($suratMasuk as $surat)
+        <div class="modal fade" id="tolakSuratModal{{ $surat->id_surat }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
+                        <h5 class="modal-title fw-bold fs-4">Konfirmasi Penolakan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="fs-6">Yakin ingin menolak surat <strong>{{ $surat->perihal }}</strong> dari <strong>{{ $surat->asal_surat }}</strong>?</p>
+                        <p class="text-muted small">Tindakan ini akan mengembalikan status surat menjadi "Ditolak".</p>
+                    </div>
+                    <div class="modal-footer border-top-0 px-4 pb-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <form action="/sekretaris/tolak/{{ $surat->id_surat }}" method="POST" class="m-0">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-danger px-4 fw-bold">Tolak Surat</button>
+                        </form>
                     </div>
                 </div>
             </div>

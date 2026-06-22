@@ -42,7 +42,13 @@ class KepegawaianController extends Controller
         
         // Menampilkan 3 agenda kantor terdekat
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -73,7 +79,13 @@ class KepegawaianController extends Controller
         $role = 'Kepegawaian';
 
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -101,6 +113,8 @@ class KepegawaianController extends Controller
             'nip' => 'required|unique:pegawai,nip|max:50',
             'nama' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
+            'email' => 'nullable|email|unique:pegawai,email',
+            'no_telp' => 'nullable|string|max:20',
             'bidang' => 'required',
             'jabatan' => 'required',
             'berkas_pegawai' => 'required|file|mimes:pdf,jpg,jpeg|max:2048', // Maksimal 2MB
@@ -124,6 +138,8 @@ class KepegawaianController extends Controller
             'nip' => $request->nip,
             'nama' => $request->nama,
             'tanggal_lahir' => $request->tanggal_lahir,
+            'email' => $request->email,
+            'no_telp' => $request->no_telp,
             'id_bidang' => $request->bidang,
             'id_jabatan' => $request->jabatan,
             'foto_profil' => $filePath, // Kita simpan path file ke kolom ini sesuai migration
@@ -142,7 +158,13 @@ class KepegawaianController extends Controller
         $role = 'Kepegawaian';
 
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
-            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->where(function ($query) {
+                $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
+                      ->orWhere(function ($q) {
+                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                            ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
+                      });
+            })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
@@ -198,6 +220,8 @@ public function updatePegawai(Request $request, $nip)
             'nip' => 'required|string|max:50|unique:pegawai,nip,' . $nip . ',nip', 
             'nama' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
+            'email' => 'nullable|email|unique:pegawai,email,' . $nip . ',nip',
+            'no_telp' => 'nullable|string|max:20',
             'bidang' => 'required',
             'jabatan' => 'required',
             'berkas_pegawai' => 'nullable|file|mimes:pdf,jpg,jpeg|max:2048',
@@ -223,6 +247,8 @@ public function updatePegawai(Request $request, $nip)
             'nip' => $request->nip,
             'nama' => $request->nama,
             'tanggal_lahir' => $request->tanggal_lahir,
+            'email' => $request->email,
+            'no_telp' => $request->no_telp,
             'id_bidang' => $request->bidang,
             'id_jabatan' => $request->jabatan,
             'foto_profil' => $filePath // Sekarang ini pasti aman, berisi file lama ATAU file baru
@@ -234,8 +260,100 @@ public function updatePegawai(Request $request, $nip)
     public function destroyPegawai($nip)
     {
         $pegawai = Pegawai::where('nip', $nip)->firstOrFail();
+
+        // Cek apakah pegawai sedang terlibat di surat disposisi atau agenda
+        $usedInDisposisi = \App\Models\Disposisi::where('nip_pemberi', $nip)->orWhere('nip_penerima', $nip)->exists();
+        $usedInPeserta = \App\Models\Peserta::where('nip', $nip)->exists();
+
+        if ($usedInDisposisi || $usedInPeserta) {
+            return redirect()->back()->with('error', 'Data pegawai tidak dapat dihapus karena masih terkait dengan Riwayat Disposisi atau Agenda Kegiatan!');
+        }
+
         $pegawai->delete();
 
         return redirect()->back()->with('success', 'Data pegawai berhasil dihapus!');
+    }
+
+    public function resetPassword($nip)
+    {
+        $pegawai = Pegawai::where('nip', $nip)->firstOrFail();
+        $pegawai->update([
+            'password' => \Illuminate\Support\Facades\Hash::make('Pegawai123')
+        ]);
+
+        return redirect()->back()->with('success', 'Password pegawai ' . $pegawai->nama . ' berhasil direset menjadi: Pegawai123');
+    }
+
+    // =================================================================
+    // CRUD DATA BIDANG
+    // =================================================================
+
+    public function indexBidang(Request $request)
+    {
+        $user = Auth::user();
+        $role = 'Kepegawaian';
+
+        $search = $request->input('search');
+        $query = Bidang::query();
+
+        if ($search) {
+            $query->where('nama_bidang', 'LIKE', "%{$search}%");
+        }
+
+        $daftarBidang = $query->orderBy('id_bidang', 'asc')->paginate(10);
+
+        return view('kepegawaian.bidang', compact('daftarBidang', 'search', 'role'));
+    }
+
+    public function storeBidang(Request $request)
+    {
+        $request->validate([
+            'nama_bidang' => 'required|string|max:255'
+        ]);
+
+        // Auto-generate ID Bidang (B001, B002, dst)
+        $lastBidang = Bidang::orderBy('id_bidang', 'desc')->first();
+        if ($lastBidang) {
+            $lastNumber = (int) substr($lastBidang->id_bidang, 1);
+            $newId = 'B' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $newId = 'B001';
+        }
+
+        Bidang::create([
+            'id_bidang' => $newId,
+            'nama_bidang' => $request->nama_bidang
+        ]);
+
+        return redirect()->back()->with('success', 'Data Bidang berhasil ditambahkan!');
+    }
+
+    public function updateBidang(Request $request, $id_bidang)
+    {
+        $request->validate([
+            'nama_bidang' => 'required|string|max:255'
+        ]);
+
+        $bidang = Bidang::findOrFail($id_bidang);
+        $bidang->update([
+            'nama_bidang' => $request->nama_bidang
+        ]);
+
+        return redirect()->back()->with('success', 'Data Bidang berhasil diperbarui!');
+    }
+
+    public function destroyBidang($id_bidang)
+    {
+        // Cek apakah bidang sedang digunakan oleh pegawai
+        $isUsed = Pegawai::where('id_bidang', $id_bidang)->exists();
+
+        if ($isUsed) {
+            return redirect()->back()->with('error', 'Bidang tidak dapat dihapus karena masih digunakan oleh pegawai!');
+        }
+
+        $bidang = Bidang::findOrFail($id_bidang);
+        $bidang->delete();
+
+        return redirect()->back()->with('success', 'Data Bidang berhasil dihapus!');
     }
 }

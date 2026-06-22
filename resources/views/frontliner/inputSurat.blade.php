@@ -26,8 +26,7 @@
                     }, 6000);
                 </script>
 
-                <form action="{{ route('surat.store') }}" method="POST" enctype="multipart/form-data"" method="POST"
-                    enctype="multipart/form-data" class="fs-6">
+                <form action="{{ route('surat.store') }}" method="POST" enctype="multipart/form-data" class="fs-6">
                     @csrf
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h3 class="fw-bold mb-0 text-dark fs-3">
