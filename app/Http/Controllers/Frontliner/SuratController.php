@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Frontliner;
 
 use App\Http\Controllers\Controller;
-use App\Models\Surat;
 use App\Models\Peserta;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Surat;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class SuratController extends Controller
 {
@@ -21,10 +22,10 @@ class SuratController extends Controller
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -33,22 +34,47 @@ class SuratController extends Controller
 
         return view('frontliner.inputSurat', compact('title', 'role', 'ringkasanAgenda'));
     }
-    
+
     public function store(Request $request)
     {
+        $rules = [
+            'jenis_surat' => 'required',
+            'nomor_surat' => 'required|unique:surat,nomor_surat',
+            'perihal' => 'required',
+            'tanggal_surat' => 'required',
+            'asal_surat' => 'required',
+            'berkas_surat' => 'required|mimes:pdf,jpg,jpeg,png|max:5120',
+            'waktu_selesai' => 'nullable|after:waktu_mulai',
+        ];
+
+        if ($request->jenis_surat === 'Undangan') {
+            $rules['tanggal_kegiatan'] = 'required';
+            $rules['lokasi'] = 'required';
+            $rules['waktu_mulai'] = 'required';
+            $rules['waktu_selesai'] = 'required|after:waktu_mulai';
+        }
+
         $request->validate(
+            $rules,
             [
-                'jenis_surat' => 'required',
-                'nomor_surat' => 'required|unique:surat,nomor_surat',
-                'perihal' => 'required',
-                'tanggal_surat' => 'required',
-                'asal_surat' => 'required',
-                'berkas_surat' => 'required|mimes:pdf,jpg,jpeg,png|max:5120',
-                'waktu_selesai' => 'nullable|after:waktu_mulai',
-            ],
-            [
+                'jenis_surat.required' => 'Jenis surat wajib dipilih.',
+
                 'nomor_surat.required' => 'Nomor surat wajib diisi.',
                 'nomor_surat.unique' => 'Nomor surat sudah terdaftar.',
+
+                'perihal.required' => 'Perihal surat wajib diisi.',
+                'tanggal_surat.required' => 'Tanggal surat wajib diisi.',
+                'asal_surat.required' => 'Asal surat wajib diisi.',
+
+                'berkas_surat.required' => 'Berkas surat wajib diunggah.',
+                'berkas_surat.uploaded' => 'Upload berkas gagal. Silakan pilih file kembali.',
+                'berkas_surat.mimes' => 'Berkas harus PDF, JPG, JPEG, atau PNG.',
+                'berkas_surat.max' => 'Ukuran berkas maksimal 5 MB.',
+
+                'tanggal_kegiatan.required' => 'Tanggal kegiatan wajib diisi untuk surat undangan.',
+                'lokasi.required' => 'Lokasi kegiatan wajib diisi untuk surat undangan.',
+                'waktu_mulai.required' => 'Waktu mulai wajib diisi untuk surat undangan.',
+                'waktu_selesai.required' => 'Waktu selesai wajib diisi untuk surat undangan.',
                 'waktu_selesai.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
             ]
         );
@@ -57,7 +83,8 @@ class SuratController extends Controller
 
         if ($request->hasFile('berkas_surat')) {
             $file = $request->file('berkas_surat');
-            $namaFile = time() . '_' . $file->getClientOriginalName();
+            $namaFile = Str::uuid() . '.' .
+                $file->getClientOriginalExtension();
             $file->storeAs('surat', $namaFile, 'public');
         }
 
@@ -102,14 +129,14 @@ class SuratController extends Controller
         }
 
         $suratMasuk = $query->paginate(10)->withQueryString();
-        
+
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -127,36 +154,39 @@ class SuratController extends Controller
         );
     }
 
-    public function info(){
+    public function info()
+    {
         $jmlSurat = Surat::whereDate('created_at', Carbon::today())->count();
         $jmltolak = Surat::where('status', 'Ditolak')->count();
         $TungguVeriv = Surat::where('status', 'Menunggu Verifikasi')->count();
-        
+
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
-        
+
         $title = "Frontliner";
         $role = "frontliner";
 
         return view(
-            'dashboardFr', compact(
-            'title',
-            'role', 
-            'jmlSurat', 
-            'jmltolak', 
-            'TungguVeriv',
-            'ringkasanAgenda'
-        ));
+            'dashboardFr',
+            compact(
+                'title',
+                'role',
+                'jmlSurat',
+                'jmltolak',
+                'TungguVeriv',
+                'ringkasanAgenda'
+            )
+        );
     }
 
     public function update(Request $request, $id)

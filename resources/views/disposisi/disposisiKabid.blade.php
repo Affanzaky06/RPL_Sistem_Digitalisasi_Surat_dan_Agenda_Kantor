@@ -178,7 +178,9 @@
                                                         </button>
                                                     </form>
 
-                                                    <button type="button" class="btn btn-danger btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
+                                                    <button type="button" class="btn btn-danger btn-sm"
+                                                        style="width:100px;" data-bs-toggle="modal"
+                                                        data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
                                                         <i class="bi bi-x"></i> Tolak
                                                     </button>
 
@@ -246,11 +248,23 @@
                                     {{ $surat->nomor_surat }} </small>
                             </div>
                             @if ($surat->status == 'Terverifikasi')
-                                <span class="badge bg-success px-3 py-2"
-                                    style="width:110px;font-size:0.85rem;">Terverifikasi</span>
+                                <span class="badge bg-success px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                    Terverifikasi
+
+                                </span>
+                            @elseif ($surat->status == 'Didisposisikan')
+                                <span class="badge bg-success px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                    Terverifikasi
+
+                                </span>
                             @else
-                                <span class="badge bg-danger px-3 py-2"
-                                    style="width:110px;font-size:0.85rem;">Ditolak</span>
+                                <span class="badge bg-danger px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                    Ditolak
+
+                                </span>
                             @endif
                         </div>
                         <hr>

@@ -12,7 +12,7 @@ use Carbon\Carbon; // WAJIB DIIMPORT
 class VerifikasiController extends Controller
 {
     public function index(Request $request)
-    {   
+    {
         $user = Auth::user();
         $query = Surat::query()
             ->where('status', 'Menunggu Verifikasi');
@@ -39,17 +39,17 @@ class VerifikasiController extends Controller
             ->withQueryString();
 
         // LOGIKA AGENDA: Hanya mengambil agenda milik Sekretaris yang sedang login
-        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->where('status_kehadiran', 'Hadir');
+        })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -116,6 +116,7 @@ class VerifikasiController extends Controller
                 ]
             );
 
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -125,10 +126,25 @@ class VerifikasiController extends Controller
             });
         }
 
-        if ($request->sort == 'terlama') {
+        if ($request->sort == 'terbaru') {
+
+            $query->latest('tanggal_verifikasi');
+        } elseif ($request->sort == 'terlama') {
+
             $query->oldest('tanggal_verifikasi');
         } else {
-            $query->latest('tanggal_verifikasi');
+
+            // Default: Prioritas
+            $query
+                ->orderByRaw("
+            CASE prioritas
+                WHEN 'Tinggi' THEN 1
+                WHEN 'Sedang' THEN 2
+                WHEN 'Rendah' THEN 3
+                ELSE 4
+            END
+        ")
+                ->latest('tanggal_verifikasi');
         }
 
         $suratMasuk = $query
@@ -136,17 +152,17 @@ class VerifikasiController extends Controller
             ->withQueryString();
 
         // Jalankan logika agenda yang sama di halaman riwayat agar sidebar tidak kosong/error
-        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->where('status_kehadiran', 'Hadir');
+        })
             ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')

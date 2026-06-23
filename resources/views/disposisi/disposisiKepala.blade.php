@@ -241,6 +241,12 @@
                                     Terverifikasi
 
                                 </span>
+                            @elseif ($surat->status == 'Didisposisikan')
+                                <span class="badge bg-success px-3 py-2" style="width:110px;font-size:0.85rem;">
+
+                                    Terverifikasi
+
+                                </span>
                             @else
                                 <span class="badge bg-danger px-3 py-2" style="width:110px;font-size:0.85rem;">
 
