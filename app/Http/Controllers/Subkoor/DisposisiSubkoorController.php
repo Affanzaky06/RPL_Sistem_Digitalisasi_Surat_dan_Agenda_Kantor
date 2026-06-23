@@ -106,7 +106,8 @@ class DisposisiSubkoorController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
         ]);
 
         $cekKepemilikan = Disposisi::where('id_surat', $id)
@@ -233,8 +234,23 @@ class DisposisiSubkoorController extends Controller
      */
     public function konfirmasiHadir(Request $request, $id_surat)
     {
+        $request->validate([
+            'nip_pendamping' => 'nullable|array',
+            'nip_pendamping.*' => 'exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user();
+
+        // Cek IDOR: Pastikan Subkoor benar-benar menerima disposisi surat ini
+        $cekDisposisi = Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->first();
+
+        if (!$cekDisposisi) {
+            return back()->with('error', 'Akses ditolak: Anda tidak memiliki wewenang untuk surat ini.');
+        }
 
         // Cek Bentrok Jadwal
         if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
@@ -250,59 +266,65 @@ class DisposisiSubkoorController extends Controller
             }
         }
 
-        // Update status disposisi Subkoor menjadi Hadir
-        Disposisi::where('id_surat', $id_surat)
-            ->where('nip_penerima', $user->nip)
-            ->update(['status' => 'Hadir']);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // 1. PASTIKAN AGENDA SUDAH DIBUAT
-        $agenda = Agenda::firstOrCreate(
-            ['id_surat' => $surat->id_surat],
-            [
-                'nama_kegiatan' => $surat->perihal,
-                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
-                'lokasi' => $surat->lokasi_kegiatan,
-                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
-                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
-            ]
-        );
+            // Update status disposisi Subkoor menjadi Hadir
+            $cekDisposisi->update(['status' => 'Hadir']);
 
-        // 2. MASUKKAN SUBKOOR SEBAGAI PESERTA PASTI HADIR
-        Peserta::updateOrCreate(
-            [
-                'id_agenda' => $agenda->id_agenda,
-                'nip' => $user->nip
-            ],
-            [
-                'status_kehadiran' => 'Hadir'
-            ]
-        );
+            // 1. PASTIKAN AGENDA SUDAH DIBUAT
+            $agenda = Agenda::firstOrCreate(
+                ['id_surat' => $surat->id_surat],
+                [
+                    'nama_kegiatan' => $surat->perihal,
+                    'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                    'lokasi' => $surat->lokasi_kegiatan,
+                    'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                    'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+                ]
+            );
 
-        // 3. JIKA SUBKOOR MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
-        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
-            foreach ($request->nip_pendamping as $nipPenerima) {
-                $disposisi = Disposisi::create([
-                    'id_surat' => $surat->id_surat,
-                    'nip_pemberi' => $user->nip,
-                    'nip_penerima' => $nipPenerima,
-                    'tanggal' => now(),
-                    'catatan' => $request->catatan ?? 'Mendampingi atasan pada kegiatan ini.',
-                    'status' => 'Menunggu Konfirmasi'
-                ]);
+            // 2. MASUKKAN SUBKOOR SEBAGAI PESERTA PASTI HADIR
+            Peserta::updateOrCreate(
+                [
+                    'id_agenda' => $agenda->id_agenda,
+                    'nip' => $user->nip
+                ],
+                [
+                    'status_kehadiran' => 'Hadir'
+                ]
+            );
 
-                Peserta::updateOrCreate(
-                    [
-                        'id_agenda' => $agenda->id_agenda,
-                        'nip' => $nipPenerima
-                    ],
-                    [
-                        'id_disposisi' => $disposisi->id_disposisi,
-                        'status_kehadiran' => 'Menunggu Konfirmasi'
-                    ]
-                );
+            // 3. JIKA SUBKOOR MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
+            if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+                foreach ($request->nip_pendamping as $nipPenerima) {
+                    $disposisi = Disposisi::create([
+                        'id_surat' => $surat->id_surat,
+                        'nip_pemberi' => $user->nip,
+                        'nip_penerima' => $nipPenerima,
+                        'tanggal' => now(),
+                        'catatan' => $request->catatan ?? 'Mendampingi atasan pada kegiatan ini.',
+                        'status' => 'Menunggu Konfirmasi'
+                    ]);
+
+                    Peserta::updateOrCreate(
+                        [
+                            'id_agenda' => $agenda->id_agenda,
+                            'nip' => $nipPenerima
+                        ],
+                        [
+                            'id_disposisi' => $disposisi->id_disposisi,
+                            'status_kehadiran' => 'Menunggu Konfirmasi'
+                        ]
+                    );
+                }
             }
-        }
 
-        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+        }
     }
 }

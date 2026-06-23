@@ -29,16 +29,7 @@ class DisposisiKabidController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        $queryAgenda = Surat::query()->whereNotNull('tanggal_kegiatan');
-
-        // 4. FILTER SAKTI: Jika BUKAN Kepala (J001), tampilkan hanya agenda miliknya!
-        if ($user->id_jabatan !== 'J001') {
-            $identitasPenerima = $user->nama;
-
-            $queryAgenda->whereHas('disposisi', function ($q) use ($identitasPenerima) {
-                $q->where('nip_penerima', $identitasPenerima);
-            });
-        }
+        // 3. Menghapus kode yang tidak terpakai ($queryAgenda)
 
         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
             $q->where('nip', $user->nip);
@@ -116,7 +107,8 @@ class DisposisiKabidController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
         ]);
 
         $cekKepemilikan = Disposisi::where('id_surat', $id)
@@ -179,8 +171,23 @@ class DisposisiKabidController extends Controller
 
     public function konfirmasiHadir(Request $request, $id_surat)
     {
+        $request->validate([
+            'nip_pendamping' => 'nullable|array',
+            'nip_pendamping.*' => 'exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user(); // NIP Kabid
+
+        // Cek IDOR: Pastikan Kabid benar-benar menerima disposisi surat ini
+        $cekDisposisi = Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->first();
+
+        if (!$cekDisposisi) {
+            return back()->with('error', 'Akses ditolak: Anda tidak memiliki wewenang untuk surat ini.');
+        }
 
         // Cek Bentrok Jadwal
         if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
@@ -196,65 +203,71 @@ class DisposisiKabidController extends Controller
             }
         }
 
-        // Update status disposisi Kabid menjadi Hadir
-        Disposisi::where('id_surat', $id_surat)
-            ->where('nip_penerima', $user->nip)
-            ->update(['status' => 'Hadir']);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // 1. PASTIKAN AGENDA SUDAH DIBUAT
-        $agenda = \App\Models\Agenda::firstOrCreate(
-            ['id_surat' => $surat->id_surat],
-            [
-                'nama_kegiatan' => $surat->perihal,
-                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
-                'lokasi' => $surat->lokasi_kegiatan,
-                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
-                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
-            ]
-        );
+            // Update status disposisi Kabid menjadi Hadir
+            $cekDisposisi->update(['status' => 'Hadir']);
 
-        // 2. MASUKKAN KABID SEBAGAI PESERTA PASTI HADIR
-        \App\Models\Peserta::updateOrCreate(
-            [
-                'id_agenda' => $agenda->id_agenda,
-                'nip' => $user->nip
-            ],
-            [
-                'status_kehadiran' => 'Hadir' // Langsung Hadir karena Kabid sendiri yang klik
-            ]
-        );
+            // 1. PASTIKAN AGENDA SUDAH DIBUAT
+            $agenda = \App\Models\Agenda::firstOrCreate(
+                ['id_surat' => $surat->id_surat],
+                [
+                    'nama_kegiatan' => $surat->perihal,
+                    'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                    'lokasi' => $surat->lokasi_kegiatan,
+                    'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                    'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+                ]
+            );
 
-        // 3. JIKA KABID MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
-        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+            // 2. MASUKKAN KABID SEBAGAI PESERTA PASTI HADIR
+            \App\Models\Peserta::updateOrCreate(
+                [
+                    'id_agenda' => $agenda->id_agenda,
+                    'nip' => $user->nip
+                ],
+                [
+                    'status_kehadiran' => 'Hadir' // Langsung Hadir karena Kabid sendiri yang klik
+                ]
+            );
 
-            // Lakukan perulangan untuk setiap NIP yang diceklis di form
-            foreach ($request->nip_pendamping as $nipPenerima) {
+            // 3. JIKA KABID MEMILIH PENDAMPING (BISA LEBIH DARI 1 ORANG)
+            if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
 
-                // Buat Disposisi untuk masing-masing Pendamping
-                $disposisi = \App\Models\Disposisi::create([
-                    'id_surat' => $surat->id_surat,
-                    'nip_pemberi' => $user->nip,
-                    'nip_penerima' => $nipPenerima, // <-- Diambil dari variabel perulangan
-                    'tanggal' => now(),
-                    'catatan' => $request->catatan ?? 'Mendampingi atasan pada kegiatan ini.',
-                    'status' => 'Menunggu Konfirmasi'
-                ]);
+                // Lakukan perulangan untuk setiap NIP yang diceklis di form
+                foreach ($request->nip_pendamping as $nipPenerima) {
 
-                // Masukkan Pendamping ke tabel Peserta (Menunggu Konfirmasi mereka)
-                \App\Models\Peserta::updateOrCreate(
-                    [
-                        'id_agenda' => $agenda->id_agenda,
-                        'nip' => $nipPenerima // <-- Diambil dari variabel perulangan
-                    ],
-                    [
-                        'id_disposisi' => $disposisi->id_disposisi,
-                        'status_kehadiran' => 'Menunggu Konfirmasi'
-                    ]
-                );
+                    // Buat Disposisi untuk masing-masing Pendamping
+                    $disposisi = \App\Models\Disposisi::create([
+                        'id_surat' => $surat->id_surat,
+                        'nip_pemberi' => $user->nip,
+                        'nip_penerima' => $nipPenerima, // <-- Diambil dari variabel perulangan
+                        'tanggal' => now(),
+                        'catatan' => $request->catatan ?? 'Mendampingi atasan pada kegiatan ini.',
+                        'status' => 'Menunggu Konfirmasi'
+                    ]);
+
+                    // Masukkan Pendamping ke tabel Peserta (Menunggu Konfirmasi mereka)
+                    \App\Models\Peserta::updateOrCreate(
+                        [
+                            'id_agenda' => $agenda->id_agenda,
+                            'nip' => $nipPenerima // <-- Diambil dari variabel perulangan
+                        ],
+                        [
+                            'id_disposisi' => $disposisi->id_disposisi,
+                            'status_kehadiran' => 'Menunggu Konfirmasi'
+                        ]
+                    );
+                }
             }
-        }
 
-        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+        }
     }
 
     public function tolak(Request $request, $id_surat)

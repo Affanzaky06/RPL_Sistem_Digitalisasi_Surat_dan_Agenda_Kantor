@@ -29,16 +29,7 @@ class DisposisiKepalaController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        $queryAgenda = Surat::query()->whereNotNull('tanggal_kegiatan');
-
-        // 4. FILTER SAKTI: Jika BUKAN Kepala (J001), tampilkan hanya agenda miliknya!
-        if ($user->id_jabatan !== 'J001') {
-            $identitasPenerima = $user->nama;
-
-            $queryAgenda->whereHas('disposisi', function ($q) use ($identitasPenerima) {
-                $q->where('nip_penerima', $identitasPenerima);
-            });
-        }
+        // 3. Menghapus kode yang tidak terpakai ($queryAgenda)
 
         $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
             $q->where('nip', $user->nip);
@@ -109,7 +100,8 @@ class DisposisiKepalaController extends Controller
     public function disposisi(Request $request, $id)
     {
         $request->validate([
-            'nip_penerima' => 'required',
+            'nip_penerima' => 'required|exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
         ]);
 
         $suratValid = Surat::where('id_surat', $id)
@@ -172,6 +164,12 @@ class DisposisiKepalaController extends Controller
 
     public function konfirmasiHadir(Request $request, $id_surat)
     {
+        $request->validate([
+            'nip_pendamping' => 'nullable|array',
+            'nip_pendamping.*' => 'exists:pegawai,nip',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user();
 
@@ -189,60 +187,68 @@ class DisposisiKepalaController extends Controller
             }
         }
 
-        // 1. Buat Agenda jika belum ada
-        $agenda = \App\Models\Agenda::firstOrCreate(
-            ['id_surat' => $surat->id_surat],
-            [
-                'nama_kegiatan' => $surat->perihal,
-                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
-                'lokasi' => $surat->lokasi_kegiatan,
-                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
-                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
-            ]
-        );
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // 2. Masukkan Kepala sebagai peserta wajib
-        \App\Models\Peserta::updateOrCreate(
-            [
-                'id_agenda' => $agenda->id_agenda,
-                'nip' => $user->nip
-            ],
-            [
-                'status_kehadiran' => 'Hadir'
-            ]
-        );
+            // 1. Buat Agenda jika belum ada
+            $agenda = \App\Models\Agenda::firstOrCreate(
+                ['id_surat' => $surat->id_surat],
+                [
+                    'nama_kegiatan' => $surat->perihal,
+                    'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                    'lokasi' => $surat->lokasi_kegiatan,
+                    'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                    'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+                ]
+            );
 
-        // 3. JIKA ADA PENDAMPING YANG DICEKLIS (Bisa lebih dari 1 orang)
-        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
+            // 2. Masukkan Kepala sebagai peserta wajib
+            \App\Models\Peserta::updateOrCreate(
+                [
+                    'id_agenda' => $agenda->id_agenda,
+                    'nip' => $user->nip
+                ],
+                [
+                    'status_kehadiran' => 'Hadir'
+                ]
+            );
 
-            // Lakukan perulangan untuk setiap NIP yang diceklis di UI
-            foreach ($request->nip_pendamping as $nipPenerima) {
+            // 3. JIKA ADA PENDAMPING YANG DICEKLIS (Bisa lebih dari 1 orang)
+            if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
 
-                // Buat Disposisi untuk masing-masing pendamping
-                $disposisi = \App\Models\Disposisi::create([
-                    'id_surat' => $surat->id_surat,
-                    'nip_pemberi' => $user->nip,
-                    'nip_penerima' => $nipPenerima,
-                    'tanggal' => now(),
-                    'catatan' => $request->catatan ?? 'Mendampingi Kepala Kantor pada kegiatan ini.',
-                    'status' => 'Menunggu Konfirmasi'
-                ]);
+                // Lakukan perulangan untuk setiap NIP yang diceklis di UI
+                foreach ($request->nip_pendamping as $nipPenerima) {
 
-                // Masukkan mereka ke tabel Peserta (Menunggu Konfirmasi)
-                \App\Models\Peserta::updateOrCreate(
-                    [
-                        'id_agenda' => $agenda->id_agenda,
-                        'nip' => $nipPenerima
-                    ],
-                    [
-                        'id_disposisi' => $disposisi->id_disposisi,
-                        'status_kehadiran' => 'Menunggu Konfirmasi'
-                    ]
-                );
+                    // Buat Disposisi untuk masing-masing pendamping
+                    $disposisi = \App\Models\Disposisi::create([
+                        'id_surat' => $surat->id_surat,
+                        'nip_pemberi' => $user->nip,
+                        'nip_penerima' => $nipPenerima,
+                        'tanggal' => now(),
+                        'catatan' => $request->catatan ?? 'Mendampingi Kepala Kantor pada kegiatan ini.',
+                        'status' => 'Menunggu Konfirmasi'
+                    ]);
+
+                    // Masukkan mereka ke tabel Peserta (Menunggu Konfirmasi)
+                    \App\Models\Peserta::updateOrCreate(
+                        [
+                            'id_agenda' => $agenda->id_agenda,
+                            'nip' => $nipPenerima
+                        ],
+                        [
+                            'id_disposisi' => $disposisi->id_disposisi,
+                            'status_kehadiran' => 'Menunggu Konfirmasi'
+                        ]
+                    );
+                }
             }
-        }
 
-        return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Berhasil mengonfirmasi kehadiran dan mengundang pendamping.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+        }
     }
 
     public function tolak(Request $request, $id_surat)
@@ -258,7 +264,7 @@ class DisposisiKepalaController extends Controller
         // 2. Jika sebelumnya pernah di-acc dan masuk agenda, hapus dari agenda
         $agenda = \App\Models\Agenda::where('id_surat', $id_surat)->first();
         if ($agenda) {
-            \App\Models\Peserta::where('id_agenda', $agenda->id_agenda)->delete();
+            $agenda->peserta()->delete();
             $agenda->delete();
         }
 

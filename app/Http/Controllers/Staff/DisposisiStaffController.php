@@ -96,6 +96,15 @@ class DisposisiStaffController extends Controller
         $surat = Surat::findOrFail($id_surat);
         $user = Auth::user();
 
+        // Cek IDOR: Pastikan Staff benar-benar menerima disposisi surat ini
+        $cekDisposisi = Disposisi::where('id_surat', $id_surat)
+            ->where('nip_penerima', $user->nip)
+            ->first();
+
+        if (!$cekDisposisi) {
+            return back()->with('error', 'Akses ditolak: Anda tidak memiliki wewenang untuk surat ini.');
+        }
+
         // Cek Bentrok Jadwal
         if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
             $bentrok = Agenda::checkConflict(
@@ -110,38 +119,44 @@ class DisposisiStaffController extends Controller
             }
         }
 
-        // Update status disposisi Staff menjadi Hadir
-        Disposisi::where('id_surat', $id_surat)
-            ->where('nip_penerima', $user->nip)
-            ->update(['status' => 'Hadir']);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        // PASTIKAN AGENDA SUDAH DIBUAT
-        $agenda = Agenda::firstOrCreate(
-            ['id_surat' => $surat->id_surat],
-            [
-                'nama_kegiatan' => $surat->perihal,
-                'tanggal_kegiatan' => $surat->tanggal_kegiatan,
-                'lokasi' => $surat->lokasi_kegiatan,
-                'waktu_mulai' => $surat->waktu_mulai_kegiatan,
-                'waktu_selesai' => $surat->waktu_selesai_kegiatan,
-            ]
-        );
+            // Update status disposisi Staff menjadi Hadir
+            $cekDisposisi->update(['status' => 'Hadir']);
 
-        // MASUKKAN STAFF SEBAGAI PESERTA PASTI HADIR
-        Peserta::updateOrCreate(
-            [
-                'id_agenda' => $agenda->id_agenda,
-                'nip' => $user->nip
-            ],
-            [
-                'status_kehadiran' => 'Hadir'
-            ]
-        );
+            // PASTIKAN AGENDA SUDAH DIBUAT
+            $agenda = Agenda::firstOrCreate(
+                ['id_surat' => $surat->id_surat],
+                [
+                    'nama_kegiatan' => $surat->perihal,
+                    'tanggal_kegiatan' => $surat->tanggal_kegiatan,
+                    'lokasi' => $surat->lokasi_kegiatan,
+                    'waktu_mulai' => $surat->waktu_mulai_kegiatan,
+                    'waktu_selesai' => $surat->waktu_selesai_kegiatan,
+                ]
+            );
 
-        return back()->with(
-            'success',
-            'Kehadiran berhasil dikonfirmasi'
-        );
+            // MASUKKAN STAFF SEBAGAI PESERTA PASTI HADIR
+            Peserta::updateOrCreate(
+                [
+                    'id_agenda' => $agenda->id_agenda,
+                    'nip' => $user->nip
+                ],
+                [
+                    'status_kehadiran' => 'Hadir'
+                ]
+            );
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with(
+                'success',
+                'Kehadiran berhasil dikonfirmasi'
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $e->getMessage());
+        }
     }
 
     public function tolakDispo($id_surat)
