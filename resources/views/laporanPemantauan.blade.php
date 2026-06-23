@@ -84,7 +84,7 @@
                                             <span class="badge bg-success-subtle text-success border border-success px-3 py-2" style="width: 100px;">ACC</span>
                                         @elseif(in_array($item->status, ['Tidak Hadir', 'Ditolak', 'Dibatalkan']))
                                             <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2" style="width: 100px;">Ditolak</span>
-                                        @elseif(in_array($item->status, ['Digantikan', 'Dimaklumi']))
+                                        @elseif(in_array($item->status, ['Digantikan', 'Dimaklumi', 'Selesai', 'Tidak Tertangani']))
                                             <span class="badge bg-secondary-subtle text-secondary border border-secondary px-3 py-2" style="width: 100px;">Selesai</span>
                                         @else
                                             <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2" style="width: 120px;">Dalam Proses</span>
@@ -151,46 +151,101 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div>
-                                <h4 class="mb-1 fw-semibold">{{ $item->surat->perihal }}</h4>
-                                <small class="text-muted">{{ $item->surat->nomor_surat }}</small>
-                            </div>
-                            <span class="badge px-3 py-2 bg-secondary">{{ $item->status }}</span>
-                        </div>
-                        <hr>
-                        <div class="mb-4">
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">Informasi Surat</div>
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <div class="text-secondary small">Pengirim</div>
-                                    <div>{{ $item->surat->asal_surat }}</div>
+                        <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
+                            <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-send me-2"></i>Pengirim</small>
+                                    <span class="fw-bold text-dark">{{ $item->surat->asal_surat }}</span>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="text-secondary small">Tanggal Surat</div>
-                                    <div>{{ \Carbon\Carbon::parse($item->surat->tanggal_surat)->format('d M Y') }}</div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor Surat</small>
+                                    <span class="fw-bold text-dark">{{ $item->surat->nomor_surat }}</span>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="text-secondary small">Prioritas</div>
-                                    <div><span class="badge bg-danger">{{ $item->surat->prioritas }}</span></div>
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text me-2"></i>Perihal Surat</small>
+                                    <span class="fw-bold text-dark">{{ $item->surat->perihal }}</span>
                                 </div>
                             </div>
-                        </div>
-                        <hr>
-                        <div class="mb-4">
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">Disposisikan Kepada</div>
-                            <div class="border rounded-3 p-3 bg-body-tertiary">
-                                <div class="fw-semibold">{{ $item->penerima->nama ?? '-' }}</div>
-                                <small class="text-muted">{{ $item->penerima->bidang->nama_bidang ?? '-' }}</small>
+                            
+                            <div class="col-6 ps-4 position-relative">
+                                <div class="mb-3 d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal Kegiatan</small>
+                                        <span class="fw-bold text-dark">{{ \Carbon\Carbon::parse($item->surat->tanggal_kegiatan)->format('d-m-Y') }}</span>
+                                    </div>
+                                    @if(in_array($item->status, ['Hadir', 'Sudah Diproses', 'ACC', 'Didisposisikan']))
+                                        <span class="badge bg-success-subtle text-success border border-success px-3 py-1">{{ $item->status }}</span>
+                                    @elseif(in_array($item->status, ['Tidak Hadir', 'Ditolak', 'Dibatalkan']))
+                                        <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1">{{ $item->status }}</span>
+                                    @elseif(in_array($item->status, ['Digantikan', 'Dimaklumi', 'Selesai', 'Tidak Tertangani']))
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary px-3 py-1">{{ $item->status }}</span>
+                                    @else
+                                        <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1">{{ $item->status }}</span>
+                                    @endif
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-clock me-2"></i>Waktu</small>
+                                    <span class="fw-bold text-dark">
+                                        {{ $item->surat->waktu_mulai_kegiatan ? \Carbon\Carbon::parse($item->surat->waktu_mulai_kegiatan)->format('H:i') : '-' }}
+                                        -
+                                        {{ $item->surat->waktu_selesai_kegiatan ? \Carbon\Carbon::parse($item->surat->waktu_selesai_kegiatan)->format('H:i') : '-' }}
+                                    </span>
+                                </div>
+                                
+                                <div>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                    @if ($item->surat->prioritas == 'Tinggi')
+                                        <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                    @elseif($item->surat->prioritas == 'Sedang')
+                                        <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
+                                    @else
+                                        <span class="badge bg-success px-3 py-1">Rendah</span>
+                                    @endif
+                                </div>
+                                
+                                <a href="{{ asset('storage/surat/' . $item->surat->file_scan) }}" target="_blank" class="btn btn-outline-secondary btn-sm position-absolute bottom-0 end-0 me-3" style="text-decoration:none;">
+                                    <i class="bi bi-eye"></i> Lihat Detail
+                                </a>
                             </div>
                         </div>
-                        <hr>
-                        <div class="mb-4">
-                            <div class="text-uppercase text-secondary small fw-semibold mb-3">Catatan</div>
-                            <div class="border rounded-3 p-3 bg-body-tertiary">{{ $item->catatan }}</div>
+
+                        <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm">
+                            <label class="fw-bold mb-3 d-flex align-items-center text-dark">
+                                <i class="bi bi-people me-2 fs-5"></i> Didisposisikan kepada
+                            </label>
+                            
+                            <div class="d-flex align-items-center gap-3 ms-2">
+                                <i class="bi bi-person-circle fs-2 text-secondary"></i>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">{{ $item->penerima->nama ?? '-' }}</h6>
+                                    <small class="text-muted">
+                                        @switch($item->penerima->id_jabatan ?? '')
+                                            @case('J001') Kepala @break
+                                            @case('J002') Kabid @break
+                                            @case('J003') Subkoor @break
+                                            @case('J004') Staff @break
+                                            @case('J006') Sekretaris @break
+                                            @default -
+                                        @endswitch
+                                        @if(isset($item->penerima->bidang))
+                                            | {{ $item->penerima->bidang->nama_bidang }}
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-3 p-3 bg-white shadow-sm mb-2">
+                            <label class="fw-bold mb-2 d-flex align-items-center text-dark">
+                                <i class="bi bi-journal-text me-2 fs-5"></i> Catatan
+                            </label>
+                            <div class="ms-2 mt-1 text-dark">
+                                {{ $item->catatan }}
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer border-top-0 pt-0 pb-3">
                         <div class="d-flex justify-content-between w-100">
                             @if (in_array($item->status, ['Menunggu Konfirmasi', 'Belum Dibaca']))
                                 @php
@@ -209,10 +264,6 @@
                             @else 
                                 <div></div> {{-- Spacer --}}
                             @endif
-
-                            <a href="{{ asset('storage/surat/' . $item->surat->file_scan) }}" target="_blank" class="btn btn-primary">
-                                <i class="bi bi-eye me-1"></i> Lihat File Surat
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -244,8 +295,8 @@
                                     <div class="fw-bold">{{ $item->surat->perihal }}</div>
                                 </div>
                                 <div class="col-6 ps-4 position-relative">
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-1"></i> Tanggal Surat</small>
-                                    <div class="fw-bold mb-2">{{ \Carbon\Carbon::parse($item->surat->tanggal_surat)->format('d-m-Y') }}</div>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-1"></i> Tanggal Kegiatan</small>
+                                    <div class="fw-bold mb-2">{{ \Carbon\Carbon::parse($item->surat->tanggal_kegiatan)->format('d-m-Y') }}</div>
                                     <small class="text-muted d-block mb-1"><i class="bi bi-clock me-1"></i> Waktu</small>
                                     <div class="fw-bold mb-2">{{ $item->surat->waktu_mulai_kegiatan ?? '-' }} - {{ $item->surat->waktu_selesai_kegiatan ?? '-' }}</div>
                                     <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-1"></i> Prioritas</small>

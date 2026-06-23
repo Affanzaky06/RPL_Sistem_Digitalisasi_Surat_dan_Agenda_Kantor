@@ -317,8 +317,8 @@
                                     <div>{{ $surat->asal_surat }}</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="text-secondary small">Tanggal Surat</div>
-                                    <div> {{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d M Y') }}
+                                    <div class="text-secondary small">Tanggal Kegiatan</div>
+                                    <div> {{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d M Y') }}
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -522,10 +522,10 @@
                                     <div class="mb-3">
                                         <small class="text-muted d-block mb-1">
                                             <i class="bi bi-calendar me-2"></i>
-                                            Tanggal Surat
+                                            Tanggal Kegiatan
                                         </small>
                                         <span class="fw-bold">
-                                            {{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}
+                                            {{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') }}
                                         </span>
                                     </div>
 
@@ -698,11 +698,10 @@
                                 </div>
 
                                 <div class="col-6 ps-4 position-relative">
-                                    <small class="text-muted d-block mb-1">
-                                        <i class="bi bi-calendar me-2"></i>Tanggal Surat
-                                    </small>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-calendar me-2"></i>Tanggal Kegiatan</small>
                                     <div class="fw-bold mb-3 text-dark">
-                                        {{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}
+                                        {{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') }}
                                     </div>
 
                                     <small class="text-muted d-block mb-1">
@@ -853,9 +852,9 @@
                                 <div class="col-6 ps-4 position-relative">
                                     <div class="mb-3">
                                         <small class="text-muted d-block mb-1"><i
-                                                class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                                class="bi bi-calendar me-2"></i>Tanggal Kegiatan</small>
                                         <span
-                                            class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}</span>
+                                            class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') }}</span>
                                     </div>
                                     <div class="mb-3">
                                         <small class="text-muted d-block mb-1"><i
@@ -937,9 +936,9 @@
                                 <div class="col-6 ps-4 position-relative">
                                     <div class="mb-3">
                                         <small class="text-muted d-block mb-1"><i
-                                                class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                                class="bi bi-calendar me-2"></i>Tanggal Kegiatan</small>
                                         <span
-                                            class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_surat)->format('d-m-Y') }}</span>
+                                            class="fw-bold text-dark">{{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') }}</span>
                                     </div>
                                     <div class="mb-3">
                                         <small class="text-muted d-block mb-1"><i

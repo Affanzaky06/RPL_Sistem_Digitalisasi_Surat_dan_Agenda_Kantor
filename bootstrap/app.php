@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => CekRole::class,
         ]);
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckSuratSelesai::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

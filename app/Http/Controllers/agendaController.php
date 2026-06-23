@@ -354,7 +354,7 @@ class AgendaController extends Controller
 
         if ($disposisi && $disposisi->status === 'Menunggu Konfirmasi') {
             // Jika pendamping belum konfirmasi, kita jadikan ini seperti disposisi biasa
-            // Update Kepala jadi Tidak Hadir (Hanya untuk log/rekam jejak, meskipun nanti agenda dihapus)
+            // Update Atasan jadi Tidak Hadir (Hanya untuk log/rekam jejak, meskipun nanti agenda dihapus)
             Peserta::where('id_agenda', $id_agenda)
                 ->where('nip', $user->nip)
                 ->update(['status_kehadiran' => 'Tidak Hadir']);
@@ -364,26 +364,40 @@ class AgendaController extends Controller
                 'catatan' => 'Atasan Batal Hadir. Anda diminta untuk hadir mewakili beliau (Disposisi).'
             ]);
 
+            // Bersihkan pendamping lain yang tidak dipilih
+            $pendampingLain = Disposisi::where('id_surat', $agenda->id_surat)
+                ->where('nip_pemberi', $user->nip)
+                ->where('nip_penerima', '!=', $request->nip_perwakilan)
+                ->get();
+            foreach ($pendampingLain as $dispoLain) {
+                if (in_array($dispoLain->status, ['Hadir', 'Menunggu Konfirmasi'])) {
+                    if ($dispoLain->status === 'Hadir') {
+                        $dispoLain->update(['status' => 'Dibatalkan']);
+                    }
+                    $dispoLain->delete();
+                }
+            }
+
             // Hapus agenda & peserta (karena Atasan batal, dan pendamping belum konfirmasi, 
             // biarkan pendamping yang akan membuat agendanya sendiri saat dia klik "Hadir" nanti)
             Peserta::where('id_agenda', $id_agenda)->delete();
             $agenda->delete();
 
-            return back()->with('success', 'Agenda dihapus karena Anda batal hadir. Penugasan dialihkan sebagai disposisi biasa ke pendamping (Menunggu Konfirmasi).');
+            return back()->with('success', 'Agenda dihapus karena Anda batal hadir. Penugasan dialihkan sebagai disposisi biasa ke pendamping terpilih. Sisa pendamping dibatalkan.');
         }
 
         // Jika pendamping sudah 'Hadir'
-        // 1. Update status Kepala menjadi Tidak Hadir
+        // 1. Update status Atasan menjadi Tidak Hadir
         Peserta::where('id_agenda', $id_agenda)
             ->where('nip', $user->nip)
             ->update(['status_kehadiran' => 'Tidak Hadir']);
 
-        // 2. Update pendamping menjadi Perwakilan
+        // 2. Update pendamping terpilih menjadi Perwakilan
         Peserta::where('id_agenda', $id_agenda)
             ->where('nip', $request->nip_perwakilan)
             ->update(['status_kehadiran' => 'Perwakilan']);
 
-        // 3. Update disposisi pendamping dengan catatan perubahan peran
+        // 3. Update disposisi pendamping terpilih
         if ($disposisi) {
             $disposisi->update([
                 'status' => 'Perwakilan',
@@ -391,7 +405,23 @@ class AgendaController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Kehadiran berhasil diwakilkan ke pendamping. Notifikasi perubahan peran telah dikirim.');
+        // 4. Bersihkan pendamping lain yang tidak dipilih
+        $pendampingLain = Disposisi::where('id_surat', $agenda->id_surat)
+            ->where('nip_pemberi', $user->nip)
+            ->where('nip_penerima', '!=', $request->nip_perwakilan)
+            ->get();
+        foreach ($pendampingLain as $dispoLain) {
+            if (in_array($dispoLain->status, ['Hadir', 'Menunggu Konfirmasi'])) {
+                Peserta::where('id_agenda', $id_agenda)->where('nip', $dispoLain->nip_penerima)->delete();
+                
+                if ($dispoLain->status === 'Hadir') {
+                    $dispoLain->update(['status' => 'Dibatalkan']);
+                }
+                $dispoLain->delete();
+            }
+        }
+
+        return back()->with('success', 'Kehadiran berhasil diwakilkan ke 1 pendamping terpilih. Sisa pendamping otomatis dibatalkan.');
     }
 
     /**
