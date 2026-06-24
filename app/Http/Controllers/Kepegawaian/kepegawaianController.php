@@ -23,7 +23,7 @@ class KepegawaianController extends Controller
         // =================================================================
         // 2. DATA METRIK UNTUK 3 CARD DI ATAS (Data HR/SDM)
         // =================================================================
-        
+
         // A. Total seluruh pegawai yang terdaftar
         $totalPegawai = Pegawai::count();
 
@@ -33,21 +33,21 @@ class KepegawaianController extends Controller
 
         // C. Jumlah pembaruan data pegawai di bulan dan tahun ini
         $pembaruanBulanIni = Pegawai::whereMonth('updated_at', Carbon::now()->month)
-                                    ->whereYear('updated_at', Carbon::now()->year)
-                                    ->count();
+            ->whereYear('updated_at', Carbon::now()->year)
+            ->count();
 
         // =================================================================
         // 3. DATA AGENDA UNTUK BAGIAN BAWAH
         // =================================================================
-        
+
         // Menampilkan 3 agenda kantor terdekat
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -61,12 +61,12 @@ class KepegawaianController extends Controller
             'title' => 'Dashboard Kepegawaian',
             'role' => $role,
             'user' => $user,
-            
+
             // Variabel untuk Card
             'totalPegawai' => $totalPegawai,
             'totalBidang' => $totalBidang,
             'pembaruanBulanIni' => $pembaruanBulanIni,
-            
+
             // Variabel untuk List Bawah
             'ringkasanAgenda' => $ringkasanAgenda
         ]);
@@ -81,10 +81,10 @@ class KepegawaianController extends Controller
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -117,7 +117,7 @@ class KepegawaianController extends Controller
             'no_telp' => 'nullable|string|max:20',
             'bidang' => 'required',
             'jabatan' => 'required',
-            'berkas_pegawai' => 'required|file|mimes:pdf,jpg,jpeg|max:2048', // Maksimal 2MB
+            'berkas_pegawai' => 'required|file|mimes:pdf,jpg,jpeg|max:5120', // Maksimal 5MB
         ], [
             'nip.unique' => 'NIP ini sudah terdaftar di sistem.',
             'berkas_pegawai.mimes' => 'Format file harus PDF, JPG, atau JPEG.'
@@ -160,10 +160,10 @@ class KepegawaianController extends Controller
         $ringkasanAgenda = \App\Models\Agenda::with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -177,9 +177,9 @@ class KepegawaianController extends Controller
 
         // Fitur Searching
         if ($search) {
-            $queryPegawai->where(function($q) use ($search) {
+            $queryPegawai->where(function ($q) use ($search) {
                 $q->where('nama', 'LIKE', "%{$search}%")
-                  ->orWhere('nip', 'LIKE', "%{$search}%");
+                    ->orWhere('nip', 'LIKE', "%{$search}%");
             });
         }
 
@@ -196,12 +196,14 @@ class KepegawaianController extends Controller
 
         $semuaBidang = Bidang::all();
         $semuaJabatan = Jabatan::all();
+        $daftarAtasan = Pegawai::orderBy('nama')->get();
 
         return view('listPegawai', [
             'title' => 'List Pegawai',
             'role' => $role,
             'ringkasanAgenda' => $ringkasanAgenda,
             'daftarPegawai' => $daftarPegawai,
+            'daftarAtasan' => $daftarAtasan,
             'search' => $search,
             'sort' => $sort, // Kirim data sort ke view
             'semuaBidang' => $semuaBidang,
@@ -210,21 +212,22 @@ class KepegawaianController extends Controller
     }
 
     // MEMPROSES UPDATE DATA PEGAWAI DARI MODAL
-public function updatePegawai(Request $request, $nip)
+    public function updatePegawai(Request $request, $nip)
     {
         // 1. Ambil data pegawai yang lama dari database
         $pegawai = Pegawai::where('nip', $nip)->firstOrFail();
 
         // 2. Validasi input form
         $request->validate([
-            'nip' => 'required|string|max:50|unique:pegawai,nip,' . $nip . ',nip', 
+            'nip' => 'required|string|max:50|unique:pegawai,nip,' . $nip . ',nip',
             'nama' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
             'email' => 'nullable|email|unique:pegawai,email,' . $nip . ',nip',
             'no_telp' => 'nullable|string|max:20',
             'bidang' => 'required',
             'jabatan' => 'required',
-            'berkas_pegawai' => 'nullable|file|mimes:pdf,jpg,jpeg|max:2048',
+            'atasan' => 'nullable|exists:pegawai,nip',
+            'berkas_pegawai' => 'nullable|file|mimes:pdf,jpg,jpeg|max:5120',
         ]);
 
         // 3. KUNCI RAHASIA: Amankan nama file lama sebagai nilai default!
@@ -235,7 +238,7 @@ public function updatePegawai(Request $request, $nip)
             $file = $request->file('berkas_pegawai');
             $filename = $request->nip . '_' . time() . '.' . $file->getClientOriginalExtension();
             $filePath = $file->storeAs('berkas_pegawai', $filename, 'public');
-            
+
             // (Opsional) Jika ingin otomatis menghapus file lama di server agar storage tidak penuh:
             // if ($pegawai->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists($pegawai->foto_profil)) {
             //     \Illuminate\Support\Facades\Storage::disk('public')->delete($pegawai->foto_profil);
@@ -251,7 +254,8 @@ public function updatePegawai(Request $request, $nip)
             'no_telp' => $request->no_telp,
             'id_bidang' => $request->bidang,
             'id_jabatan' => $request->jabatan,
-            'foto_profil' => $filePath // Sekarang ini pasti aman, berisi file lama ATAU file baru
+            'nip_atasan' => $request->atasan,
+            'foto_profil' => $filePath
         ]);
 
         return redirect()->back()->with('success', 'Data pegawai berhasil diperbarui!');
