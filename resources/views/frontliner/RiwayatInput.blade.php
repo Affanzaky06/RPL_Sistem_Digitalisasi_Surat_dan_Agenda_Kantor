@@ -150,15 +150,15 @@
                                                     </button>
 
                                                     <form action="{{ route('surat.destroy', $surat->id_surat) }}"
-                                                        method="POST" class="m-0" id="formDeleteSurat{{ $surat->id_surat }}">
+                                                        method="POST" class="m-0"
+                                                        id="formDeleteSurat{{ $surat->id_surat }}">
 
                                                         @csrf
                                                         @method('DELETE')
 
                                                         <button type="button"
                                                             class="btn btn-danger btn-sm rounded-1 w-100"
-                                                            style="font-size:0.7rem;"
-                                                            data-bs-toggle="modal"
+                                                            style="font-size:0.7rem;" data-bs-toggle="modal"
                                                             data-bs-target="#deleteSuratModal{{ $surat->id_surat }}">
                                                             Hapus
                                                         </button>
@@ -191,7 +191,7 @@
 
             </div>
 
-            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda"/>
+            <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
 
         </div>
     </div>
@@ -386,10 +386,10 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label">
-                                        Perihal
+                                        Perihal Surat
                                     </label>
 
-                                    <input type="text" name="perihal"
+                                    <input type="text" name="perihal" autocomplete="off"
                                         value="{{ old('perihal', $surat->perihal) }}" class="form-control">
                                 </div>
 
@@ -398,7 +398,7 @@
                                         Nomor Surat
                                     </label>
 
-                                    <input type="text" name="nomor_surat"
+                                    <input type="text" name="nomor_surat" autocomplete="off"
                                         value="{{ old('nomor_surat', $surat->nomor_surat) }}"
                                         class="form-control @error('nomor_surat') is-invalid @enderror">
 
@@ -414,78 +414,81 @@
                                         Tanggal Surat
                                     </label>
 
-                                    <input type="date" name="tanggal_surat"
+                                    <input type="date" name="tanggal_surat" autocomplete="off"
                                         value="{{ old('tanggal_surat', $surat->tanggal_surat) }}"
                                         class="form-control">
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Jenis Surat</label>
-                                    <select name="jenis_surat" class="form-select" required>
-                                        <option value="Biasa" {{ old('jenis_surat', $surat->jenis_surat) == 'Biasa' ? 'selected' : '' }}>Biasa</option>
-                                        <option value="Undangan" {{ old('jenis_surat', $surat->jenis_surat) == 'Undangan' ? 'selected' : '' }}>Undangan</option>
-                                    </select>
-                                </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Prioritas</label>
-                                    <select name="prioritas" class="form-select" required>
-                                        <option value="Biasa" {{ old('prioritas', $surat->prioritas) == 'Biasa' ? 'selected' : '' }}>Biasa</option>
-                                        <option value="Penting" {{ old('prioritas', $surat->prioritas) == 'Penting' ? 'selected' : '' }}>Penting</option>
-                                        <option value="Sangat Penting" {{ old('prioritas', $surat->prioritas) == 'Sangat Penting' ? 'selected' : '' }}>Sangat Penting</option>
-                                        <option value="Segera" {{ old('prioritas', $surat->prioritas) == 'Segera' ? 'selected' : '' }}>Segera</option>
-                                    </select>
-                                </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6 kegiatan-edit">
                                     <label class="form-label">
                                         Tanggal Kegiatan
+                                        <span class="text-danger kegiatan-required">*</span>
                                     </label>
 
-                                    <input type="date" name="tanggal_kegiatan"
+                                    <input type="date" name="tanggal_kegiatan" autocomplete="off"
                                         value="{{ old('tanggal_kegiatan', $surat->tanggal_kegiatan) }}"
                                         class="form-control">
                                 </div>
 
-                                <div class="col-12">
+                                <div class="col-12 kegiatan-edit">
                                     <label class="form-label">
-                                        Lokasi
+                                        Lokasi Kegiatan
+                                        <span class="text-danger kegiatan-required">*</span>
                                     </label>
 
-                                    <input type="text" name="lokasi_kegiatan"
+                                    <input type="text" name="lokasi_kegiatan" autocomplete="off"
                                         value="{{ old('lokasi_kegiatan', $surat->lokasi_kegiatan) }}"
                                         class="form-control">
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6 kegiatan-edit">
                                     <label class="form-label">
                                         Waktu Mulai
+                                        <span class="text-danger kegiatan-required">*</span>
                                     </label>
 
-                                    <input type="time" name="waktu_mulai_kegiatan"
+                                    <input type="time" name="waktu_mulai_kegiatan" autocomplete="off"
                                         value="{{ old('waktu_mulai_kegiatan', $surat->waktu_mulai_kegiatan) }}"
                                         class="form-control">
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6 kegiatan-edit">
                                     <label class="form-label">
                                         Waktu Selesai
+                                        <span class="text-danger kegiatan-required">*</span>
                                     </label>
 
-                                    <input type="time" name="waktu_selesai_kegiatan"
+                                    <input type="time" name="waktu_selesai_kegiatan" autocomplete="off"
                                         value="{{ old('waktu_selesai_kegiatan', $surat->waktu_selesai_kegiatan) }}"
                                         class="form-control">
                                 </div>
+
 
                                 <div class="col-12">
                                     <label class="form-label">
                                         Asal Surat
                                     </label>
 
-                                    <input type="text" name="asal_surat"
+                                    <input type="text" name="asal_surat" autocomplete="off"
                                         value="{{ old('asal_surat', $surat->asal_surat) }}" class="form-control">
                                 </div>
+                                <div class="col-12">
+                                    <label class="form-label">Jenis Surat</label>
+                                    <select name="jenis_surat" class="form-select" required>
+                                        <option value="Undangan"
+                                            {{ old('jenis_surat', $surat->jenis_surat) == 'Undangan' ? 'selected' : '' }}>
+                                            Surat Undangan</option>
+                                        <option value="Pemberitahuan"
+                                            {{ old('jenis_surat', $surat->jenis_surat) == 'Pemberitahuan' ? 'selected' : '' }}>
+                                            Surat Pemberitahuan</option>
+                                        <option value="Edaran"
+                                            {{ old('jenis_surat', $surat->jenis_surat) == 'Edaran' ? 'selected' : '' }}>
+                                            Surat Edaran</option>
 
+                                    </select>
+                                </div>
                                 <div class="col-12">
 
                                     <label class="form-label">
@@ -556,11 +559,13 @@
                     </div>
                     <div class="modal-body p-4">
                         <p class="fs-6">Yakin ingin menghapus surat <strong>{{ $surat->perihal }}</strong>?</p>
-                        <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Data yang dihapus tidak dapat dikembalikan.</p>
+                        <p class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Data yang
+                            dihapus tidak dapat dikembalikan.</p>
                     </div>
                     <div class="modal-footer border-top-0 px-4 pb-4">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" form="formDeleteSurat{{ $surat->id_surat }}" class="btn btn-danger px-4 fw-bold">Hapus Surat</button>
+                        <button type="submit" form="formDeleteSurat{{ $surat->id_surat }}"
+                            class="btn btn-danger px-4 fw-bold">Hapus Surat</button>
                     </div>
                 </div>
             </div>
@@ -568,3 +573,33 @@
     @endforeach
 
 </x-layout>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        document.querySelectorAll('[id^="editModal"]').forEach(modal => {
+
+            const jenis = modal.querySelector('select[name="jenis_surat"]');
+
+            if (!jenis) return;
+
+            function toggleJenisSurat() {
+
+                const isUndangan = jenis.value === 'Undangan';
+
+                modal.querySelectorAll('.kegiatan-edit').forEach(el => {
+                    el.style.display = isUndangan ? '' : 'none';
+                });
+
+                modal.querySelectorAll('.kegiatan-required').forEach(el => {
+                    el.style.display = isUndangan ? '' : 'none';
+                });
+            }
+
+            toggleJenisSurat();
+
+            jenis.addEventListener('change', toggleJenisSurat);
+        });
+
+    });
+</script>

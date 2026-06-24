@@ -196,24 +196,38 @@ class SuratController extends Controller
         if ($surat->status !== 'Menunggu Verifikasi') {
             abort(403);
         }
+
+        $rules = [
+            'nomor_surat' => 'required|unique:surat,nomor_surat,' . $id . ',id_surat',
+            'jenis_surat' => 'required',
+            'perihal' => 'required',
+            'tanggal_surat' => 'required',
+            'asal_surat' => 'required',
+            'file_scan' => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
+        ];
+
+        if ($request->jenis_surat === 'Undangan') {
+            $rules['tanggal_kegiatan'] = 'required|date';
+            $rules['lokasi_kegiatan'] = 'required|string|max:255';
+            $rules['waktu_mulai_kegiatan'] = 'required';
+            $rules['waktu_selesai_kegiatan'] = 'required|after:waktu_mulai_kegiatan';
+        }
+
         $validator = Validator::make(
             $request->all(),
-            [
-                'nomor_surat' => 'required|unique:surat,nomor_surat,' . $id . ',id_surat',
-                'jenis_surat' => 'required',
-                'prioritas' => 'required',
-                'perihal' => 'required',
-                'tanggal_surat' => 'required',
-                'asal_surat' => 'required',
-                'file_scan' => 'nullable|mimes:pdf,jpg,jpeg,png|max:5120',
-                'waktu_selesai_kegiatan' => 'nullable|after:waktu_mulai_kegiatan',
-            ],
+            $rules,
             [
                 'nomor_surat.required' => 'Nomor surat wajib diisi.',
                 'nomor_surat.unique' => 'Nomor surat sudah terdaftar.',
+
+                'tanggal_kegiatan.required' => 'Tanggal kegiatan wajib diisi.',
+                'lokasi_kegiatan.required' => 'Lokasi kegiatan wajib diisi.',
+                'waktu_mulai_kegiatan.required' => 'Waktu mulai wajib diisi.',
+                'waktu_selesai_kegiatan.required' => 'Waktu selesai wajib diisi.',
+                'waktu_selesai_kegiatan.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
+
                 'file_scan.mimes' => 'File harus PDF/JPG/JPEG/PNG.',
                 'file_scan.max' => 'Ukuran file maksimal 5 MB.',
-                'waktu_selesai_kegiatan.after' => 'Waktu selesai harus lebih besar dari waktu mulai.',
             ]
         );
 
@@ -247,12 +261,24 @@ class SuratController extends Controller
             'perihal' => $request->perihal,
             'nomor_surat' => $request->nomor_surat,
             'jenis_surat' => $request->jenis_surat,
-            'prioritas' => $request->prioritas,
             'tanggal_surat' => $request->tanggal_surat,
-            'tanggal_kegiatan' => $request->tanggal_kegiatan,
-            'lokasi_kegiatan' => $request->lokasi_kegiatan,
-            'waktu_mulai_kegiatan' => $request->waktu_mulai_kegiatan,
-            'waktu_selesai_kegiatan' => $request->waktu_selesai_kegiatan,
+
+            'tanggal_kegiatan' => $request->jenis_surat === 'Undangan'
+                ? $request->tanggal_kegiatan
+                : null,
+
+            'lokasi_kegiatan' => $request->jenis_surat === 'Undangan'
+                ? $request->lokasi_kegiatan
+                : null,
+
+            'waktu_mulai_kegiatan' => $request->jenis_surat === 'Undangan'
+                ? $request->waktu_mulai_kegiatan
+                : null,
+
+            'waktu_selesai_kegiatan' => $request->jenis_surat === 'Undangan'
+                ? $request->waktu_selesai_kegiatan
+                : null,
+
             'asal_surat' => $request->asal_surat,
             'file_scan' => $fileName,
         ]);
