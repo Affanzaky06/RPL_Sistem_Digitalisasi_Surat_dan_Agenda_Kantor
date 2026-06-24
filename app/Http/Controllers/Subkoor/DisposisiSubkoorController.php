@@ -125,6 +125,7 @@ class DisposisiSubkoorController extends Controller
 
         $disposisiEksis = Disposisi::where('id_surat', $id)
             ->where('nip_penerima', $request->nip_penerima)
+            ->latest('id_disposisi')
             ->first();
 
         if ($disposisiEksis) {

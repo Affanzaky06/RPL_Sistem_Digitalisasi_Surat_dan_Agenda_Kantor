@@ -141,8 +141,9 @@ class laporanPemantauanController extends Controller
             return back()->with('error', 'Akses ditolak: Anda bukan pemberi disposisi ini.');
         }
 
-        if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
-            foreach ($request->nip_pendamping as $nipBaru) {
+        if ($request->has('nip_pendamping')) {
+            $pendampings = is_array($request->nip_pendamping) ? $request->nip_pendamping : [$request->nip_pendamping];
+            foreach ($pendampings as $nipBaru) {
 
                 // Buat Disposisi Baru
                 $dispoBaru = Disposisi::create([

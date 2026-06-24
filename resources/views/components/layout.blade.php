@@ -89,9 +89,9 @@
                 .catch(error => console.error('Error fetching notifications:', error));
             }
 
-            // Fetch pertama kali, lalu setiap 10 detik
+            // Fetch pertama kali, lalu setiap 3 detik
             fetchNotifications();
-            setInterval(fetchNotifications, 10000);
+            setInterval(fetchNotifications, 3000);
         });
     </script>
 </body>

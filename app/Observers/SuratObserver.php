@@ -22,4 +22,29 @@ class SuratObserver
             }
         }
     }
+
+    public function updated(Surat $surat)
+    {
+        if ($surat->isDirty('status')) {
+            $sekretarisList = Pegawai::whereIn('id_jabatan', ['J006', 'J007'])->get();
+            
+            if ($surat->status === 'Ditolak Kepala') {
+                foreach ($sekretarisList as $sekretaris) {
+                    $sekretaris->notify(new SistemNotification(
+                        'Surat Ditolak',
+                        'Surat dari ' . $surat->asal_surat . ' (Perihal: ' . $surat->perihal . ') ditolak oleh Kepala Kantor.',
+                        '#'
+                    ));
+                }
+            } elseif ($surat->status === 'Terverifikasi') {
+                foreach ($sekretarisList as $sekretaris) {
+                    $sekretaris->notify(new SistemNotification(
+                        'Surat Terverifikasi',
+                        'Surat dari ' . $surat->asal_surat . ' (Perihal: ' . $surat->perihal . ') telah diverifikasi oleh Kepala Kantor.',
+                        '#'
+                    ));
+                }
+            }
+        }
+    }
 }

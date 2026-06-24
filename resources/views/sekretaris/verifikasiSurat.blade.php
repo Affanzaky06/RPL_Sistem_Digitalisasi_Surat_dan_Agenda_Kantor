@@ -287,7 +287,7 @@
                                 </div>
                                 <div class="row g-4">
                                     <div class="col-md-4">
-                                        <div class="text-secondary small">Tanggal Surat</div>
+                                        <div class="text-secondary small">Tanggal Kegiatan</div>
                                         <div>
                                             {{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d M Y') }}
                                         </div>

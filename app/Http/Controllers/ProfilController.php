@@ -143,6 +143,7 @@ class ProfilController extends Controller
             $disposisi = Disposisi::where('id_surat', $id_surat)
                 ->where('nip_penerima', $user->nip)
                 ->whereIn('status', ['Belum Dibaca', 'Menunggu Konfirmasi'])
+                ->latest('id_disposisi')
                 ->first();
             if ($disposisi) $disposisi->update(['status' => 'Hadir']);
 
@@ -156,6 +157,7 @@ class ProfilController extends Controller
             // 2. Ubah status di tabel Disposisi menjadi 'Tidak Hadir' atau 'Ditolak'
             $disposisi = Disposisi::where('id_surat', $id_surat)
                 ->where('nip_penerima', $user->nip)
+                ->latest('id_disposisi')
                 ->first();
             if ($disposisi) {
                 $disposisi->update([

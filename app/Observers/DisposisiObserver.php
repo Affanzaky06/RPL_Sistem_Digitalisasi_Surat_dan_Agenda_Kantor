@@ -27,7 +27,7 @@ class DisposisiObserver
 
     public function updated(Disposisi $disposisi)
     {
-        if ($disposisi->isDirty('status')) {
+        if ($disposisi->isDirty('status') || $disposisi->isDirty('catatan')) {
             $pemberi = Pegawai::find($disposisi->nip_pemberi);
             $penerima = Pegawai::find($disposisi->nip_penerima);
             $surat = Surat::find($disposisi->id_surat);
@@ -37,6 +37,24 @@ class DisposisiObserver
             $namaPemberi = $pemberi ? $pemberi->nama : 'Atasan';
 
             switch ($disposisi->status) {
+                case 'Menunggu Konfirmasi':
+                    if ($penerima) {
+                        if (str_contains($disposisi->catatan, 'Atasan batal hadir')) {
+                            $penerima->notify(new SistemNotification(
+                                'Peran Diubah: Perwakilan',
+                                $namaPemberi . ' batal hadir dan menunjuk Anda sebagai perwakilan untuk (Perihal: ' . $perihal . '). Silakan konfirmasi kehadiran.',
+                                '#'
+                            ));
+                        } else if ($disposisi->isDirty('status')) {
+                            $penerima->notify(new SistemNotification(
+                                'Disposisi / Undangan Baru Masuk',
+                                'Perihal: ' . $perihal . '. Catatan: ' . $disposisi->catatan,
+                                '#'
+                            ));
+                        }
+                    }
+                    break;
+
                 case 'Tidak Hadir':
                 case 'Ditolak':
                     if ($pemberi) {
@@ -64,15 +82,6 @@ class DisposisiObserver
                         $penerima->notify(new SistemNotification(
                             'Disposisi Dibatalkan',
                             'Disposisi untuk surat (Perihal: ' . $perihal . ') telah dibatalkan atau dialihkan oleh ' . $namaPemberi . '.',
-                            '#'
-                        ));
-                    }
-                    break;
-                case 'Perwakilan':
-                    if ($penerima) {
-                        $penerima->notify(new SistemNotification(
-                            'Peran Diubah: Perwakilan',
-                            $namaPemberi . ' menunjuk Anda sebagai perwakilan untuk (Perihal: ' . $perihal . ').',
                             '#'
                         ));
                     }

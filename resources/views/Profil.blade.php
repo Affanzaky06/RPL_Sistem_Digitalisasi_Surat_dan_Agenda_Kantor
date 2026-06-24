@@ -2,6 +2,51 @@
     <x-slot:title>{{ $title }}</x-slot:title>
     <div class="container-fluid pt-2">
         <div class="row">
+            @if (session('success'))
+                <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                    <div class="toast show border-0 shadow">
+                        <div class="toast-body">
+                            <span class="text-success">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                            </span>
+                            {{ session('success') }}
+                        </div>
+                    </div>
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                    <div class="toast show border-0 shadow">
+                        <div class="toast-body">
+                            <span class="text-danger">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            </span>
+                            {{ session('error') }}
+                        </div>
+                    </div>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
+                    @foreach ($errors->all() as $error)
+                        <div class="toast show border-0 shadow mb-2">
+                            <div class="toast-body">
+                                <span class="text-danger">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                </span>
+                                {{ $error }}
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+            <script>
+                setTimeout(() => {
+                    document.querySelectorAll('.toast').forEach(el => {
+                        el.remove();
+                    });
+                }, 6000);
+            </script>
             {{-- KOLOM PROFIL UTAMA --}}
             <div class="col-lg-8 d-flex flex-column align-items-center text-center pe-lg-3 mx-auto" style="max-width: 600px;">
                 

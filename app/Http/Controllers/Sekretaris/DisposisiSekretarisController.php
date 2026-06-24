@@ -80,6 +80,7 @@ class DisposisiSekretarisController extends Controller
         // Cek IDOR: Pastikan Sekretaris benar-benar menerima disposisi surat ini
         $cekDisposisi = Disposisi::where('id_surat', $id_surat)
             ->where('nip_penerima', $user->nip)
+            ->latest('id_disposisi')
             ->first();
 
         if (!$cekDisposisi) {
