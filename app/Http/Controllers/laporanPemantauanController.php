@@ -15,6 +15,8 @@ class laporanPemantauanController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $search = trim((string) request('search', ''));
+        $sort = request('sort', 'terbaru');
 
         $roleMap = [
             'J001' => 'Kepala',
@@ -28,17 +30,34 @@ class laporanPemantauanController extends Controller
 
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
 
-        $laporan = Disposisi::with([
+        $laporanQuery = Disposisi::with([
             'penerima.bidang',
             'pemberi.bidang',
-            'peserta'
+            'peserta',
+            'surat' // Ditambahkan agar query relasi surat lebih efisien (Eager Loading)
         ])
-            ->where(
-                'nip_pemberi',
-                $user->nip
-            )
-            ->latest()
-            ->paginate(10);
+            ->where('nip_pemberi', $user->nip);
+
+        if ($search !== '') {
+            $laporanQuery->where(function ($query) use ($search) {
+                $query->where('catatan', 'like', "%{$search}%")
+                    ->orWhereHas('surat', function ($q) use ($search) {
+                        $q->where('perihal', 'like', "%{$search}%")
+                            ->orWhere('asal_surat', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('penerima', function ($q) use ($search) {
+                        $q->where('nama', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($sort === 'terlama') {
+            $laporanQuery->oldest('tanggal');
+        } else {
+            $laporanQuery->latest('tanggal');
+        }
+
+        $laporan = $laporanQuery->paginate(10)->withQueryString();
 
         $routeMap = [
             'J001' => 'kepala.disposisi.batal',
@@ -56,32 +75,47 @@ class laporanPemantauanController extends Controller
             $pegawai = collect();
         }
 
+        // --- SOLUSI: Ekstrak daftar jabatan tersedia untuk dilempar ke View ---
+        $jabatanTersedia = $pegawai->map(function ($p) {
+            return match ($p->id_jabatan) {
+                'J002' => 'Kabid',
+                'J003' => 'Subkoor',
+                'J004' => 'Staff',
+                'J006' => 'Sekretaris',
+                default => null,
+            };
+        })->filter()->unique();
+
         $routeBatalDisposisi = $routeMap[$user->id_jabatan] ?? null;
-        
-        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function($q) use ($user) {
-                $q->where('nip', $user->nip);
-                $q->where('status_kehadiran', 'Hadir');
-            })
-            ->with(['surat', 'peserta.pegawai']) // Wajib agar tidak null di view
+
+        $ringkasanAgenda = \App\Models\Agenda::whereHas('peserta', function ($q) use ($user) {
+            $q->where('nip', $user->nip);
+            $q->where('status_kehadiran', 'Hadir');
+        })
+            ->with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
             ->take(3)
             ->get();
+
         return view(
             'laporanPemantauan',
             [
                 'title' => $role,
                 'role' => $role,
                 'laporan' => $laporan,
+                'search' => $search,
+                'sort' => $sort,
                 'ringkasanAgenda' => $ringkasanAgenda,
                 'pegawai' => $pegawai,
+                'jabatanTersedia' => $jabatanTersedia, // <-- WAJIB DIKIRIMKAN DI SINI
                 'routeBatalDisposisi' => $routeBatalDisposisi
             ]
         );
@@ -109,7 +143,7 @@ class laporanPemantauanController extends Controller
 
         if ($request->has('nip_pendamping') && is_array($request->nip_pendamping)) {
             foreach ($request->nip_pendamping as $nipBaru) {
-                
+
                 // Buat Disposisi Baru
                 $dispoBaru = Disposisi::create([
                     'id_surat' => $dispoLama->id_surat,
@@ -143,23 +177,23 @@ class laporanPemantauanController extends Controller
     public function hadirAmbilAlih(Request $request, $id_disposisi)
     {
         $dispoBawahan = Disposisi::findOrFail($id_disposisi);
-        
+
         if ($dispoBawahan->nip_pemberi !== Auth::user()->nip) {
             return back()->with('error', 'Akses ditolak: Anda bukan pemberi disposisi ini.');
         }
-        
+
         $surat = Surat::findOrFail($dispoBawahan->id_surat);
         $user = Auth::user();
 
         // Cek Bentrok Jadwal
         if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
             $bentrok = \App\Models\Agenda::checkConflict(
-                $user->nip, 
-                $surat->tanggal_kegiatan, 
-                $surat->waktu_mulai_kegiatan, 
+                $user->nip,
+                $surat->tanggal_kegiatan,
+                $surat->waktu_mulai_kegiatan,
                 $surat->waktu_selesai_kegiatan
             );
-            
+
             if ($bentrok) {
                 return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan disposisikan surat ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
             }
@@ -180,8 +214,8 @@ class laporanPemantauanController extends Controller
         // 2. Masukkan Atasan (User Login) sebagai peserta wajib
         // Pastikan kita tahu id_disposisi milik atasan ini (yaitu disposisi awal dari atasannya dia)
         $dispoAtasan = Disposisi::where('id_surat', $surat->id_surat)
-                        ->where('nip_penerima', $user->nip)
-                        ->first();
+            ->where('nip_penerima', $user->nip)
+            ->first();
 
         // Jika atasan ini adalah Kepala Kantor (tidak punya disposisi), dispoAtasan null
         $idDispoAtasan = $dispoAtasan ? $dispoAtasan->id_disposisi : null;
@@ -237,11 +271,11 @@ class laporanPemantauanController extends Controller
     public function tolakKeAtasan(Request $request, $id_disposisi)
     {
         $dispoBawahan = Disposisi::findOrFail($id_disposisi);
-        
+
         if ($dispoBawahan->nip_pemberi !== Auth::user()->nip) {
             return back()->with('error', 'Akses ditolak: Anda bukan pemberi disposisi ini.');
         }
-        
+
         $user = Auth::user();
 
         $request->validate([
@@ -250,8 +284,8 @@ class laporanPemantauanController extends Controller
 
         // 1. Cari Disposisi milik Atasan (user login) untuk surat ini
         $dispoAtasan = Disposisi::where('id_surat', $dispoBawahan->id_surat)
-                        ->where('nip_penerima', $user->nip)
-                        ->first();
+            ->where('nip_penerima', $user->nip)
+            ->first();
 
         if (!$dispoAtasan) {
             return back()->with('error', 'Anda tidak memiliki disposisi asal untuk ditolak ke atasan.');
@@ -288,7 +322,7 @@ class laporanPemantauanController extends Controller
 
         // Ubah status menjadi dimaklumi, jadi sistem tidak minta dispo ulang lagi
         $dispoLama->update(['status' => 'Dimaklumi']);
-        
+
         return back()->with('success', 'Penolakan bawahan berhasil disetujui (Dimaklumi). Anda akan hadir tanpa pendamping tersebut.');
     }
 }

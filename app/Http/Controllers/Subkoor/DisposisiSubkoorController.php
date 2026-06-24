@@ -171,6 +171,10 @@ class DisposisiSubkoorController extends Controller
 
     public function tolak(Request $request, $id_surat)
     {
+        $request->validate([
+            'alasan_tolak' => 'required|string|max:1000',
+        ]);
+
         $disposisi = Disposisi::where(
             'id_surat',
             $id_surat
@@ -183,7 +187,8 @@ class DisposisiSubkoorController extends Controller
             ->firstOrFail();
 
         $disposisi->update([
-            'status' => 'Tidak Hadir'
+            'status' => 'Tidak Hadir',
+            'catatan' => $request->alasan_tolak,
         ]);
 
         return back()->with(

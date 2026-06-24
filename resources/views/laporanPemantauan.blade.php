@@ -33,6 +33,34 @@
 
                 <h3 class="fw-bold mb-4">Laporan dan Pemantauan Surat</h3>
 
+                <form method="GET" class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                        <div class="input-group" style="max-width: 450px;">
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Cari pengirim, perihal, atau catatan..." value="{{ request('search') }}">
+                            <button class="btn btn-outline-dark" type="submit">
+                                <i class="bi bi-search me-1"></i>
+                                Cari
+                            </button>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-uppercase fw-semibold" style="font-size:12px; color:#555;">
+                                Sort By
+                            </span>
+                            <select name="sort" class="form-select" style="width:140px;"
+                                onchange="this.form.submit()">
+                                <option value="terbaru" @selected(request('sort', 'terbaru') === 'terbaru')>
+                                    Terbaru
+                                </option>
+                                <option value="terlama" @selected(request('sort') === 'terlama')>
+                                    Terlama
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
                 <div class="table-responsive">
                     <!-- Tabel disesuaikan dengan desain mockup (tanpa border luar, garis hitam tegas di header) -->
                     <table class="table table-borderless align-middle text-center mb-0"
@@ -176,18 +204,26 @@
                                 @empty
                                     <tr>
                                         <td colspan="7" class="py-4 text-muted">Belum ada riwayat disposisi atau ajakan
-                                            pendamping.</td>
+                                            pendamping.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
+
+                        <div class="mt-3">
+                            {{ $laporan->withQueryString()->links() }}
+                        </div>
                     </div>
                 </div>
-
                 <!-- KANAN : RINGKASAN AGENDA -->
                 <x-card-agenda :ringkasanAgenda="$ringkasanAgenda" />
             </div>
         </div>
+
+
+
+
 
         <!-- SEMUA MODAL DILOOP DI BAWAH SINI -->
         @foreach ($laporan as $item)
@@ -412,54 +448,46 @@
                                 </div>
 
                                 <!-- DAFTAR PEGAWAI BARU -->
+                                <!-- DAFTAR PEGAWAI BARU (MODAL DISPO ULANG) -->
                                 <div class="border rounded-3 p-3 mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h6 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Pilih yang ingin
                                             diDisposisi</h6>
                                         <div class="d-flex gap-2">
+                                            <!-- INPUT SEARCH (Ganti data-target dengan akhiran -ulang) -->
                                             <input type="text" class="form-control form-control-sm search-pendamping"
-                                                data-target="list-pendamping-{{ $item->id_disposisi }}"
-                                                placeholder="Cari nama..." style="width: 150px;">
+                                                data-target="list-pendamping-ulang-{{ $item->id_disposisi }}"
+                                                placeholder="Cari Nama..." style="width: 150px;">
+
+                                            <select class="form-select form-select-sm sort-jabatan"
+                                                data-target="list-pendamping-ulang-{{ $item->id_disposisi }}"
+                                                style="width: 140px;">
+                                                <option value="">Semua Jabatan</option>
+                                                @foreach ($jabatanTersedia as $jabatan)
+                                                    <option value="{{ strtolower($jabatan) }}">{{ $jabatan }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
 
-                                    <div class="list-group" id="list-pendamping-{{ $item->id_disposisi }}"
+                                    <!-- KONTAINER LIST (Ganti id dengan akhiran -ulang) -->
+                                    <div class="list-group" id="list-pendamping-ulang-{{ $item->id_disposisi }}"
                                         style="max-height: 180px; overflow-y: auto;">
                                         @foreach ($pegawai as $p)
                                             <label
                                                 class="list-group-item d-flex gap-3 align-items-center p-3 pendamping-item"
-                                                data-nama="{{ strtolower($p->nama) }}" style="cursor: pointer;">
-                                                {{-- Pakai checkbox agar bisa pilih banyak orang sekaligus jika dibutuhkan --}}
-                                                <input class="form-check-input flex-shrink-0 fs-5 mt-0" type="checkbox"
-                                                    name="nip_pendamping[]" value="{{ $p->nip }}">
+                                                data-nama="{{ strtolower($p->nama) }}"
+                                                data-jabatan="{{ strtolower(match ($p->id_jabatan) {'J002' => 'Kabid','J003' => 'Subkoor','J004' => 'Staff','J006' => 'Sekretaris',default => ''}) }}"
+                                                style="cursor: pointer;">
+                                                <input class="form-check-input flex-shrink-0 fs-5 mt-0" type="radio"
+                                                    required name="nip_pendamping" value="{{ $p->nip }}">
                                                 <div class="d-flex align-items-center gap-3">
                                                     <i class="bi bi-person-circle fs-3 text-secondary"></i>
                                                     <div>
                                                         <h6 class="mb-0 fw-bold">{{ $p->nama }}</h6>
                                                         <small class="text-muted">
-                                                            @switch($p->id_jabatan)
-                                                                @case('J002')
-                                                                    Kabid
-                                                                @break
-
-                                                                @case('J003')
-                                                                    Subkoor
-                                                                @break
-
-                                                                @case('J004')
-                                                                    Staff
-                                                                @break
-
-                                                                @case('J006')
-                                                                    Sekretaris
-                                                                @break
-
-                                                                @default
-                                                                    {{ $p->id_jabatan }}
-                                                            @endswitch
-                                                            @if ($p->bidang)
-                                                                | {{ $p->bidang->nama_bidang }}
-                                                            @endif
+                                                            {{ match ($p->id_jabatan) {'J002' => 'Kabid','J003' => 'Subkoor','J004' => 'Staff','J006' => 'Sekretaris',default => $p->id_jabatan} }}
                                                         </small>
                                                     </div>
                                                 </div>
@@ -467,6 +495,9 @@
                                         @endforeach
                                     </div>
                                 </div>
+
+
+
 
                                 <!-- CATATAN -->
                                 <div class="border rounded-3 p-3">
@@ -501,29 +532,46 @@
                                     pendamping di bawah ini.
                                 </div>
 
+                                <!-- DAFTAR PEGAWAI BARU (MODAL HADIR) -->
                                 <div class="border rounded-3 p-3 mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h6 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Pilih Pendamping
                                             (Opsional)</h6>
-                                        <input type="text" class="form-control form-control-sm search-pendamping"
-                                            data-target="list-pendamping-hadir-{{ $item->id_disposisi }}"
-                                            placeholder="Cari nama..." style="width: 150px;">
+                                        <div class="d-flex gap-2">
+                                            <!-- INPUT SEARCH (Ganti data-target dengan akhiran -hadir) -->
+                                            <input type="text" class="form-control form-control-sm search-pendamping"
+                                                data-target="list-pendamping-hadir-{{ $item->id_disposisi }}"
+                                                placeholder="Cari Nama..." style="width: 150px;">
+
+                                            <select class="form-select form-select-sm sort-jabatan"
+                                                data-target="list-pendamping-hadir-{{ $item->id_disposisi }}"
+                                                style="width: 140px;">
+                                                <option value="">Semua Jabatan</option>
+                                                @foreach ($jabatanTersedia as $jabatan)
+                                                    <option value="{{ strtolower($jabatan) }}">{{ $jabatan }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     </div>
+
+                                    <!-- KONTAINER LIST (Ganti id dengan akhiran -hadir) -->
                                     <div class="list-group" id="list-pendamping-hadir-{{ $item->id_disposisi }}"
                                         style="max-height: 180px; overflow-y: auto;">
                                         @foreach ($pegawai as $p)
                                             <label
                                                 class="list-group-item d-flex gap-3 align-items-center p-3 pendamping-item"
-                                                data-nama="{{ strtolower($p->nama) }}" style="cursor: pointer;">
+                                                data-nama="{{ strtolower($p->nama) }}"
+                                                data-jabatan="{{ strtolower(match ($p->id_jabatan) {'J002' => 'Kabid','J003' => 'Subkoor','J004' => 'Staff','J006' => 'Sekretaris',default => ''}) }}"
+                                                style="cursor: pointer;">
                                                 <input class="form-check-input flex-shrink-0 fs-5 mt-0" type="checkbox"
                                                     name="nip_pendamping[]" value="{{ $p->nip }}">
                                                 <div class="d-flex align-items-center gap-3">
                                                     <i class="bi bi-person-circle fs-3 text-secondary"></i>
                                                     <div>
                                                         <h6 class="mb-0 fw-bold">{{ $p->nama }}</h6>
-                                                        <small class="text-muted">{{ $p->id_jabatan }} @if ($p->bidang)
-                                                                | {{ $p->bidang->nama_bidang }}
-                                                            @endif
+                                                        <small class="text-muted">
+                                                            {{ match ($p->id_jabatan) {'J002' => 'Kabid','J003' => 'Subkoor','J004' => 'Staff','J006' => 'Sekretaris',default => $p->id_jabatan} }}
                                                         </small>
                                                     </div>
                                                 </div>
@@ -532,7 +580,8 @@
                                     </div>
                                 </div>
                                 <div class="text-end mt-4">
-                                    <button type="submit" class="btn btn-success px-5 fw-bold">Konfirmasi Hadir</button>
+                                    <button type="submit" class="btn btn-success px-5 fw-bold">Konfirmasi
+                                        Hadir</button>
                                 </div>
                             </form>
                         </div>
@@ -616,19 +665,50 @@
             </div>
         @endforeach
 
+
         <!-- SCRIPT JAVASCRIPT UNTUK FITUR PENCARIAN NAMA -->
+
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                document.querySelectorAll('.search-pendamping').forEach(input => {
-                    input.addEventListener('keyup', function() {
-                        const term = this.value.toLowerCase();
-                        const targetList = document.getElementById(this.dataset.target);
-                        const items = targetList.querySelectorAll('.pendamping-item');
 
-                        items.forEach(item => {
-                            const nama = item.dataset.nama;
-                            item.style.display = nama.includes(term) ? 'flex' : 'none';
-                        });
+                function filterPendamping(targetId, triggerElement) {
+                    const container = document.getElementById(targetId);
+                    if (!container) return;
+
+                    // Mencari input dan select yang memiliki data-target yang sama
+                    const modalContext = triggerElement.closest('.modal-body');
+                    const searchInput = modalContext.querySelector(`.search-pendamping[data-target="${targetId}"]`);
+                    const jabatanSelect = modalContext.querySelector(`.sort-jabatan[data-target="${targetId}"]`);
+
+                    const keyword = (searchInput?.value || '').toLowerCase().trim();
+                    const jabatan = (jabatanSelect?.value || '').toLowerCase().trim();
+
+                    container.querySelectorAll('.pendamping-item').forEach(item => {
+                        const nama = (item.dataset.nama || '').toLowerCase();
+                        const itemJabatan = (item.dataset.jabatan || '').toLowerCase();
+
+                        const cocokNama = nama.includes(keyword);
+                        const cocokJabatan = !jabatan || itemJabatan === jabatan;
+
+                        if (cocokNama && cocokJabatan) {
+                            item.insertAdjacentHTML('afterbegin', ''); // Triggers layout refresh if needed
+                            item.style.setProperty('display', 'flex', 'important');
+                        } else {
+                            item.style.setProperty('display', 'none', 'important');
+                        }
+                    });
+                }
+
+                // Event listener menggunakan input & change
+                document.querySelectorAll('.search-pendamping').forEach(input => {
+                    input.addEventListener('input', function() {
+                        filterPendamping(this.dataset.target, this);
+                    });
+                });
+
+                document.querySelectorAll('.sort-jabatan').forEach(select => {
+                    select.addEventListener('change', function() {
+                        filterPendamping(this.dataset.target, this);
                     });
                 });
             });
