@@ -155,7 +155,9 @@
                                                         </button>
                                                     </form>
 
-                                                    <button type="button" class="btn btn-danger btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
+                                                    <button type="button" class="btn btn-danger btn-sm"
+                                                        style="width:100px;" data-bs-toggle="modal"
+                                                        data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
                                                         <i class="bi bi-x"></i> Tolak
                                                     </button>
 
@@ -418,7 +420,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger">Urgent</span>
+                                            <span class="badge bg-danger">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark">Sedang</span>
                                         @else
@@ -489,7 +491,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else
@@ -573,7 +575,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else

@@ -632,7 +632,7 @@
                                     <small class="text-muted d-block mb-1"><i
                                             class="bi bi-info-circle me-2"></i>Prioritas</small>
                                     @if ($surat->prioritas == 'Tinggi')
-                                        <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                        <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                     @elseif($surat->prioritas == 'Sedang')
                                         <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                     @else
@@ -781,7 +781,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else
@@ -862,7 +862,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else

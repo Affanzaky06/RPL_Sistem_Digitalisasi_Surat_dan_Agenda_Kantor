@@ -207,7 +207,9 @@
                                                         </button>
                                                     </form>
 
-                                                    <button type="button" class="btn btn-danger btn-sm" style="width:100px;" data-bs-toggle="modal" data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
+                                                    <button type="button" class="btn btn-danger btn-sm"
+                                                        style="width:100px;" data-bs-toggle="modal"
+                                                        data-bs-target="#tolakPendampingModal{{ $surat->id_surat }}">
                                                         <i class="bi bi-x"></i> Tolak
                                                     </button>
 
@@ -333,28 +335,28 @@
 
                                     <div>
 
-                                            @if ($surat->prioritas == 'Tinggi')
-                                                <span class="badge bg-danger px-3 py-2"
-                                                    style="width:110px;font-size:0.85rem;">
+                                        @if ($surat->prioritas == 'Tinggi')
+                                            <span class="badge bg-danger px-3 py-2"
+                                                style="width:110px;font-size:0.85rem;">
 
-                                                    Tinggi
+                                                Tinggi
 
-                                                </span>
-                                            @elseif($surat->prioritas == 'Sedang')
-                                                <span class="badge bg-warning text-dark px-3 py-2"
-                                                    style="width:110px;font-size:0.85rem;">
+                                            </span>
+                                        @elseif($surat->prioritas == 'Sedang')
+                                            <span class="badge bg-warning text-dark px-3 py-2"
+                                                style="width:110px;font-size:0.85rem;">
 
-                                                    Sedang
+                                                Sedang
 
-                                                </span>
-                                            @else
-                                                <span class="badge bg-success px-3 py-2"
-                                                    style="width:110px;font-size:0.85rem;">
+                                            </span>
+                                        @else
+                                            <span class="badge bg-success px-3 py-2"
+                                                style="width:110px;font-size:0.85rem;">
 
-                                                    Rendah
+                                                Rendah
 
-                                                </span>
-                                            @endif
+                                            </span>
+                                        @endif
 
                                     </div>
 
@@ -698,8 +700,8 @@
                                 </div>
 
                                 <div class="col-6 ps-4 position-relative">
-                                    <small class="text-muted d-block mb-1"><i
-                                            class="bi bi-calendar me-2"></i>Tanggal Kegiatan</small>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal
+                                        Kegiatan</small>
                                     <div class="fw-bold mb-3 text-dark">
                                         {{ \Carbon\Carbon::parse($surat->tanggal_kegiatan)->format('d-m-Y') }}
                                     </div>
@@ -718,7 +720,7 @@
                                     </small>
 
                                     @if ($surat->prioritas == 'Tinggi')
-                                        <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                        <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                     @elseif($surat->prioritas == 'Sedang')
                                         <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                     @else
@@ -869,7 +871,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else
@@ -953,7 +955,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else

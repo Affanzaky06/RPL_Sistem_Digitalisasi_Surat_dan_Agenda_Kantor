@@ -694,7 +694,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else
@@ -742,10 +742,11 @@
                                     style="max-height: 220px; overflow-y: auto;">
                                     @foreach ($pegawai as $p)
                                         <label
-                                            class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle pendamping-item"
+                                            class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle pendamping-item pendamping-item-row"
                                             data-nama="{{ strtolower($p->nama) }}"
                                             data-jabatan="{{ $p->id_jabatan }}" style="cursor: pointer;">
-                                            <input class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle"
+                                            <input
+                                                class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle check-pendamping"
                                                 type="checkbox" name="nip_pendamping[]" value="{{ $p->nip }}">
                                             <div class="d-flex align-items-center gap-3">
                                                 <i class="bi bi-person-circle fs-2 text-secondary"></i>
@@ -845,7 +846,7 @@
                                         <small class="text-muted d-block mb-1"><i
                                                 class="bi bi-info-circle me-2"></i>Prioritas</small>
                                         @if ($surat->prioritas == 'Tinggi')
-                                            <span class="badge bg-danger px-3 py-1">Urgent</span>
+                                            <span class="badge bg-danger px-3 py-1">Tinggi</span>
                                         @elseif($surat->prioritas == 'Sedang')
                                             <span class="badge bg-warning text-dark px-3 py-1">Sedang</span>
                                         @else
@@ -928,6 +929,22 @@
             } else {
                 init();
             }
+
+            document.querySelectorAll('.check-pendamping').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const row = this.closest('.pendamping-item-row');
+                    if (!row) return;
+
+                    if (this.checked) {
+                        row.classList.add('bg-success-subtle', 'border', 'border-success');
+                        row.classList.remove('border-secondary-subtle');
+                    } else {
+                        row.classList.remove('bg-success-subtle', 'border', 'border-success');
+                        row.classList.add('border-secondary-subtle');
+                    }
+                });
+            });
+
         })();
     </script>
 </x-layout>
