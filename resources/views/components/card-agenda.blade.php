@@ -9,18 +9,16 @@
                 <h6 class="fw-bold mb-1 text-primary">
                     <i class="bi bi-clock me-1"></i>
                     {{ \Carbon\Carbon::parse($agenda->waktu_mulai)->format('H:i') }} WIB
-                    <span class="text-muted small fw-normal">({{ \Carbon\Carbon::parse($agenda->tanggal_kegiatan)->format('d M') }})</span>
+                    <span
+                        class="text-muted small fw-normal">({{ \Carbon\Carbon::parse($agenda->tanggal_kegiatan)->format('d M') }})</span>
                 </h6>
                 <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.95rem;">{{ $agenda->nama_kegiatan }}</h6>
-                
+
                 <p class="text-dark mb-2" style="font-size: 0.8rem; line-height: 1.4;">
                     <strong>Peserta:</strong> <br>
                     <span class="text-secondary">
-                        {{ $agenda->peserta->filter(function($p) {
-                            return $p->status_kehadiran === 'Hadir';
-                        })->map(function($p) {
-                            return $p->pegawai->nama ?? $p->nip;
-                        })->implode(', ') ?: '-' }}
+                        {{ $agenda->peserta->whereIn('status_kehadiran', ['Hadir', 'Perwakilan'])->map(fn($p) => $p->pegawai->nama ?? $p->nip)->implode(', ') ?:
+                            '-' }}
                     </span>
                 </p>
 
@@ -30,7 +28,8 @@
             </div>
         </div>
     @empty
-        <div class="text-center p-3 text-muted" style="font-size: 0.85rem; border: 1px dashed #ccc; border-radius: 12px;">
+        <div class="text-center p-3 text-muted"
+            style="font-size: 0.85rem; border: 1px dashed #ccc; border-radius: 12px;">
             <i class="bi bi-calendar-x fs-4 d-block mb-1"></i>
             Belum ada agenda terdaftar.
         </div>

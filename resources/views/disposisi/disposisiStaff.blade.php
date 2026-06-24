@@ -257,6 +257,11 @@
                         </table>
                     </div>
                 </div>
+                @if ($suratMasuk->hasPages())
+                    <div class="d-flex justify-content-end mt-3 me-3">
+                        {{ $suratMasuk->links() }}
+                    </div>
+                @endif
             </div>
             {{-- SIDEBAR KANAN --}}
 

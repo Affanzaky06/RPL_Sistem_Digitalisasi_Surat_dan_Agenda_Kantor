@@ -113,6 +113,7 @@ class DisposisiKabidController extends Controller
 
         $cekKepemilikan = Disposisi::where('id_surat', $id)
             ->where('nip_penerima', Auth::user()->nip)
+            ->latest('id_disposisi')
             ->first();
 
         if (!$cekKepemilikan) {

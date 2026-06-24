@@ -13,6 +13,8 @@ class SuratFactory extends Factory
     {
         $jenisSurat = $this->faker->randomElement([
             'Undangan',
+            'Undangan',
+            'Undangan',
             'Pemberitahuan',
             'Edaran'
         ]);
@@ -24,6 +26,21 @@ class SuratFactory extends Factory
                 'Undangan Rapat Koordinasi',
                 'Undangan Sosialisasi Program Kerja',
                 'Undangan Kegiatan Monitoring dan Evaluasi',
+                'Undangan Rapat Koordinasi Triwulan',
+                'Undangan Forum Konsultasi Publik',
+                'Undangan Sosialisasi Reformasi Birokrasi',
+                'Undangan Monitoring dan Evaluasi Kinerja',
+                'Undangan Pembahasan Anggaran',
+                'Undangan Penyusunan Renstra',
+                'Undangan Audit Internal',
+                'Undangan Pembinaan Pegawai',
+                'Undangan Evaluasi Program Kerja',
+                'Undangan Rakor Lintas Bidang',
+                'Undangan Workshop Pelayanan Publik',
+                'Undangan Bimbingan Teknis',
+                'Undangan Desk Verifikasi Data',
+                'Undangan Pembahasan Laporan Keuangan',
+                'Undangan Kunjungan Kerja'
             ]),
             'Pemberitahuan' => $this->faker->randomElement([
                 'Pemberitahuan Pelaksanaan Kegiatan',
@@ -83,9 +100,18 @@ class SuratFactory extends Factory
                 'BPK RI',
                 'BPKP',
                 'Inspektorat',
-                'Pemprov Jawa Timur',
                 'Kementerian Keuangan',
-                'Sekretariat Daerah'
+                'Kementerian PANRB',
+                'Kementerian Dalam Negeri',
+                'Pemprov Jawa Timur',
+                'Pemkot Surabaya',
+                'Sekretariat Daerah',
+                'Bappeda',
+                'Dinas Kominfo',
+                'Dinas Pendidikan',
+                'Dinas Kesehatan',
+                'BKD',
+                'KPU Provinsi'
             ]),
 
             'status' => $this->faker->randomElement([
@@ -94,7 +120,18 @@ class SuratFactory extends Factory
                 'Ditolak'
             ]),
 
-            'file_scan' => 'dummy.pdf',
+            'file_scan' => $this->faker->randomElement([
+                'undangan-rakor.pdf',
+                'undangan-monitoring.pdf',
+                'undangan-sosialisasi.pdf',
+                'undangan-bimtek.pdf',
+                'undangan-evaluasi.pdf',
+                'pemberitahuan-jadwal.pdf',
+                'pemberitahuan-layanan.pdf',
+                'pemberitahuan-kegiatan.pdf',
+                'edaran-apel.pdf',
+                'edaran-fasilitas.pdf',
+            ]),
 
             'tanggal_verifikasi' => $this->faker->optional(0.7)
                 ->dateTimeBetween('-1 month', 'now')

@@ -36,10 +36,10 @@ class DisposisiSubkoorController extends Controller
             ->with(['surat', 'peserta.pegawai'])
             ->where(function ($query) {
                 $query->whereDate('tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('tanggal_kegiatan', 'asc')
             ->orderBy('waktu_mulai', 'asc')
@@ -112,6 +112,7 @@ class DisposisiSubkoorController extends Controller
 
         $cekKepemilikan = Disposisi::where('id_surat', $id)
             ->where('nip_penerima', Auth::user()->nip)
+            ->latest('id_disposisi')
             ->first();
 
         if (!$cekKepemilikan) {
@@ -255,12 +256,12 @@ class DisposisiSubkoorController extends Controller
         // Cek Bentrok Jadwal
         if ($surat->tanggal_kegiatan && $surat->waktu_mulai_kegiatan && $surat->waktu_selesai_kegiatan) {
             $bentrok = Agenda::checkConflict(
-                $user->nip, 
-                $surat->tanggal_kegiatan, 
-                $surat->waktu_mulai_kegiatan, 
+                $user->nip,
+                $surat->tanggal_kegiatan,
+                $surat->waktu_mulai_kegiatan,
                 $surat->waktu_selesai_kegiatan
             );
-            
+
             if ($bentrok) {
                 return back()->with('error', 'Tidak bisa menghadiri. Jadwal bertabrakan dengan acara: ' . $bentrok->nama_kegiatan . ' (' . \Carbon\Carbon::parse($bentrok->waktu_mulai)->format('H:i') . ' - ' . \Carbon\Carbon::parse($bentrok->waktu_selesai)->format('H:i') . '). Silakan disposisikan surat ini atau batalkan kehadiran acara sebelumnya jika acara ini lebih penting.');
             }

@@ -183,16 +183,34 @@
                                         </td>
                                         <td>
                                             @php
-                                                // CEK REAL-TIME: Apakah baris surat ini adalah undangan pendampingan dari Atasan untuk user ini?
-                                                $isDiajakPendamping = \App\Models\Peserta::where(
-                                                    'nip',
-                                                    auth()->user()->nip,
+                                                $disposisiSaya = \App\Models\Disposisi::where(
+                                                    'id_surat',
+                                                    $surat->id_surat,
                                                 )
-                                                    ->whereHas('agenda', function ($q) use ($surat) {
-                                                        $q->where('id_surat', $surat->id_surat);
-                                                    })
-                                                    ->where('status_kehadiran', 'Menunggu Konfirmasi')
-                                                    ->exists();
+                                                    ->where('nip_penerima', auth()->user()->nip)
+                                                    ->latest('id_disposisi')
+                                                    ->first();
+
+                                                $isDiajakPendamping = false;
+
+                                                if ($disposisiSaya) {
+                                                    $isHasilWakilkan = str_contains(
+                                                        $disposisiSaya->catatan ?? '',
+                                                        'Atasan batal hadir',
+                                                    );
+
+                                                    if (!$isHasilWakilkan) {
+                                                        $isDiajakPendamping = \App\Models\Peserta::where(
+                                                            'nip',
+                                                            auth()->user()->nip,
+                                                        )
+                                                            ->whereHas('agenda', function ($q) use ($surat) {
+                                                                $q->where('id_surat', $surat->id_surat);
+                                                            })
+                                                            ->where('status_kehadiran', 'Menunggu Konfirmasi')
+                                                            ->exists();
+                                                    }
+                                                }
                                             @endphp
 
                                             @if ($isDiajakPendamping)
@@ -267,6 +285,11 @@
                         </table>
                     </div>
                 </div>
+                @if ($suratMasuk->hasPages())
+                    <div class="d-flex justify-content-end mt-3 me-3">
+                        {{ $suratMasuk->links() }}
+                    </div>
+                @endif
             </div>
             {{-- SIDEBAR KANAN --}}
 

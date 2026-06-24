@@ -27,7 +27,7 @@ class AgendaController extends Controller
             'J006' => 'Sekretaris',
             'J007' => 'Frontliner'
         ];
-        
+
         $role = $roleMap[$user->id_jabatan] ?? 'Umum';
         $title = $role;
 
@@ -37,18 +37,26 @@ class AgendaController extends Controller
             ->join('surat', 'agenda.id_surat', '=', 'surat.id_surat')
             ->where('peserta.nip', $user->nip)
             ->whereIn('peserta.status_kehadiran', ['Hadir', 'Perwakilan'])
-            ->select('agenda.*', 'surat.perihal', 'surat.nomor_surat', 'surat.asal_surat', 
-                     'surat.tanggal_surat', 'surat.jenis_surat', 'surat.prioritas', 'surat.id_surat');
+            ->select(
+                'agenda.*',
+                'surat.perihal',
+                'surat.nomor_surat',
+                'surat.asal_surat',
+                'surat.tanggal_surat',
+                'surat.jenis_surat',
+                'surat.prioritas',
+                'surat.id_surat'
+            );
 
         // --- A. Eksekusi Data untuk FullCalendar ---
-        $queryKalender = clone $baseQuery; 
+        $queryKalender = clone $baseQuery;
         $agendaKalender = $queryKalender->distinct()->get();
 
         $events = $agendaKalender->map(function ($item) {
             $now = Carbon::now();
             $mulai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_mulai);
             $selesai = Carbon::parse($item->tanggal_kegiatan . ' ' . $item->waktu_selesai);
-            
+
             if ($now->gt($selesai)) {
                 $statusAcara = 'terlaksana';
             } elseif ($now->gte($mulai) && $now->lte($selesai)) {
@@ -73,9 +81,9 @@ class AgendaController extends Controller
                     'tanggal_surat' => $item->tanggal_surat ? Carbon::parse($item->tanggal_surat)->format('d-m-Y') : '-',
                     'jenis_surat' => $item->jenis_surat,
                     'tanggal_kegiatan' => $item->tanggal_kegiatan ? Carbon::parse($item->tanggal_kegiatan)->format('d-m-Y') : '-',
-                    'waktu' => ($item->waktu_mulai ? Carbon::parse($item->waktu_mulai)->format('H:i') : '-') 
-                             . ' - ' . 
-                             ($item->waktu_selesai ? Carbon::parse($item->waktu_selesai)->format('H:i') : '-'),
+                    'waktu' => ($item->waktu_mulai ? Carbon::parse($item->waktu_mulai)->format('H:i') : '-')
+                        . ' - ' .
+                        ($item->waktu_selesai ? Carbon::parse($item->waktu_selesai)->format('H:i') : '-'),
                     'prioritas' => $item->prioritas,
                 ]
             ];
@@ -86,10 +94,10 @@ class AgendaController extends Controller
         $ringkasanAgenda = $querySidebar
             ->where(function ($query) {
                 $query->whereDate('agenda.tanggal_kegiatan', '>', \Carbon\Carbon::today())
-                      ->orWhere(function ($q) {
-                          $q->whereDate('agenda.tanggal_kegiatan', '=', \Carbon\Carbon::today())
+                    ->orWhere(function ($q) {
+                        $q->whereDate('agenda.tanggal_kegiatan', '=', \Carbon\Carbon::today())
                             ->whereTime('agenda.waktu_selesai', '>', \Carbon\Carbon::now()->format('H:i:s'));
-                      });
+                    });
             })
             ->orderBy('agenda.tanggal_kegiatan', 'asc')
             ->orderBy('agenda.waktu_mulai', 'asc')
@@ -102,10 +110,10 @@ class AgendaController extends Controller
             $bawahanQuery->whereIn('id_jabatan', ['J002', 'J006']);
         } elseif ($user->id_jabatan === 'J002') {
             $bawahanQuery->where('id_bidang', $user->id_bidang)
-                         ->whereIn('id_jabatan', ['J003', 'J004']);
+                ->whereIn('id_jabatan', ['J003', 'J004']);
         } elseif ($user->id_jabatan === 'J003') {
             $bawahanQuery->where('id_bidang', $user->id_bidang)
-                         ->where('id_jabatan', 'J004');
+                ->where('id_jabatan', 'J004');
         } else {
             $bawahanQuery->where('nip', 'invalid');
         }
@@ -113,7 +121,7 @@ class AgendaController extends Controller
 
         return view('agenda', [
             'title' => $title,
-            'role' => $role, 
+            'role' => $role,
             'events' => $events,
             'ringkasanAgenda' => $ringkasanAgenda,
             'pegawai' => $pegawai
@@ -181,7 +189,7 @@ class AgendaController extends Controller
                     $dispo->update(['status' => 'Dibatalkan']);
                 }
                 // Hapus agar hilang dari Laporan Pemantauan/Surat Masuk pendamping
-                $dispo->delete(); 
+                $dispo->delete();
             }
 
             // 3. Hapus agendanya
@@ -201,7 +209,7 @@ class AgendaController extends Controller
             ->where('nip_pemberi', $user->nip)
             ->get();
 
-        foreach($disposisiBawahan as $dispo) {
+        foreach ($disposisiBawahan as $dispo) {
             if (in_array($dispo->status, ['Hadir', 'Menunggu Konfirmasi'])) {
                 // Hapus peserta pendamping terlebih dahulu untuk hindari Foreign Key constraint
                 Peserta::where('id_agenda', $id_agenda)->where('nip', $dispo->nip_penerima)->delete();
@@ -210,7 +218,7 @@ class AgendaController extends Controller
                     // Jika sudah ACC (Hadir), ubah status jadi Dibatalkan agar Observer mengirim Notif
                     $dispo->update(['status' => 'Dibatalkan']);
                 }
-                
+
                 // Hapus disposisi agar langsung hilang dari Laporan Pemantauan / Surat Masuk pendamping
                 $dispo->delete();
             }
@@ -259,7 +267,7 @@ class AgendaController extends Controller
         $isPendampingOnly = false;
         $disposisiUser = null;
         $atasanHadir = false;
-        
+
         if ($user->id_jabatan !== 'J001') {
             $disposisiUser = \App\Models\Disposisi::where('id_surat', $agenda->id_surat)
                 ->where('nip_penerima', $user->nip)
@@ -271,7 +279,7 @@ class AgendaController extends Controller
                     ->where('nip', $disposisiUser->nip_pemberi)
                     ->where('status_kehadiran', 'Hadir')
                     ->exists();
-                
+
                 if ($atasanHadir) {
                     $isPendampingOnly = true;
                 }
@@ -295,11 +303,11 @@ class AgendaController extends Controller
         } elseif ($user->id_jabatan === 'J002') {
             // Kabid: Subkoor + Staff di bidangnya
             $bawahanQuery->where('id_bidang', $user->id_bidang)
-                         ->whereIn('id_jabatan', ['J003', 'J004']);
+                ->whereIn('id_jabatan', ['J003', 'J004']);
         } elseif ($user->id_jabatan === 'J003') {
             // Subkoor: Staff di bidangnya
             $bawahanQuery->where('id_bidang', $user->id_bidang)
-                         ->where('id_jabatan', 'J004');
+                ->where('id_jabatan', 'J004');
         } else {
             // Default kosong jika tidak berhak punya bawahan
             $bawahanQuery->where('nip', 'invalid');
@@ -352,17 +360,22 @@ class AgendaController extends Controller
             ->latest('id_disposisi')
             ->first();
 
+
         if ($disposisi && $disposisi->status === 'Menunggu Konfirmasi') {
             // Jika pendamping belum konfirmasi, kita jadikan ini seperti disposisi biasa
             // Update Atasan jadi Tidak Hadir (Hanya untuk log/rekam jejak, meskipun nanti agenda dihapus)
             Peserta::where('id_agenda', $id_agenda)
                 ->where('nip', $user->nip)
                 ->update(['status_kehadiran' => 'Tidak Hadir']);
-                
+
             // Update catatan pendamping agar dia tahu dia sekarang jadi perwakilan/penerima dispo utama
             $disposisi->update([
-                'catatan' => 'Atasan Batal Hadir. Anda diminta untuk hadir mewakili beliau (Disposisi).'
+                'status' => 'Menunggu Konfirmasi',
+                'catatan' => 'Atasan batal hadir. Silakan konfirmasi kehadiran untuk mengambil alih kegiatan ini.'
             ]);
+
+            Peserta::where('id_agenda', $id_agenda)->delete();
+            $agenda->delete();
 
             // Bersihkan pendamping lain yang tidak dipilih
             $pendampingLain = Disposisi::where('id_surat', $agenda->id_surat)
@@ -392,16 +405,18 @@ class AgendaController extends Controller
             ->where('nip', $user->nip)
             ->update(['status_kehadiran' => 'Tidak Hadir']);
 
-        // 2. Update pendamping terpilih menjadi Perwakilan
+        // 2. Kembalikan penerima terpilih menjadi disposisi aktif
         Peserta::where('id_agenda', $id_agenda)
             ->where('nip', $request->nip_perwakilan)
-            ->update(['status_kehadiran' => 'Perwakilan']);
+            ->update([
+                'status_kehadiran' => 'Menunggu Konfirmasi'
+            ]);
 
-        // 3. Update disposisi pendamping terpilih
+        // 3. Kembalikan disposisi menjadi perlu konfirmasi
         if ($disposisi) {
             $disposisi->update([
-                'status' => 'Perwakilan',
-                'catatan' => 'Anda ditunjuk sebagai perwakilan Atasan pada kegiatan ini.'
+                'status' => 'Menunggu Konfirmasi',
+                'catatan' => 'Atasan batal hadir. Anda ditunjuk untuk menggantikan dan diminta memberikan konfirmasi kehadiran.'
             ]);
         }
 
@@ -413,7 +428,7 @@ class AgendaController extends Controller
         foreach ($pendampingLain as $dispoLain) {
             if (in_array($dispoLain->status, ['Hadir', 'Menunggu Konfirmasi'])) {
                 Peserta::where('id_agenda', $id_agenda)->where('nip', $dispoLain->nip_penerima)->delete();
-                
+
                 if ($dispoLain->status === 'Hadir') {
                     $dispoLain->update(['status' => 'Dibatalkan']);
                 }
@@ -445,7 +460,7 @@ class AgendaController extends Controller
         $disposisiLama = Disposisi::where('id_surat', $agenda->id_surat)
             ->where('nip_pemberi', $user->nip)
             ->get();
-            
+
         foreach ($disposisiLama as $dispoLama) {
             if (in_array($dispoLama->status, ['Hadir', 'Menunggu Konfirmasi'])) {
                 // Hapus peserta terlebih dahulu untuk hindari Foreign Key constraint
@@ -455,7 +470,7 @@ class AgendaController extends Controller
                     // Jika sudah ACC (Hadir), ubah status jadi Dibatalkan agar Observer mengirim Notif
                     $dispoLama->update(['status' => 'Dibatalkan']);
                 }
-                
+
                 // Hapus disposisi agar langsung hilang dari Laporan Pemantauan / Surat Masuk pendamping
                 $dispoLama->delete();
             }
