@@ -110,9 +110,10 @@
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
             padding: 16px;
         }
+
         #event-popup-card .popup-close {
             position: absolute;
             top: 8px;
@@ -123,6 +124,7 @@
             cursor: pointer;
             color: #6c757d;
         }
+
         #event-popup-card .popup-close:hover {
             color: #212529;
         }
@@ -229,7 +231,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
-                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-info-circle-fill me-2"></i>Pilih Tindakan (Ada Pendamping)</h5>
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-info-circle-fill me-2"></i>Pilih
+                        Tindakan (Ada Pendamping)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
@@ -248,9 +251,10 @@
                         <p class="mb-2 text-muted small">Pilih pendamping yang akan menjadi perwakilan:</p>
                         <!-- Diisi oleh JS -->
                     </div>
-                    
+
                     <div class="mt-3" id="fallback-buttons" style="display: none;">
-                        <button type="button" class="btn btn-outline-danger w-100 fw-bold mt-3" id="btn-tolak-kirim-alasan">
+                        <button type="button" class="btn btn-outline-danger w-100 fw-bold mt-3"
+                            id="btn-tolak-kirim-alasan">
                             <i class="bi bi-x-circle-fill me-2"></i>Batal dan Kirim Alasan ke Atasan
                         </button>
                     </div>
@@ -265,7 +269,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
-                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan</h5>
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i
+                            class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
@@ -282,17 +287,19 @@
             </div>
         </div>
     </div>
-    
+
     <!-- MODAL PILIH AKSI BATAL KEPALA (TANPA PENDAMPING) -->
     <div class="modal fade" id="modalPilihAksiBatalKepala" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4">
                 <div class="modal-header border-bottom-0 pb-0 mt-2 px-4">
-                    <h5 class="modal-title fw-bold fs-4 text-primary"><i class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan Pembatalan</h5>
+                    <h5 class="modal-title fw-bold fs-4 text-primary"><i
+                            class="bi bi-question-circle-fill me-2"></i>Pilih Tindakan Pembatalan</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
-                    <p class="mb-4">Anda akan membatalkan kehadiran pada agenda ini. Apa yang ingin Anda lakukan selanjutnya?</p>
+                    <p class="mb-4">Anda akan membatalkan kehadiran pada agenda ini. Apa yang ingin Anda lakukan
+                        selanjutnya?</p>
                     <div class="d-flex flex-column gap-3">
                         <button type="button" class="btn btn-primary fw-bold" id="btn-aksi-kepala-disposisi">
                             <i class="bi bi-person-lines-fill me-2"></i>Buat Disposisi Ulang ke Bawahan
@@ -324,29 +331,35 @@
                         <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm d-flex position-relative">
                             <div class="col-6 pe-3" style="border-right: 2px dashed #dee2e6;">
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-send me-2"></i>Pengirim</small>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-send me-2"></i>Pengirim</small>
                                     <span class="fw-bold" id="dispo-batal-pengirim">-</span>
                                 </div>
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor Surat</small>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-hash me-2"></i>Nomor
+                                        Surat</small>
                                     <span class="fw-bold" id="dispo-batal-nomor">-</span>
                                 </div>
                                 <div>
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark-text me-2"></i>Perihal</small>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-file-earmark-text me-2"></i>Perihal</small>
                                     <span class="fw-bold" id="dispo-batal-perihal">-</span>
                                 </div>
                             </div>
                             <div class="col-6 ps-4">
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal
+                                        Surat</small>
                                     <span class="fw-bold" id="dispo-batal-tanggal">-</span>
                                 </div>
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-file-earmark me-2"></i>Jenis Surat</small>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-file-earmark me-2"></i>Jenis Surat</small>
                                     <span class="fw-bold" id="dispo-batal-jenis">-</span>
                                 </div>
                                 <div>
-                                    <small class="text-muted d-block mb-1"><i class="bi bi-info-circle me-2"></i>Prioritas</small>
+                                    <small class="text-muted d-block mb-1"><i
+                                            class="bi bi-info-circle me-2"></i>Prioritas</small>
                                     <span id="dispo-batal-prioritas">-</span>
                                 </div>
                             </div>
@@ -363,10 +376,15 @@
                                     </label>
                                     <div class="d-flex gap-2">
                                         <div class="input-group input-group-sm border rounded-2" style="width:220px;">
-                                            <input type="text" class="form-control border-0 shadow-none search-penerima-batal" data-target="list-penerima-batal" placeholder="Cari nama...">
-                                            <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+                                            <input type="text"
+                                                class="form-control border-0 shadow-none search-penerima-batal"
+                                                data-target="list-penerima-batal" placeholder="Cari nama...">
+                                            <span class="input-group-text bg-white border-0"><i
+                                                    class="bi bi-search"></i></span>
                                         </div>
-                                        <select class="form-select form-select-sm border filter-jabatan-penerima-batal shadow-none" data-target="list-penerima-batal" style="width: 140px;">
+                                        <select
+                                            class="form-select form-select-sm border filter-jabatan-penerima-batal shadow-none"
+                                            data-target="list-penerima-batal" style="width: 140px;">
                                             <option value="ALL">Semua Jabatan</option>
                                             <option value="J002">Kabid</option>
                                             <option value="J003">Subkoor</option>
@@ -376,24 +394,43 @@
                                     </div>
                                 </div>
 
-                                <div class="list-group" id="list-penerima-batal" style="max-height:220px; overflow-y:auto;">
-                                    @if(isset($pegawai))
+                                <div class="list-group" id="list-penerima-batal"
+                                    style="max-height:220px; overflow-y:auto;">
+                                    @if (isset($pegawai))
                                         @foreach ($pegawai as $p)
-                                            <label class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle penerima-item-batal"
-                                                data-nama="{{ strtolower($p->nama) }}" data-jabatan="{{ $p->id_jabatan }}" style="cursor:pointer;">
-                                                <input class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle" type="radio" name="nip_penerima" value="{{ $p->nip }}" required>
+                                            <label
+                                                class="list-group-item d-flex gap-3 align-items-center p-3 border-secondary-subtle penerima-item-batal"
+                                                data-nama="{{ strtolower($p->nama) }}"
+                                                data-jabatan="{{ $p->id_jabatan }}" style="cursor:pointer;">
+                                                <input
+                                                    class="form-check-input flex-shrink-0 fs-5 mt-0 border-dark-subtle"
+                                                    type="radio" name="nip_penerima" value="{{ $p->nip }}"
+                                                    required>
                                                 <div class="d-flex align-items-center gap-3">
                                                     <i class="bi bi-person-circle fs-2 text-secondary"></i>
                                                     <div>
                                                         <h6 class="mb-0 fw-bold">{{ $p->nama }}</h6>
                                                         <small class="text-muted">
                                                             @switch($p->id_jabatan)
-                                                                @case('J002') Kabid @break
-                                                                @case('J003') Subkoor @break
-                                                                @case('J004') Staff @break
-                                                                @case('J006') Sekretaris @break
+                                                                @case('J002')
+                                                                    Kabid
+                                                                @break
+
+                                                                @case('J003')
+                                                                    Subkoor
+                                                                @break
+
+                                                                @case('J004')
+                                                                    Staff
+                                                                @break
+
+                                                                @case('J006')
+                                                                    Sekretaris
+                                                                @break
                                                             @endswitch
-                                                            @if ($p->bidang) | {{ $p->bidang->nama_bidang }} @endif
+                                                            @if ($p->bidang)
+                                                                | {{ $p->bidang->nama_bidang }}
+                                                            @endif
                                                         </small>
                                                     </div>
                                                 </div>
@@ -407,7 +444,8 @@
                                 <label class="fw-bold mb-2 d-flex align-items-center text-dark">
                                     <i class="bi bi-journal-text me-2 fs-5"></i>Catatan Disposisi
                                 </label>
-                                <textarea name="catatan" rows="3" class="form-control border-secondary-subtle" placeholder="Tulis Catatan Disini... (kosongkan jika tidak ada)" autocomplete="off"></textarea>
+                                <textarea name="catatan" rows="3" class="form-control border-secondary-subtle"
+                                    placeholder="Tulis Catatan Disini... (kosongkan jika tidak ada)" autocomplete="off"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer border-top-0 px-4 pb-4 justify-content-end">
@@ -452,8 +490,8 @@
 
                             <div class="col-6 ps-4 position-relative">
                                 <div class="mb-3">
-                                    <small class="text-muted d-block mb-1"><i
-                                            class="bi bi-calendar me-2"></i>Tanggal Surat</small>
+                                    <small class="text-muted d-block mb-1"><i class="bi bi-calendar me-2"></i>Tanggal
+                                        Surat</small>
                                     <span class="fw-bold text-dark" id="modal-tanggal-surat"></span>
                                 </div>
                                 <div class="mb-3">

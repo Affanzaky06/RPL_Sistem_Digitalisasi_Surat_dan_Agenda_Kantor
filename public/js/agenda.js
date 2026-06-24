@@ -144,6 +144,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 popupLokasi.textContent = props.lokasi || "-";
                 popupPerihal.textContent = props.perihal || event.title;
 
+                if (popupBatalBtn) {
+                    popupBatalBtn.style.display =
+                        props.status === "berlangsung"
+                            ? "none"
+                            : "inline-block";
+                }
+
                 // Simpan data event aktif
                 activeEventProps = props;
 
@@ -266,7 +273,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let prioritas = eventProps.prioritas || "Rendah";
             if (prioritas === "Tinggi") {
                 prioritasEl.innerHTML =
-                    '<span class="badge bg-danger px-3 py-1">Tinggi</span>';
+                    '<span class="badge bg-danger px-3 py-1">Urgent</span>';
             } else if (prioritas === "Sedang") {
                 prioritasEl.innerHTML =
                     '<span class="badge bg-warning text-dark px-3 py-1">Sedang</span>';
