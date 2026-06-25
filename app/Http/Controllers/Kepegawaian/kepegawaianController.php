@@ -263,6 +263,11 @@ class KepegawaianController extends Controller
     // MEMPROSES HAPUS DATA PEGAWAI
     public function destroyPegawai($nip)
     {
+        // Cek jika akun yang mau dihapus adalah akun sendiri
+        if (Auth::user()->nip === $nip) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri!');
+        }
+
         $pegawai = Pegawai::where('nip', $nip)->firstOrFail();
 
         // Cek apakah pegawai sedang terlibat di surat disposisi atau agenda

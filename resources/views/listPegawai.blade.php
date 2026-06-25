@@ -78,9 +78,14 @@
                                                 id="formDelete{{ $pegawai->nip }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-danger btn-sm w-100"
-                                                    style="font-size: 0.8rem;" data-bs-toggle="modal"
-                                                    data-bs-target="#deleteModal{{ $pegawai->nip }}">Hapus</button>
+                                                @if(auth()->user()->nip === $pegawai->nip)
+                                                    <button type="button" class="btn btn-secondary btn-sm w-100"
+                                                        style="font-size: 0.8rem;" disabled>Hapus</button>
+                                                @else
+                                                    <button type="button" class="btn btn-danger btn-sm w-100"
+                                                        style="font-size: 0.8rem;" data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal{{ $pegawai->nip }}">Hapus</button>
+                                                @endif
                                             </form>
                                         </div>
                                     </td>
